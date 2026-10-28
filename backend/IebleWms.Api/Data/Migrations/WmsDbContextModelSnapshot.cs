@@ -22,6 +22,27 @@ namespace IebleWms.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("IebleWms.Api.Models.AdministratorBootstrap", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AdministratorBootstraps", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AdministratorBootstraps_Singleton", "\"Id\" = 1");
+                        });
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -130,6 +151,15 @@ namespace IebleWms.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BillingStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("BusinessRegistrationNumber")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -149,6 +179,11 @@ namespace IebleWms.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("ServiceStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -161,6 +196,9 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BusinessRegistrationNumber")
+                        .IsUnique();
+
                     b.HasIndex("Code")
                         .IsUnique();
 
@@ -170,9 +208,15 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.ToTable("Tenants", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Tenants_BillingStatus", "\"BillingStatus\" IN ('CardRequired', 'PaymentRequired', 'Paid')");
+
+                            t.HasCheckConstraint("CK_Tenants_BusinessRegistrationNumber", "\"BusinessRegistrationNumber\" IS NULL OR (length(\"BusinessRegistrationNumber\") = 10 AND replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"BusinessRegistrationNumber\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', '') = '')");
+
                             t.HasCheckConstraint("CK_Tenants_Code", "length(trim(\"Code\")) > 0 AND \"Code\" = upper(trim(\"Code\"))");
 
                             t.HasCheckConstraint("CK_Tenants_Name", "length(trim(\"Name\")) > 0");
+
+                            t.HasCheckConstraint("CK_Tenants_ServiceStatus", "\"ServiceStatus\" IN ('Active', 'Suspended')");
                         });
                 });
 
@@ -191,6 +235,9 @@ namespace IebleWms.Api.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Role")
@@ -214,6 +261,11 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.HasIndex("UpdatedByUserId");
 
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_TenantMemberships_DefaultUser")
+                        .HasFilter("\"IsDefault\" = TRUE");
+
                     b.HasIndex("UserId", "IsActive");
 
                     b.HasIndex("TenantId", "Role", "IsActive");
@@ -221,6 +273,50 @@ namespace IebleWms.Api.Data.Migrations
                     b.ToTable("TenantMemberships", null, t =>
                         {
                             t.HasCheckConstraint("CK_Memberships_Role", "\"Role\" IN ('Employee', 'Administrator', 'Master')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.TenantStatusChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FromStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("TenantId", "Id");
+
+                    b.ToTable("TenantStatusChanges", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TenantStatusChanges_Reason", "length(trim(\"Reason\")) > 0");
+
+                            t.HasCheckConstraint("CK_TenantStatusChanges_Transition", "(\"FromStatus\" = 'PendingActivation' AND \"ToStatus\" IN ('Active', 'Rejected')) OR (\"FromStatus\" = 'Active' AND \"ToStatus\" = 'Suspended') OR (\"FromStatus\" = 'Suspended' AND \"ToStatus\" = 'Active')");
                         });
                 });
 
@@ -288,6 +384,17 @@ namespace IebleWms.Api.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.AdministratorBootstrap", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.ApplicationUser", b =>
                 {
                     b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
@@ -341,6 +448,25 @@ namespace IebleWms.Api.Data.Migrations
                     b.Navigation("Tenant");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.TenantStatusChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>

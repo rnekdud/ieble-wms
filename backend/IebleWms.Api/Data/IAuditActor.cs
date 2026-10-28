@@ -1,6 +1,6 @@
 namespace IebleWms.Api.Data;
 
-// Replace with a trusted authenticated-user implementation when authentication is added.
+// Runtime requests use HttpAuditActor; design-time and system operations use SystemAuditActor.
 // Null denotes a system operation; never populate this from a client request body.
 public interface IAuditActor
 {

@@ -9,5 +9,6 @@ public sealed class TenantMembership : AuditableEntity
     public Guid UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
     public TenantRole Role { get; set; } = TenantRole.Employee;
+    public bool IsDefault { get; set; }
     public bool IsActive { get; set; } = true;
 }

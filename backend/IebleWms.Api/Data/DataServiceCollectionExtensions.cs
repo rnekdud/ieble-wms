@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using IebleWms.Api.Models;
 using IebleWms.Api.Services;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +14,17 @@ public static class DataServiceCollectionExtensions
         services.TryAddScoped<IAuditActor, SystemAuditActor>();
         services.AddDbContext<WmsDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-        services.AddIdentityCore<ApplicationUser>(options => options.User.RequireUniqueEmail = true)
-            .AddEntityFrameworkStores<WmsDbContext>();
+        services.AddIdentityCore<ApplicationUser>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+            options.Password.RequiredLength = 12;
+            options.Password.RequireUppercase = false;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.AllowedForNewUsers = true;
+        })
+            .AddEntityFrameworkStores<WmsDbContext>()
+            .AddSignInManager();
         services.AddScoped<MembershipAccessService>();
         return services;
     }
