@@ -1,0 +1,33 @@
+# React / Node.js
+node_modules/
+dist/
+coverage/
+*.log
+
+# .NET
+bin/
+obj/
+.vs/
+TestResults/
+
+# 환경 변수 및 비밀 정보
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/appsettings.Development.json
+**/appsettings.Production.json
+*.pfx
+*.pem
+*.key
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# PostgreSQL / Docker 데이터
+postgres_data/
+pgdata/
