@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/IebleWms.Api.Tests/IebleWms.Api.Tests.csproj" />
+    <Project Path="backend/IebleWms.Api/IebleWms.Api.csproj" />
+  </Folder>
+</Solution>
