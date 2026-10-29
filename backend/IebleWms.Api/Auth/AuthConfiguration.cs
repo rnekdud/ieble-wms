@@ -22,6 +22,10 @@ public static class AuthConfiguration
         services.AddScoped<IAuditActor, HttpAuditActor>();
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<TenantPermissionService>();
+        services.AddScoped<IebleWms.Api.Organization.OrganizationAudit>();
+        services.AddScoped<IebleWms.Api.Organization.CompanyService>();
+        services.AddScoped<IebleWms.Api.Organization.OrganizationStructureService>();
+        services.AddScoped<IebleWms.Api.Organization.EmployeeService>();
         services.AddScoped<TenantSessionService>();
         services.AddScoped<IebleWms.Api.Administration.BootstrapAdminService>();
         services.AddScoped<IebleWms.Api.Administration.TenantAdministrationService>();
@@ -44,7 +48,8 @@ public static class AuthConfiguration
                     var manager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
                     var user = await manager.GetUserAsync(context.Principal!);
                     var stamp = context.Principal?.FindFirstValue(manager.Options.ClaimsIdentity.SecurityStampClaimType);
-                    if (user is null || !user.IsActive || stamp != user.SecurityStamp)
+                    var access = context.HttpContext.RequestServices.GetRequiredService<MembershipAccessService>();
+                    if (user is null || !user.IsActive || stamp != user.SecurityStamp || !await access.CanAuthenticateAsync(user.Id))
                     {
                         context.RejectPrincipal();
                         await context.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
@@ -63,7 +68,8 @@ public static class AuthConfiguration
             options.Cookie.Path = "/";
         });
         services.AddScoped<ApiAntiforgeryFilter>();
-        services.Configure<MvcOptions>(options => options.Filters.AddService<ApiAntiforgeryFilter>());
+        services.AddScoped<PasswordChangeGate>();
+        services.Configure<MvcOptions>(options => { options.Filters.AddService<ApiAntiforgeryFilter>(); options.Filters.AddService<PasswordChangeGate>(); });
         services.AddAuthorization(options =>
         {
             options.AddPolicy("IebleAdministrator", policy => policy.RequireAuthenticatedUser().AddRequirements(new WmsAccessRequirement("platform")));
@@ -84,7 +90,7 @@ public static class AuthConfiguration
                 context.HttpContext.Response.Headers.RetryAfter = "60";
                 await context.HttpContext.Response.WriteAsJsonAsync(new { message = "요청이 많습니다. 잠시 후 다시 시도해 주세요." }, token);
             };
-            foreach (var (name, limit) in new[] { ("login", 10), ("register", 3) })
+            foreach (var (name, limit) in new[] { ("login", 10), ("register", 3), ("password-change", 10) })
                 options.AddPolicy(name, context => RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -106,6 +112,7 @@ internal sealed class WmsAuthorizationHandler(WmsDbContext db, MembershipAccessS
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, WmsAccessRequirement requirement)
     {
         if (!Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return;
+        if (await db.Users.AsNoTracking().AnyAsync(x => x.Id == userId && x.MustChangePassword)) return;
         if (requirement.Scope == "platform")
         {
             if (await access.IsIebleAdministratorAsync(userId)) context.Succeed(requirement);

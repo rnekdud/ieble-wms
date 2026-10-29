@@ -10,6 +10,8 @@ public sealed class WmsDbContext(
     IAuditActor actor,
     TimeProvider clock) : IdentityUserContext<ApplicationUser, Guid>(options)
 {
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<JobPosition> JobPositions => Set<JobPosition>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
 
@@ -18,6 +20,8 @@ public sealed class WmsDbContext(
 
     public DbSet<TenantPermissionSettings> TenantPermissionSettings => Set<TenantPermissionSettings>();
     public DbSet<TenantPermissionChange> TenantPermissionChanges => Set<TenantPermissionChange>();
+
+    public DbSet<OrganizationChange> OrganizationChanges => Set<OrganizationChange>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -45,6 +49,10 @@ public sealed class WmsDbContext(
         tenant.HasKey(x => x.Id);
         tenant.Property(x => x.Code).HasMaxLength(64).IsRequired();
         tenant.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        tenant.Property(x => x.RepresentativeName).HasMaxLength(200);
+        tenant.Property(x => x.Address).HasMaxLength(500);
+        tenant.Property(x => x.ContactName).HasMaxLength(200);
+        tenant.Property(x => x.ContactPhone).HasMaxLength(30);
         tenant.Property(x => x.BusinessRegistrationNumber).HasMaxLength(10);
         tenant.HasIndex(x => x.BusinessRegistrationNumber).IsUnique();
         tenant.Property(x => x.ServiceStatus).HasConversion<string>().HasMaxLength(32).IsRequired();
@@ -52,10 +60,37 @@ public sealed class WmsDbContext(
         tenant.HasIndex(x => x.Code).IsUnique();
         tenant.Property(x => x.Version).IsConcurrencyToken();
 
+        var department = builder.Entity<Department>();
+        department.HasKey(x => new { x.TenantId, x.Id });
+        department.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        department.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
+        department.Property(x => x.Version).IsConcurrencyToken();
+        department.HasIndex(x => new { x.TenantId, x.NormalizedName }).IsUnique();
+        department.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        department.HasOne<Department>().WithMany().HasForeignKey(x => new { x.TenantId, x.ParentId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        department.ToTable("Departments", t => {
+            t.HasCheckConstraint("CK_Department_Parent", "\"ParentId\" IS NULL OR \"ParentId\" <> \"Id\"");
+            t.HasCheckConstraint("CK_Department_Name", "length(trim(\"Name\")) > 0");
+            t.HasCheckConstraint("CK_Department_Order", "\"SortOrder\" >= 0");
+        });
+        var position = builder.Entity<JobPosition>();
+        position.HasKey(x => new { x.TenantId, x.Id });
+        position.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        position.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
+        position.Property(x => x.Version).IsConcurrencyToken();
+        position.HasIndex(x => new { x.TenantId, x.NormalizedName }).IsUnique();
+        position.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        position.ToTable("JobPositions", t => {
+            t.HasCheckConstraint("CK_Position_Name", "length(trim(\"Name\")) > 0");
+            t.HasCheckConstraint("CK_Position_Order", "\"SortOrder\" >= 0");
+        });
         var membership = builder.Entity<TenantMembership>();
         membership.ToTable("TenantMemberships", t => t.HasCheckConstraint("CK_Memberships_Role",
             "\"Role\" IN ('Employee', 'Administrator', 'Master')"));
         membership.HasKey(x => new { x.TenantId, x.UserId });
+        membership.HasOne<Department>().WithMany().HasForeignKey(x => new { x.TenantId, x.DepartmentId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        membership.HasOne<JobPosition>().WithMany().HasForeignKey(x => new { x.TenantId, x.PositionId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        membership.Property(x => x.DisplayName).HasMaxLength(200);
         membership.Property(x => x.Role).HasConversion<string>().HasMaxLength(32).IsRequired();
         membership.Property(x => x.Version).IsConcurrencyToken();
         membership.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("IX_TenantMemberships_DefaultUser").HasFilter("\"IsDefault\" = TRUE");
@@ -99,6 +134,17 @@ public sealed class WmsDbContext(
         permissionHistory.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ChangedByUserId).OnDelete(DeleteBehavior.Restrict);
         permissionHistory.HasIndex(x => new { x.TenantId, x.Id });
 
+        var organizationHistory = builder.Entity<OrganizationChange>();
+        organizationHistory.HasKey(x => x.Id);
+        organizationHistory.Property(x => x.Action).HasMaxLength(64).IsRequired();
+        organizationHistory.Property(x => x.Reason).HasMaxLength(500);
+        organizationHistory.Property(x => x.BeforeJson).IsRequired();
+        organizationHistory.Property(x => x.AfterJson).IsRequired();
+        organizationHistory.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        organizationHistory.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.TargetUserId).OnDelete(DeleteBehavior.Restrict);
+        organizationHistory.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ChangedByUserId).OnDelete(DeleteBehavior.Restrict);
+        organizationHistory.HasIndex(x => new { x.TenantId, x.Id });
+
         ConfigureAudit<ApplicationUser>(builder);
         ConfigureAudit<Tenant>(builder);
         ConfigureAudit<TenantMembership>(builder);
@@ -129,7 +175,7 @@ public sealed class WmsDbContext(
 
     private void ApplyAudit()
     {
-        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange) && x.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange or OrganizationChange) && x.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Administrative history and bootstrap receipts are immutable.");
         var now = clock.GetUtcNow();
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())

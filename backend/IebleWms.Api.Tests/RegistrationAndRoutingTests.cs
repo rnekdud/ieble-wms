@@ -121,7 +121,8 @@ public sealed class RegistrationAndRoutingTests
     [InlineData("lowercaseonly!", false)]
     [InlineData("lowercase12345", false)]
     [InlineData("UPPERCASE123!", false)]
-    [InlineData("short12!", false)]
+    [InlineData("short12!", true)]
+    [InlineData("short1!", false)]
     public async Task SharedIdentityPolicyAppliesToPasswordChanges(string candidate, bool valid)
     {
         using var factory = new AuthFactory(); using var client = factory.Client(); var initial = Password();

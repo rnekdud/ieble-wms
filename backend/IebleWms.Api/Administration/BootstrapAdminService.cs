@@ -14,7 +14,7 @@ public sealed class BootstrapAdminService(WmsDbContext db, UserManager<Applicati
     {
         if (!environment.IsDevelopment()) return new(false, "개발 환경에서만 실행할 수 있습니다.");
         if (email.Length > 256 || !new EmailAddressAttribute().IsValid(email.Trim()) ||
-            string.IsNullOrWhiteSpace(displayName) || displayName.Trim().Length > 200 || password.Length is < 12 or > 128)
+            string.IsNullOrWhiteSpace(displayName) || displayName.Trim().Length > 200 || password.Length is < 8 or > 128)
             return new(false, "이메일·이름·비밀번호 형식을 확인해 주세요.");
         await using var transaction = await db.Database.BeginTransactionAsync(token);
         try
@@ -32,7 +32,7 @@ public sealed class BootstrapAdminService(WmsDbContext db, UserManager<Applicati
                 return new(false, "이미 등록된 이메일입니다. 기존 기업 계정을 승격하지 않습니다.");
             var user = new ApplicationUser { UserName = email.Trim(), Email = email.Trim(), DisplayName = displayName.Trim(), SystemRole = SystemRole.IebleAdministrator };
             var result = await users.CreateAsync(user, password);
-            if (!result.Succeeded) return new(false, "관리자를 생성하지 못했습니다. 비밀번호는 12~128자이며 소문자, 숫자, 특수문자를 포함해야 합니다.");
+            if (!result.Succeeded) return new(false, "관리자를 생성하지 못했습니다. 비밀번호는 8~128자이며 소문자, 숫자, 특수문자를 포함해야 합니다.");
             db.AdministratorBootstraps.Add(new AdministratorBootstrap { UserId = user.Id, CreatedAt = clock.GetUtcNow() });
             // The singleton PK wins concurrent attempts; a losing transaction rolls back its new user too.
             await db.SaveChangesAsync(token);

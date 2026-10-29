@@ -5,7 +5,7 @@ export type Membership = {
   serviceStatus: string
 }
 export type Session = {
-  user: { id: string; displayName: string; email: string; systemRole: string }
+  user: { id: string; displayName: string; email: string; systemRole: string; userName: string; mustChangePassword: boolean }
   memberships: Membership[]
   tenantResolution: 'resolved' | 'default_required' | 'no_membership'
   selectedTenantId: string | null

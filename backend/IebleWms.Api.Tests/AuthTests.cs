@@ -51,6 +51,9 @@ public sealed class AuthTests
         Assert.Equal(TenantServiceStatus.Active, tenant.ServiceStatus);
         Assert.Equal(TenantBillingStatus.CardRequired, tenant.BillingStatus);
         Assert.Equal("010-1234-5678", user.PhoneNumber);
+        Assert.Equal("담당자", tenant.ContactName); Assert.Equal("010-1234-5678", tenant.ContactPhone);
+        Assert.False(user.MustChangePassword);
+        Assert.NotNull((await db.TenantMemberships.SingleAsync()).BillingStartsAt);
         Assert.NotEqual(password, user.PasswordHash);
         Assert.True(await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().CheckPasswordAsync(user, password));
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);

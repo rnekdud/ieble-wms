@@ -11,6 +11,10 @@ public sealed class Tenant : AuditableEntity
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? BusinessRegistrationNumber { get; set; }
+    public string? RepresentativeName { get; set; }
+    public string? Address { get; set; }
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
     public TenantServiceStatus ServiceStatus { get; set; } = TenantServiceStatus.Active;
     public TenantBillingStatus BillingStatus { get; set; } = TenantBillingStatus.CardRequired;
     public bool IsActive { get; set; } = true;

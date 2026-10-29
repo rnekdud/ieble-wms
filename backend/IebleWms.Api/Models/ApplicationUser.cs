@@ -11,6 +11,7 @@ public sealed class ApplicationUser : IdentityUser<Guid>, IAuditableEntity
 
     public string DisplayName { get; set; } = string.Empty;
     public SystemRole SystemRole { get; set; } = SystemRole.None;
+    public bool MustChangePassword { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

@@ -59,3 +59,10 @@ test('blocked browser storage does not break authentication', () => {
   )
   assert.doesNotThrow(() => clearRememberedEmail(storage))
 })
+
+test('remembered login also preserves a staff login ID without storing a password', () => {
+  const storage = memoryStorage()
+  saveRememberedEmail(' staff_login_01 ', true, storage)
+  assert.deepEqual(readRememberedEmail(storage), { email: 'staff_login_01', remember: true })
+  assert.deepEqual([...storage.data.keys()].sort(), ['ieble.rememberEmail', 'ieble.savedEmail'])
+})

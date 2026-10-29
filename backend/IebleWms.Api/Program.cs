@@ -56,8 +56,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler(handler => handler.Run(async context =>
 {
-    context.Response.StatusCode = 500;
-    await context.Response.WriteAsJsonAsync(new { message = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
+    var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    context.Response.StatusCode = error is IebleWms.Api.Organization.OrganizationException known ? known.StatusCode : 500;
+    await context.Response.WriteAsJsonAsync(new { message = error is IebleWms.Api.Organization.OrganizationException expected
+        ? expected.Message : "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
 }));
 if (!app.Environment.IsDevelopment()) app.UseHsts();
 app.UseHttpsRedirection();

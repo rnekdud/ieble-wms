@@ -843,3 +843,36 @@ textarea:focus {
   accent-color: #19786b;
   box-shadow: none;
 }
+
+
+.password-gate-screen { min-height: 100dvh; background: #f4f7f8; }
+.password-gate-dialog { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid #dde6e4; border-radius: 12px; padding: 28px; color: #243536; }
+.password-gate-dialog h1 { font-size: 23px; line-height: 1.5; }
+.password-gate-dialog p { font-size: 14px; line-height: 1.8; color: #667a74; }
+.password-gate-dialog small { display: block; margin-bottom: 18px; color: #667a74; }
+.password-gate-dialog::backdrop { background: rgb(20 40 35 / 55%); }
+
+.user-profile { position: relative; flex-shrink: 0; }
+.user-profile-trigger { display: flex; align-items: center; gap: 10px; background: transparent; color: #345c50; padding: 8px; border-radius: 8px; }
+.user-profile-trigger:hover, .user-profile-trigger[aria-expanded="true"] { background: #eef5f1; }
+.user-profile-trigger > span { display: flex; flex-direction: column; align-items: flex-end; max-width: 160px; }
+.user-profile-trigger strong { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-profile-trigger small { font-size: 10px; color: #758a7e; }
+.user-profile-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 190px; padding: 6px; border: 1px solid #dde6e4; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgb(20 40 35 / 12%); z-index: 30; }
+.user-profile-panel button { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px; background: transparent; color: #345c50; font-size: 13px; border-radius: 6px; }
+.user-profile-panel button:hover { background: #eef5f1; }
+@media (max-width: 700px) {
+  .user-profile-trigger > span { max-width: 90px; }
+}
+
+.password-field { margin-bottom: 18px; }
+.password-field > label { margin-bottom: 8px; }
+.password-input-wrap { position: relative; }
+.password-input-wrap > input { width: 100%; padding-right: 48px; }
+.password-visibility { position: absolute; top: 50%; right: 2px; transform: translateY(-50%); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #667a74; }
+.password-visibility:hover { background: #eef5f1; color: #19786b; }
+.password-visibility:focus-visible { outline: 2px solid #19786b; outline-offset: -3px; }
+.password-field .password-field-error { display: block; margin: 6px 0 0; color: #b63e32; font-size: 12px; }
+.registration .password-field { margin-bottom: 15px; }
+.password-with-help > .password-field { margin-bottom: 7px; }
+.password-with-help > small { display: block; font-size: 11px; margin-bottom: 15px; }

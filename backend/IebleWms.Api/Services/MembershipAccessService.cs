@@ -11,6 +11,12 @@ public sealed class MembershipAccessService(WmsDbContext db)
         db.Users.AsNoTracking().AnyAsync(x => x.Id == userId && x.IsActive &&
             x.SystemRole == SystemRole.IebleAdministrator, cancellationToken);
 
+    // A deactivated corporate account cannot log in again. Other-company memberships remain independent.
+    public async Task<bool> CanAuthenticateAsync(Guid userId, CancellationToken token = default) =>
+        await IsIebleAdministratorAsync(userId, token) ||
+        !await db.TenantMemberships.AsNoTracking().AnyAsync(x => x.UserId == userId, token) ||
+        await db.TenantMemberships.AsNoTracking().AnyAsync(x => x.UserId == userId && x.IsActive && x.Tenant.IsActive, token);
+
     // Platform administrators get no implicit tenant membership or tenant business authority.
     public Task<TenantRole?> GetTenantRoleAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken = default) =>
         db.TenantMemberships.AsNoTracking()

@@ -54,7 +54,11 @@ public sealed class PersistentLoginTests
         if (remember) Assert.Equal(clock.Now.AddDays(30), cookie.Expires); else Assert.Null(cookie.Expires);
         using (var scope = factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>(); var membership = await db.TenantMemberships.SingleAsync(); membership.IsActive = false; await db.SaveChangesAsync();
+            var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>(); var membership = await db.TenantMemberships.SingleAsync(); membership.IsActive = false;
+            // Refresh the selected-company claim while another membership remains available.
+            // With no enabled membership the new deactivation rule revokes the session entirely.
+            db.Add(new TenantMembership { UserId = membership.UserId, Tenant = new Tenant { Code = "OTHERACTIVE", Name = "다른 활성 기업" } });
+            await db.SaveChangesAsync();
         }
         clock.Now = clock.Now.AddHours(1);
         var me = await client.GetAsync("/api/auth/me"); var refreshed = ReadCookie(me);
@@ -84,7 +88,7 @@ public sealed class PersistentLoginTests
         {
             var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>(); (await db.TenantMemberships.SingleAsync()).IsActive = false; await db.SaveChangesAsync();
         }
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/tenants/{tenant}/workspace")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync($"/api/tenants/{tenant}/workspace")).StatusCode);
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>(); (await db.Users.SingleAsync()).IsActive = false; await db.SaveChangesAsync();

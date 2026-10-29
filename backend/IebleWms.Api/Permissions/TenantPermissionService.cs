@@ -10,7 +10,12 @@ public sealed class TenantPermissionService(WmsDbContext db, Services.Membership
     public async Task<Dictionary<string, Dictionary<string, string[]>>> ReadAsync(Guid tenantId, CancellationToken token = default)
     {
         var json = await db.TenantPermissionSettings.AsNoTracking().Where(x => x.TenantId == tenantId).Select(x => x.RolesJson).SingleOrDefaultAsync(token);
-        return json is null ? PermissionCatalog.Defaults() : JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string[]>>>(json)!;
+        var result = json is null ? PermissionCatalog.Defaults() : JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string[]>>>(json)!;
+        // Existing saved grants remain unchanged; new features require an explicit master grant.
+        foreach (var role in PermissionCatalog.EditableRoles)
+            foreach (var feature in PermissionCatalog.Features)
+                result[role].TryAdd(feature.Key, []);
+        return result;
     }
 
     public async Task<Dictionary<string, string[]>> EffectiveAsync(Guid tenantId, TenantRole? role, CancellationToken token = default) => role switch

@@ -9,6 +9,9 @@ import {
 } from './remembered-email'
 import AdminTenants from './components/AdminTenants'
 import CompanyWorkspace from './components/workspace/CompanyWorkspace'
+import PasswordChangeGate from './components/PasswordChangeGate'
+import PasswordInput from './components/PasswordInput'
+import UserProfileMenu from './components/UserProfileMenu'
 import {
   normalizeBusinessNumber,
   validBusinessNumber,
@@ -108,9 +111,14 @@ function App() {
         setBusy(false)
         return
       }
+      if (values.password.length < 8) {
+        setError('비밀번호는 최소 8자 이상 입력해 주세요.')
+        setBusy(false)
+        return
+      }
       if (!validNewPassword(values.password)) {
         setError(
-          '비밀번호는 12~128자이며 영문 소문자, 숫자, 특수문자를 포함해야 합니다.',
+          '비밀번호는 8~128자이며 영문 소문자, 숫자, 특수문자를 포함해야 합니다.',
         )
         setBusy(false)
         return
@@ -173,6 +181,8 @@ function App() {
     }
   }
   const register = route === '/register'
+  if (!loading && session?.user.mustChangePassword)
+    return <PasswordChangeGate name={session.user.displayName} loginId={session.user.userName} onChanged={refresh} onLogout={logout} />
   if (
     !loading &&
     session &&
@@ -212,12 +222,7 @@ function App() {
         </a>
         <span className="header-caption">기업을 연결하는 물류의 시작</span>
         {session && (
-          <div className="account">
-            <span>{session.user.displayName}님</span>
-            <button className="text-button" disabled={busy} onClick={logout}>
-              로그아웃
-            </button>
-          </div>
+          <UserProfileMenu session={session} roleLabel={session.user.systemRole === 'IebleAdministrator' ? '아이블 관리자' : '기업 구성원'} busy={busy} onLogout={logout} />
         )}
       </header>
       {loading ? (
@@ -343,7 +348,7 @@ function App() {
                   </>
                 )}
                 <label>
-                  이메일
+                  {register ? '이메일' : '로그인 아이디 또는 이메일'}
                   <input
                     name="email"
                     value={register ? undefined : loginEmail}
@@ -352,53 +357,47 @@ function App() {
                         ? undefined
                         : (e) => setLoginEmail(e.target.value)
                     }
-                    type="email"
+                    type={register ? "email" : "text"}
                     required
                     maxLength={256}
                     autoComplete="username"
-                    placeholder="name@company.com"
+                    placeholder={register ? "name@company.com" : "직원 아이디 또는 이메일"}
                   />
                 </label>
-                <label>
-                  비밀번호
-                  <input
+                <div className={register ? 'password-with-help' : undefined}>
+                  <PasswordInput label="비밀번호" key={register ? 'register-password' : 'login-password'}
                     name="password"
                     pattern={
                       register
-                        ? '(?=.*[a-z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{12,128}'
+                        ? '(?=.*[a-z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,128}'
                         : undefined
                     }
-                    type="password"
                     required
-                    minLength={register ? 12 : undefined}
+                    minLength={register ? 8 : undefined}
                     maxLength={128}
                     autoComplete={
                       register ? 'new-password' : 'current-password'
                     }
                     placeholder={
-                      register ? '12자 이상 입력' : '비밀번호를 입력하세요'
+                      register ? '8자 이상 입력' : '비밀번호를 입력하세요'
                     }
                   />
                   {register && (
                     <small>
-                      12~128자, 영문 소문자, 숫자, 특수문자 (대문자 선택)를
+                      8~128자, 영문 소문자, 숫자, 특수문자 (대문자 선택)를
                       포함해 주세요.
                     </small>
                   )}
-                </label>
+                </div>
                 {register && (
-                  <label>
-                    비밀번호 확인
-                    <input
+                  <PasswordInput label="비밀번호 확인"
                       name="passwordConfirm"
-                      type="password"
                       required
-                      minLength={12}
+                      minLength={8}
                       maxLength={128}
                       autoComplete="new-password"
                       placeholder="비밀번호를 다시 입력하세요"
                     />
-                  </label>
                 )}
                 {register && (
                   <p className="signup-note">

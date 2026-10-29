@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Building2, ChevronRight, LogOut, RefreshCw } from 'lucide-react'
+import { Building2, ChevronRight, RefreshCw } from 'lucide-react'
 import { api, ApiError } from '../../api'
 import type { Session } from '../../api'
 import type { Workspace } from '../../types/workspace'
@@ -8,6 +8,12 @@ import WorkspaceSidebar from './WorkspaceSidebar'
 import { Dashboard, EmptyPage, PageHeading, EmptyState } from './WorkspaceUI'
 import BillingNotice from './BillingNotice'
 import PermissionSettings from './PermissionSettings'
+import CompanyManagement from './CompanyManagement'
+import OrganizationItems from './OrganizationItems'
+import OrganizationChart from './OrganizationChart'
+import UserManagement from './UserManagement'
+import { isManager } from './navigation'
+import UserProfileMenu from '../UserProfileMenu'
 import DefaultTenantGuide from '../DefaultTenantGuide'
 import './workspace.css'
 const roles: Record<string, string> = {
@@ -116,16 +122,7 @@ export default function CompanyWorkspace({
             <Building2 size={20} aria-hidden="true" />
             <span>{name}</span>
           </div>
-          <div className="wms-user">
-            <div>
-              <strong>{session.user.displayName}</strong>
-              <span>{roles[role || ''] || '기업 구성원'}</span>
-            </div>
-            <button className="wms-logout" aria-label="로그아웃" disabled={busy} onClick={onLogout}>
-              <LogOut size={17} aria-hidden="true" />
-              <span>로그아웃</span>
-            </button>
-          </div>
+          <UserProfileMenu session={session} roleLabel={roles[role || ''] || '기업 구성원'} busy={busy} onLogout={onLogout} />
         </header>
         <main className="wms-content" id="workspace-content">
           <div className="wms-breadcrumb">
@@ -191,6 +188,18 @@ export default function CompanyWorkspace({
             </section>
           ) : page?.key === 'dashboard' ? (
             <Dashboard />
+          ) : page?.key === 'org-chart' ? (
+            <OrganizationChart key={tenantId!} tenantId={tenantId!} canManage={isManager(role) && current.workspace!.permissions['organization-items']?.includes('create') === true} onNavigate={onNavigate} />
+          ) : page?.key === 'organization-items' ? (
+            <OrganizationItems key={tenantId!} tenantId={tenantId!} grants={current.workspace!.permissions['organization-items'] || []} />
+          ) : page?.key === 'company' ? (
+            <CompanyManagement key={tenantId!} tenantId={tenantId!} master={role === 'Master'}
+              canUpdate={current.workspace!.permissions.company?.includes('update') === true}
+              onSaved={name => setView(previous => previous?.workspace ? { ...previous, workspace: { ...previous.workspace, name } } : previous)} />
+          ) : page?.key === 'users' ? (
+            <UserManagement key={tenantId!} tenantId={tenantId!} currentUserId={session.user.id}
+              canCreate={isManager(role) && current.workspace!.permissions.users?.includes('create') === true && current.workspace!.permissions.users?.includes('manageUsers') === true}
+              canUpdate={isManager(role) && current.workspace!.permissions.users?.includes('update') === true && current.workspace!.permissions.users?.includes('manageUsers') === true} />
           ) : page?.key === 'permissions' ? (
             <PermissionSettings key={tenantId!} tenantId={tenantId!} />
           ) : page?.key === 'billing' ? (

@@ -79,10 +79,10 @@ export default function PermissionSettings({ tenantId }: { tenantId: string }) {
           <table className="wms-table permission-table">
             <caption>{roleLabels[role]} 기능별 권한</caption>
             <thead><tr><th scope="col">기능</th>{actions.map(a => <th key={a} scope="col">{actionLabels[a]}</th>)}</tr></thead>
-            <tbody>{settings.features.map(f => <tr key={f.key}><th scope="row">{f.label}</th>{actions.map(a => <td key={a}>{f.actions.includes(a) ? <input type="checkbox" checked={draft[role][f.key].includes(a)} disabled={busy || stale} onChange={e => toggle(f.key, a, e.target.checked)} aria-label={`${roleLabels[role]} ${f.label} ${actionLabels[a]}`} /> : <span aria-label="해당 없음">—</span>}</td>)}</tr>)}</tbody>
+            <tbody>{settings.features.map(f => <tr key={f.key}><th scope="row">{f.label}</th>{actions.map(a => <td key={a}>{f.actions.includes(a) ? <input type="checkbox" checked={draft[role][f.key].includes(a)} disabled={busy || stale || (role === 'Employee' && f.key === 'organization-items')} onChange={e => toggle(f.key, a, e.target.checked)} aria-label={`${roleLabels[role]} ${f.label} ${actionLabels[a]}`} /> : <span aria-label="해당 없음">—</span>}</td>)}</tr>)}</tbody>
           </table>
         </div>
-        <p className="permission-help">기능 권한을 켜면 메뉴·조회도 허용됩니다. 메뉴나 조회를 끄면 해당 기능의 모든 권한이 해제됩니다. 기본값은 관리자 전체 허용, 직원 업무 조회만 허용입니다.</p>
+        <p className="permission-help">기능 권한을 켜면 메뉴·조회도 허용됩니다. 메뉴나 조회를 끄면 해당 기능의 모든 권한이 해제됩니다. 기존 기능의 기본값은 관리자 전체 허용, 직원 업무 조회 허용입니다. 조직도·항목 관리는 마스터가 별도로 허용하며, 일반 직원에게는 조직도 조회만 부여할 수 있습니다.</p>
         {review && <section className="permission-review" aria-label="저장 전 변경사항 확인">
           <h2>변경사항 확인 ({changes.length}건)</h2>
           <ul>{changes.map(change => <li key={change.key}>{change.label}: {change.before ? '허용' : '차단'} → <strong>{change.after ? '허용' : '차단'}</strong></li>)}</ul>

@@ -80,8 +80,10 @@ export const workspaceMenus: WorkspaceMenu[] = [
     label: '조직관리',
     icon: 'settings',
     children: [
-      page('company', '기업 관리', '/app/settings/company', false, true),
+      page('org-chart', '조직도', '/app/settings/organization', false),
       page('users', '사용자 관리', '/app/settings/users', false, true),
+      page('organization-items', '항목 관리', '/app/settings/items', false, true),
+      page('company', '기업 관리', '/app/settings/company', false, true),
     ],
   },
   {
@@ -100,7 +102,7 @@ export const isManager = (role: string | undefined) =>
   role === 'Master' || role === 'Administrator'
 export const canViewPage = (page: WorkspacePage, role: string | undefined, permissions?: Record<string, string[]>) => {
   if (role === 'Master') return true
-  if (page.masterOnly || !role) return false
+  if (page.masterOnly || !role || (page.key === 'organization-items' && role === 'Employee')) return false
   if (permissions) return permissions[page.key]?.includes('menu') === true && permissions[page.key]?.includes('read') === true
   return !page.managerOnly || isManager(role)
 }

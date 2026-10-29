@@ -19,12 +19,14 @@ public static class PermissionCatalog
         new("movement-stats", "입출고 통계", ["menu", "read"]),
         new("stock-history", "재고 변동 이력", ["menu", "read"]),
         new("support", "문의하기", ["menu", "read"], false),
+        new("org-chart", "조직도", ["menu", "read"], false),
+        new("organization-items", "항목 관리", ["menu", "read", "create", "update", "delete"], false),
         new("company", "기업 관리", ["menu", "read", "update"], false),
         new("users", "사용자 관리", ["menu", "read", "create", "update", "delete", "manageUsers"], false)
     ];
     // Preserve existing page access; employees receive read-only business access by default.
     public static Dictionary<string, Dictionary<string, string[]>> Defaults() => EditableRoles.ToDictionary(role => role,
-        role => Features.ToDictionary(f => f.Key, f => role == "Administrator" ? f.Actions.ToArray() :
+        role => Features.ToDictionary(f => f.Key, f => f.Key is "org-chart" or "organization-items" ? [] : role == "Administrator" ? f.Actions.ToArray() :
             f.Key is "company" or "users" ? [] : new[] { "menu", "read" }));
 
     public static bool IsValid(Dictionary<string, Dictionary<string, string[]>>? roles)
@@ -40,6 +42,7 @@ public static class PermissionCatalog
                 if (feature.Key == "users" && actions.Except(["menu", "read"]).Any() && !actions.Contains("manageUsers")) return false;
             }
         }
+        if (roles["Employee"]["organization-items"].Length != 0) return false;
         return true;
     }
 }
