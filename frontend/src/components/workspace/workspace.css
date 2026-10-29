@@ -1,8 +1,14 @@
 .wms-layout {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   min-height: 100dvh;
   background: #f4f7f8;
   color: #243536;
   --wms-side-width: 248px;
+  /* Reserve the fixed sidebar once; the flex child fills the entire remainder. */
+  padding-left: var(--wms-side-width);
 }
 .wms-layout.sidebar-collapsed {
   --wms-side-width: 76px;
@@ -154,13 +160,17 @@
   justify-content: center;
 }
 .wms-main {
-  margin-left: var(--wms-side-width);
+  flex: 1 1 0%;
+  width: 100%;
+  max-width: none;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 .wms-layout .wms-header {
+  width: 100%;
+  min-width: 0;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -223,6 +233,7 @@
 .wms-content {
   padding: 25px 36px 40px;
   width: 100%;
+  max-width: none;
   flex: 1;
   min-width: 0;
 }
@@ -443,8 +454,8 @@
   }
 }
 @media (max-width: 760px) {
-  .wms-main {
-    margin-left: 76px;
+  .wms-layout {
+    padding-left: 76px;
   }
   .wms-layout .wms-header {
     padding: 0 16px;
@@ -553,10 +564,14 @@
 .permission-settings { padding: 24px; min-width: 0; }
 .permission-toolbar, .permission-roles { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .permission-toolbar { justify-content: space-between; margin: 20px 0; }
-.permission-table { min-width: 1060px; }
+.permission-table { width: 100%; min-width: 480px; table-layout: fixed; }
+.permission-table th:first-child { width: 150px; }
 .permission-table caption { text-align: left; font-weight: 600; padding: 12px 0; }
 .permission-table th, .permission-table td { white-space: nowrap; }
-.permission-table td { text-align: center; }
+.permission-table td { text-align: left; white-space: normal; }
+.permission-actions { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+.permission-option { display: flex; flex-direction: row; align-items: center; gap: 8px; margin: 0; min-width: 105px; cursor: pointer; }
+.permission-option small { display: block; margin-top: 3px; color: #667a74; font-weight: normal; }
 .permission-table input[type='checkbox'] { width: 18px; height: 18px; accent-color: #176b56; cursor: pointer; }
 .permission-table input:focus-visible { outline: 2px solid #176b56; outline-offset: 3px; }
 .permission-table input:disabled { cursor: default; }
@@ -631,3 +646,30 @@
 .org-card-empty { padding: 16px; margin: 0; font-size: 13px; color: #76867c; }
 .org-unassigned > article > header { background: #f2f5f3; }
 @media (max-width: 760px) { .org-chart-viewport { height: 65vh; min-height: 320px; } }
+
+.warehouse-table { min-width: 650px; }
+.warehouse-table td { overflow-wrap: anywhere; white-space: normal; }
+.warehouse-table small { display: block; margin-top: 5px; color: #6c7e75; }
+.warehouse-details { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 10px 16px; font-size: 13px; line-height: 1.8; }
+.warehouse-details dt { color: #6c7e75; }
+.warehouse-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.warehouse-structure { display: grid; grid-template-columns: minmax(230px, 300px) minmax(0, 1fr); gap: 24px; margin-top: 28px; }
+.warehouse-tree { border-right: 1px solid #e0e9e3; padding-right: 16px; overflow-wrap: anywhere; }
+.warehouse-tree ul { list-style: none; padding-left: 12px; border-left: 1px solid #d9e6df; }
+.warehouse-tree > ul { padding-left: 0; border: 0; }
+.warehouse-tree-row { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin: 10px 0; }
+.warehouse-tree .text-button { text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.warehouse-tree button[aria-pressed='true'] { color: #136b56; background: #e6f2eb; border-radius: 6px; }
+.warehouse-tree-row > .secondary { flex-shrink: 0; padding: 6px 10px; }
+.warehouse-locations { min-width: 0; }
+@media (max-width: 1100px) { .warehouse-structure { grid-template-columns: minmax(0, 1fr); } .warehouse-tree { border-right: 0; border-bottom: 1px solid #e0e9e3; padding-bottom: 16px; } }
+
+/* Enterprise work areas use all remaining space; compact forms and dialogs keep their own limits. */
+.wms-content > section, .wms-content > .wms-card { width: 100%; min-width: 0; max-width: none; }
+.wms-table-scroll { width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; }
+.organization-toolbar > *, .organization-filters { min-width: 0; }
+.organization-filters { flex: 1 1 0%; }
+.organization-filters > label { flex: 1 1 120px; }
+.organization-filters > label:first-child { flex-grow: 2; }
+.organization-filters input, .organization-filters select { width: 100%; max-width: none; }
+.wms-content .organization-form-grid { width: 100%; }

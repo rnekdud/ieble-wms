@@ -12,7 +12,7 @@ namespace IebleWms.Api.Controllers;
 
 [ApiController, Route("api/tenants/{tenantId:guid}"), Authorize(Policy = "TenantMember")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class OrganizationController(WmsDbContext db, CompanyService companies, EmployeeService employees, BillingAccessService billing) : ControllerBase
+public sealed class OrganizationController(WmsDbContext db, CompanyService companies, EmployeeService employees, BillingAccessService billing, MasterTransferService transfer) : ControllerBase
 {
     private Guid Actor => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -51,6 +51,16 @@ public sealed class OrganizationController(WmsDbContext db, CompanyService compa
         var positions = await db.JobPositions.AsNoTracking().Where(x => x.TenantId == tenantId).ToDictionaryAsync(x => x.Id, x => x.Name, token);
         return Ok(new { items = rows.Select(x => EmployeeView.From(x, billing, departments.GetValueOrDefault(x.DepartmentId ?? Guid.Empty), positions.GetValueOrDefault(x.PositionId ?? Guid.Empty))), total, page, pageSize,
             monthlyPerUserKrw = billing.Policy.MonthlyPerUserKrw, billMasterAccounts = billing.Policy.BillMasterAccounts, billingTerminationPolicy = "Undecided" });
+    }
+
+    [HttpGet("users/master-transfer"), Authorize(Policy = "TenantMaster")]
+    public async Task<IActionResult> TransferCandidates(Guid tenantId, CancellationToken token) => Ok(await transfer.Candidates(tenantId, Actor, token));
+
+    [HttpPost("users/master-transfer"), Authorize(Policy = "TenantMaster"), Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("password-change")]
+    public async Task<IActionResult> TransferMaster(Guid tenantId, TransferMasterRequest request, CancellationToken token)
+    {
+        await transfer.Transfer(tenantId, Actor, request, token);
+        return Ok(new { message = "마스터 위임이 완료되었습니다. 본인은 기업 관리자로 변경되었습니다." });
     }
 
     [HttpPost("users"), Authorize(Policy = "TenantAdministrator"), Authorize(Policy = "Permission:users:create")]

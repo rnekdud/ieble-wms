@@ -33,6 +33,9 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         if (await db.Users.AnyAsync(x => x.NormalizedUserName == normalizedName || x.NormalizedEmail == normalizedEmail, token)) throw Duplicate();
         await using var transaction = await db.Database.BeginTransactionAsync(token);
         await OrganizationStructureService.LockAsync(db, tenantId, token);
+        var actorRole = await db.TenantMemberships.AsNoTracking().Where(x => x.TenantId == tenantId && x.UserId == actor && x.IsActive && x.User.IsActive).Select(x => (TenantRole?)x.Role).SingleOrDefaultAsync(token);
+        if (actorRole is not (TenantRole.Master or TenantRole.Administrator) || (request.Role == "Administrator" && actorRole != TenantRole.Master))
+            throw new OrganizationException(403, "기업 관리자 지정은 기업 마스터만 할 수 있습니다.");
         await structure.ValidateAssignmentAsync(tenantId, request.DepartmentId, request.PositionId, null, null, token);
         try
         {
@@ -41,9 +44,10 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
             if (!created.Succeeded) throw created.Errors.Any(x => x.Code is "DuplicateEmail" or "DuplicateUserName") ? Duplicate() : new OrganizationException(400, "직원 정보를 확인해 주세요.");
             var assigned = await SetInitialPasswordAsync(user);
             if (!assigned.Succeeded) throw new OrganizationException(409, "직원 생성이 충돌했습니다. 목록을 다시 확인해 주세요.");
+            var tenant = await db.Tenants.SingleAsync(x => x.Id == tenantId, token);
             var membership = new TenantMembership { TenantId = tenantId, User = user, DisplayName = name,
                 Role = Enum.Parse<TenantRole>(request.Role), IsDefault = true, DepartmentId = request.DepartmentId, PositionId = request.PositionId,
-                BillingStartsAt = billing.FirstMemberChargeAt(new TenantMembership { CreatedAt = clock.GetUtcNow() }) };
+                BillingStartsAt = billing.FirstMemberChargeAt(tenant, new TenantMembership { CreatedAt = clock.GetUtcNow() }) };
             db.TenantMemberships.Add(membership);
             audit.Add(tenantId, actor, "EmployeeCreated", new { }, new { user.Id, request.Role, membership.BillingStartsAt, membership.DepartmentId, membership.PositionId }, user.Id);
             await db.SaveChangesAsync(token);
@@ -60,6 +64,8 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         var membership = await FindAsync(tenantId, userId, token);
         await structure.ValidateAssignmentAsync(tenantId, request.DepartmentId, request.PositionId, membership.DepartmentId, membership.PositionId, token);
         Protect(membership, actor, request.Role, request.IsActive);
+        if (membership.Role.ToString() != request.Role && !await db.TenantMemberships.AsNoTracking().AnyAsync(x => x.TenantId == tenantId && x.UserId == actor && x.IsActive && x.User.IsActive && x.Role == TenantRole.Master, token))
+            throw new OrganizationException(403, "시스템 권한 변경은 기업 마스터만 할 수 있습니다.");
         if (membership.Version != request.Version) throw Stale();
         if (string.IsNullOrWhiteSpace(request.Name) || request.Role is not ("Administrator" or "Employee")) throw new OrganizationException(400, "이름과 권한을 확인해 주세요.");
         var before = Snapshot(membership);
@@ -95,6 +101,7 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
     public async Task<EmployeeCredentialResult> ResetPasswordAsync(Guid tenantId, Guid actor, Guid userId, Guid version, CancellationToken token)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(token);
+        await OrganizationStructureService.LockAsync(db, tenantId, token);
         var membership = await FindAsync(tenantId, userId, token);
         if (membership.Role == TenantRole.Master || membership.User.SystemRole != SystemRole.None || userId == actor) throw new OrganizationException(403, "마스터 또는 본인의 비밀번호는 이 화면에서 초기화할 수 없습니다.");
         if (membership.Version != version) throw Stale();

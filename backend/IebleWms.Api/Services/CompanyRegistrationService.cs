@@ -47,8 +47,11 @@ public sealed class CompanyRegistrationService(WmsDbContext db, UserManager<Appl
                 ServiceStatus = TenantServiceStatus.Active,
                 BillingStatus = TenantBillingStatus.CardRequired
             };
+            billing.InitializeNewContract(tenant);
+            db.BillingChanges.Add(new BillingChange { TenantId = tenant.Id, ActorId = user.Id, ChangedAt = clock.GetUtcNow(), Action = "SubscriptionCreated",
+                AfterJson = System.Text.Json.JsonSerializer.Serialize(new { tenant.BillingPolicyVersion, tenant.TrialStartedAt, tenant.TrialEndsAt, tenant.FirstChargeAt, tenant.BillingAnchorDay, tenant.BillingTimeZone, billing.Policy.MonthlyPerUserKrw, billing.Policy.MonthlyBaseKrw, billing.Policy.IncludedUsers }) });
             db.TenantMemberships.Add(new TenantMembership { User = user, Tenant = tenant, Role = TenantRole.Master, IsDefault = true, DisplayName = request.ContactName.Trim(),
-                BillingStartsAt = billing.FirstMemberChargeAt(new TenantMembership { CreatedAt = clock.GetUtcNow() }) });
+                BillingStartsAt = billing.FirstMemberChargeAt(tenant, new TenantMembership { CreatedAt = clock.GetUtcNow() }) });
             await db.SaveChangesAsync(token);
             await transaction.CommitAsync(token);
             return new(true, false, null);

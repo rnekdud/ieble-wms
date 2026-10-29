@@ -14,6 +14,16 @@
 body {
   margin: 0;
 }
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+#root {
+  min-height: 100dvh;
+}
 button,
 input,
 select {
@@ -393,7 +403,8 @@ nav .nav-active {
 }
 .workspace-content {
   padding: 50px;
-  max-width: 1180px;
+  max-width: none;
+  min-width: 0;
   width: 100%;
 }
 .workspace-content h1 {

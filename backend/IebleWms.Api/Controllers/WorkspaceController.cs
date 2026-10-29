@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace IebleWms.Api.Controllers;
 
 [ApiController, ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class WorkspaceController(WmsDbContext db, MembershipAccessService access, IebleWms.Api.Billing.BillingAccessService billing, IebleWms.Api.Permissions.TenantPermissionService permissions) : ControllerBase
+public sealed class WorkspaceController(WmsDbContext db, MembershipAccessService access, IebleWms.Api.Billing.BillingAccessService billing, IebleWms.Api.Permissions.TenantPermissionService permissions, IebleWms.Api.Warehousing.WarehouseSetupAccess warehouseSetup) : ControllerBase
 {
     [HttpGet("api/admin/overview"), Authorize(Policy = "IebleAdministrator")]
     public async Task<IActionResult> Admin(CancellationToken token) => Ok(new
@@ -26,8 +26,10 @@ public sealed class WorkspaceController(WmsDbContext db, MembershipAccessService
         var latestChange = await db.TenantStatusChanges.AsNoTracking().Where(x => x.TenantId == tenantId)
             .OrderByDescending(x => x.ChangedAt).ThenByDescending(x => x.Id).Select(x => new { x.Reason, x.ChangedAt }).FirstOrDefaultAsync(token);
         return Ok(new { latestChange, tenant.Id, tenant.Name, tenant.BusinessRegistrationNumber,
+            tenant.BillingPolicyVersion, tenant.BillingAnchorDay, tenant.AutoBillingCanceledAt, tenant.ServiceEndsAt,
             billingStatus = tenant.BillingStatus.ToString(), billingAccess = billing.Evaluate(tenant), billingPolicy = billing.Policy, billingProvider = "TossPayments", billingProviderConfigured = false,
             canManageBilling = role == Models.TenantRole.Master,
+            warehouseSetupPreview = warehouseSetup.AllowsWithoutCard(tenant),
             permissions = await permissions.EffectiveAsync(tenantId, role, token),
             role = role.ToString(), serviceStatus = tenant.ServiceStatus.ToString() });
     }

@@ -69,3 +69,13 @@ public sealed class OrganizationItemRequest
 public sealed record OrganizationItemDeleteRequest(Guid Version);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record MemberOrganizationRequest(Guid Version, Guid? DepartmentId, Guid? PositionId);
+
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed class TransferMasterRequest
+{
+    public Guid TargetUserId { get; set; }
+    public Guid CurrentMasterVersion { get; set; }
+    public Guid TargetVersion { get; set; }
+    [Required, StringLength(128)] public string CurrentPassword { get; set; } = "";
+    [Required, StringLength(500)] public string Reason { get; set; } = "";
+}

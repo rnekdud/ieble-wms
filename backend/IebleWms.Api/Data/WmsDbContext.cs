@@ -10,6 +10,15 @@ public sealed class WmsDbContext(
     IAuditActor actor,
     TimeProvider clock) : IdentityUserContext<ApplicationUser, Guid>(options)
 {
+    public DbSet<BillingFeedback> BillingFeedbacks => Set<BillingFeedback>();
+    public DbSet<BillingReminderDismissal> BillingReminderDismissals => Set<BillingReminderDismissal>();
+    public DbSet<BillingInvoice> BillingInvoices => Set<BillingInvoice>();
+    public DbSet<BillingChange> BillingChanges => Set<BillingChange>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<WarehouseZone> WarehouseZones => Set<WarehouseZone>();
+    public DbSet<WarehouseRack> WarehouseRacks => Set<WarehouseRack>();
+    public DbSet<StorageLocation> StorageLocations => Set<StorageLocation>();
+    public DbSet<WarehouseChange> WarehouseChanges => Set<WarehouseChange>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<JobPosition> JobPositions => Set<JobPosition>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
@@ -26,6 +35,8 @@ public sealed class WmsDbContext(
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        WarehouseModel.Configure(builder);
+        BillingModel.Configure(builder);
         var user = builder.Entity<ApplicationUser>();
         user.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
         user.Property(x => x.Email).IsRequired();
@@ -88,6 +99,7 @@ public sealed class WmsDbContext(
         membership.ToTable("TenantMemberships", t => t.HasCheckConstraint("CK_Memberships_Role",
             "\"Role\" IN ('Employee', 'Administrator', 'Master')"));
         membership.HasKey(x => new { x.TenantId, x.UserId });
+        membership.HasIndex(x => x.TenantId).IsUnique().HasDatabaseName("IX_TenantMemberships_OneActiveMaster").HasFilter("\"Role\" = 'Master' AND \"IsActive\" = TRUE");
         membership.HasOne<Department>().WithMany().HasForeignKey(x => new { x.TenantId, x.DepartmentId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         membership.HasOne<JobPosition>().WithMany().HasForeignKey(x => new { x.TenantId, x.PositionId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         membership.Property(x => x.DisplayName).HasMaxLength(200);
@@ -175,15 +187,21 @@ public sealed class WmsDbContext(
 
     private void ApplyAudit()
     {
-        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange or OrganizationChange) && x.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange or OrganizationChange or WarehouseChange or BillingChange or BillingFeedback) && x.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Administrative history and bootstrap receipts are immutable.");
+        foreach (var entry in ChangeTracker.Entries<Warehouse>().Where(x => x.State == EntityState.Modified))
+            if (entry.Property(x => x.Code).IsModified) throw new InvalidOperationException("System warehouse codes are immutable.");
+        foreach (var entry in ChangeTracker.Entries<BillingInvoice>().Where(x => x.State is EntityState.Modified or EntityState.Deleted))
+            if (entry.State == EntityState.Deleted || entry.Property(x => x.AmountKrw).IsModified || entry.Property(x => x.UserCount).IsModified || entry.Property(x => x.CycleStart).IsModified || entry.Property(x => x.CycleEnd).IsModified || entry.Property(x => x.IdempotencyKey).IsModified || entry.Property(x => x.TenantId).IsModified)
+                throw new InvalidOperationException("Finalized invoice amounts and periods are immutable.");
         var now = clock.GetUtcNow();
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State is not (EntityState.Added or EntityState.Modified)) continue;
             if (entry.State == EntityState.Added)
             {
-                entry.Entity.CreatedAt = now;
+                entry.Entity.CreatedAt = entry.Entity is Tenant { BillingPolicyVersion: 2, TrialStartedAt: DateTimeOffset signedUpAt }
+                    ? signedUpAt : now;
                 entry.Entity.CreatedByUserId = actor.UserId;
             }
             else

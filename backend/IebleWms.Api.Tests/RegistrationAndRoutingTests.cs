@@ -65,7 +65,7 @@ public sealed class RegistrationAndRoutingTests
         var me = await client.GetFromJsonAsync<JsonElement>("/api/auth/me");
         Assert.Equal(tenantId.ToString(), me.GetProperty("selectedTenantId").GetString());
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/tenants/{tenantId}/workspace")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/tenants/{tenantId}/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/tenants/{tenantId}/dashboard")).StatusCode); // New signup trial needs no card.
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/overview")).StatusCode);
     }
 

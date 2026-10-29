@@ -4,6 +4,7 @@ export type Workspace = {
   businessRegistrationNumber: string | null
   role: string
   serviceStatus: string
+  billingPolicyVersion?: number
   billingStatus: string
   billingAccess: {
     state: string
@@ -22,6 +23,7 @@ export type Workspace = {
     billingDayOfMonth: number
     timeZoneId: string
   }
+  warehouseSetupPreview?: boolean
   billingProviderConfigured: boolean
   canManageBilling: boolean
   permissions: Record<string, string[]>

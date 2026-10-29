@@ -30,14 +30,14 @@ public sealed class TenantAdministrationController(WmsDbContext db, TenantAdmini
         }
         var total = await query.CountAsync(token);
         var items = await query.OrderBy(x => x.Name).ThenBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(x => new { x.Id, x.Name, x.BusinessRegistrationNumber, x.CreatedAt, x.Version, x.IsActive,
+            .Select(x => new { billingTenant = x, x.Id, x.Name, x.BusinessRegistrationNumber, x.CreatedAt, x.Version, x.IsActive,
                 serviceStatus = x.ServiceStatus.ToString(), billingStatus = x.BillingStatus.ToString(),
                 contacts = x.Memberships.Where(m => m.Role == TenantRole.Master && m.IsActive && m.User.IsActive)
                     .OrderBy(m => m.UserId).Select(m => new { name = m.User.DisplayName, m.User.Email, phone = m.User.PhoneNumber }).ToList() })
             .ToListAsync(token);
         return Ok(new { items = items.Select(x => new { x.Id, x.Name, x.BusinessRegistrationNumber, x.CreatedAt, x.Version, x.IsActive, x.serviceStatus, x.billingStatus, x.contacts,
-            billingAccess = billing.Evaluate(x.CreatedAt, Enum.Parse<TenantBillingStatus>(x.billingStatus)),
-            canReactivate = x.IsActive && billing.Evaluate(x.CreatedAt, Enum.Parse<TenantBillingStatus>(x.billingStatus)).CanAccessWms }), total, page, pageSize });
+            billingAccess = billing.EvaluateEntitlement(x.billingTenant),
+            canReactivate = x.IsActive && billing.EvaluateEntitlement(x.billingTenant).CanAccessWms }), total, page, pageSize });
     }
 
     [HttpGet("{tenantId:guid}/history")]

@@ -29,15 +29,24 @@ public static class PermissionCatalog
         role => Features.ToDictionary(f => f.Key, f => f.Key is "org-chart" or "organization-items" ? [] : role == "Administrator" ? f.Actions.ToArray() :
             f.Key is "company" or "users" ? [] : new[] { "menu", "read" }));
 
+    // User mutation endpoints also require the manager role; do not offer ineffective staff write grants.
+    public static string[] ActionsForRole(PermissionFeature feature, string role) => role == "Employee" && feature.Key == "organization-items" ? []
+        : role == "Employee" && feature.Key == "users" ? ["menu", "read"] : feature.Actions;
+    public static string[] ImplementedActions(PermissionFeature feature) => feature.Key switch {
+        "warehouses" or "users" => feature.Actions.Where(x => x != "delete").ToArray(),
+        "company" or "organization-items" or "org-chart" => feature.Actions,
+        _ => []
+    };
+
     public static bool IsValid(Dictionary<string, Dictionary<string, string[]>>? roles)
     {
         if (roles is null || roles.Count != EditableRoles.Length || EditableRoles.Any(r => !roles.ContainsKey(r))) return false;
-        foreach (var permissions in roles.Values)
+        foreach (var (role, permissions) in roles)
         {
             if (permissions is null || permissions.Count != Features.Length) return false;
             foreach (var feature in Features)
             {
-                if (!permissions.TryGetValue(feature.Key, out var actions) || actions is null || actions.Distinct().Count() != actions.Length || actions.Except(feature.Actions).Any()) return false;
+                if (!permissions.TryGetValue(feature.Key, out var actions) || actions is null || actions.Distinct().Count() != actions.Length || actions.Except(ActionsForRole(feature, role)).Any()) return false;
                 if (actions.Length > 0 && (!actions.Contains("menu") || !actions.Contains("read"))) return false;
                 if (feature.Key == "users" && actions.Except(["menu", "read"]).Any() && !actions.Contains("manageUsers")) return false;
             }

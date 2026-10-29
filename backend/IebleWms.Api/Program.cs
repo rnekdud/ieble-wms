@@ -32,6 +32,7 @@ builder.Services.AddOptions<IebleWms.Api.Billing.BillingPolicyOptions>()
     .Validate(policy => { try { TimeZoneInfo.FindSystemTimeZoneById(policy.TimeZoneId); return true; } catch { return false; } }, "Billing policy time zone must be valid.")
     .ValidateOnStart();
 builder.Services.AddScoped<IebleWms.Api.Billing.BillingAccessService>();
+builder.Services.AddScoped<IebleWms.Api.Billing.SubscriptionService>();
 builder.Services.Configure<IebleWms.Api.Billing.TossPaymentsOptions>(builder.Configuration.GetSection(IebleWms.Api.Billing.TossPaymentsOptions.SectionName));
 
 builder.Services.AddScoped<Npgsql.NpgsqlConnection>(_ =>

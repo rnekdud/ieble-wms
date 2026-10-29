@@ -17,6 +17,16 @@ public sealed class Tenant : AuditableEntity
     public string? ContactPhone { get; set; }
     public TenantServiceStatus ServiceStatus { get; set; } = TenantServiceStatus.Active;
     public TenantBillingStatus BillingStatus { get; set; } = TenantBillingStatus.CardRequired;
+    // Version 1 retains the existing calendar-month contract. Only new signups use version 2.
+    public int BillingPolicyVersion { get; set; } = 1;
+    public DateTimeOffset? TrialStartedAt { get; set; }
+    public DateTimeOffset? TrialEndsAt { get; set; }
+    public DateTimeOffset? FirstChargeAt { get; set; }
+    public int? BillingAnchorDay { get; set; }
+    public string BillingTimeZone { get; set; } = "Asia/Seoul";
+    public DateTimeOffset? PaidThrough { get; set; }
+    public DateTimeOffset? AutoBillingCanceledAt { get; set; }
+    public DateTimeOffset? ServiceEndsAt { get; set; }
     public bool IsActive { get; set; } = true;
     public ICollection<TenantMembership> Memberships { get; set; } = new List<TenantMembership>();
 }

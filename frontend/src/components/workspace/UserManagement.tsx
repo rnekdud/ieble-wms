@@ -1,5 +1,5 @@
 import { formValues } from '../../form-values'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from '../../api'
 import type {
@@ -9,6 +9,8 @@ import type {
 } from '../../types/organization'
 import type { OrganizationOptions } from '../../types/organization-structure'
 import { PageHeading } from './WorkspaceUI'
+import MasterTransferDialog from './MasterTransferDialog'
+import { notifyAccessChanged } from '../../access-events'
 import OrganizationDialog from './OrganizationDialog'
 
 const roles: Record<string, string> = {
@@ -21,11 +23,15 @@ export default function UserManagement({
   currentUserId,
   canCreate,
   canUpdate,
+  isMaster,
+  onAccessChanged,
 }: {
   tenantId: string
   currentUserId: string
   canCreate: boolean
   canUpdate: boolean
+  isMaster: boolean
+  onAccessChanged: () => Promise<unknown>
 }) {
   const [filters, setFilters] = useState({
     search: '',
@@ -46,6 +52,9 @@ export default function UserManagement({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [transferring, setTransferring] = useState(false)
+  const saving = useRef(false)
+  const [pending, setPending] = useState<{ values: Record<string, string>; assignment: { departmentId: string | null; positionId: string | null }; active: boolean; selectedRole: string; confirmation: string } | null>(null)
   const endpoint = `/api/tenants/${tenantId}/users`
   const query = new URLSearchParams({
     ...filters,
@@ -99,9 +108,9 @@ export default function UserManagement({
     setNotice('')
     setEditing(value)
   }
-  async function save(event: FormEvent<HTMLFormElement>) {
+  function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!editing) return
+    if (!editing || busy || pending) return
     const values = formValues(event.currentTarget)
     if (editing !== 'create' && editing.role === 'Master')
       values.name = editing.name
@@ -124,8 +133,13 @@ export default function UserManagement({
         ? `${values.name.trim()}님을 ${roles[selectedRole]}로 등록하시겠습니까? 첫 로그인 시 비밀번호 변경이 필요합니다.`
         : editing.membershipIsActive && !active
           ? `${values.name.trim()}님을 비활성화하시겠습니까? 해당 기업의 로그인·API 접근이 차단됩니다. 과거 이력은 유지되며 과금 종료일은 변경하지 않습니다.`
-          : `${values.name.trim()}님의 정보를 저장하시겠습니까? 권한: ${roles[selectedRole]}, 소속 상태: ${active ? '활성' : '비활성'}`
-    if (!window.confirm(confirmation)) return
+          : `${values.name.trim()}님의 정보를 저장하시겠습니까? 시스템 권한: ${roles[editing.role]} → ${roles[selectedRole]}, 소속 상태: ${active ? '활성' : '비활성'}`
+    setPending({ values, assignment, active, selectedRole, confirmation })
+  }
+  async function commitSave() {
+    if (!pending || !editing || saving.current) return
+    saving.current = true
+    const { values, assignment, active, selectedRole } = pending
     setBusy(true)
     setError('')
     setNotice('')
@@ -158,10 +172,14 @@ export default function UserManagement({
             : '사용자 정보를 저장했습니다.',
         )
       }
+      setPending(null)
       setRevision((x) => x + 1)
+      notifyAccessChanged()
     } catch (e) {
+      setPending(null)
       setError(e instanceof Error ? e.message : '저장하지 못했습니다.')
     } finally {
+      saving.current = false
       setBusy(false)
     }
   }
@@ -196,6 +214,8 @@ export default function UserManagement({
         title="사용자 관리"
         description="소속 직원의 계정과 권한, 활성 상태를 관리하세요."
       />
+      {isMaster && <div className="organization-toolbar"><p className="organization-help">기업 관리자는 시스템 접근 권한입니다. 부서·직급과 별개로 여러 명을 지정할 수 있습니다.</p><button className="secondary" disabled={busy} onClick={() => setTransferring(true)}>마스터 위임</button></div>}
+      {transferring && isMaster && <MasterTransferDialog tenantId={tenantId} onClose={() => setTransferring(false)} onTransferred={async () => { setNotice('마스터 위임이 완료되었습니다.'); setRevision(x => x + 1); await onAccessChanged() }} />}
       <section className="wms-card organization-card">
         {!editing && error && (
           <div className="alert error" role="alert">
@@ -295,7 +315,7 @@ export default function UserManagement({
                       <th>상태</th>
                       <th>등록일</th>
                       <th>최근 로그인</th>
-                      <th>과금 시작월</th>
+                      <th>과금 시작일 (서울)</th>
                       <th>관리</th>
                     </tr>
                   </thead>
@@ -340,7 +360,7 @@ export default function UserManagement({
                                 )
                               : '미수집'}
                           </td>
-                          <td>{user.billingStartMonth}</td>
+                          <td>{new Date(user.billingStartsAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}</td>
                           <td>
                             {user.role === 'Master' ? (
                               <>
@@ -414,7 +434,7 @@ export default function UserManagement({
               </div>
               <p className="organization-help">
                 사용자당 월 {data.monthlyPerUserKrw.toLocaleString('ko-KR')}원 ·
-                기업 마스터 포함. 직원 등록 월은 무료이며 다음 달부터 과금
+                기업 마스터 포함. 직원 등록 월은 무료이며 다음 달부터 도래하는 기업 정기결제일부터 과금
                 대상입니다. 비활성화에 따른 과금 종료 규칙은 미정이며 실제
                 결제·청구는 실행하지 않습니다.
               </p>
@@ -434,7 +454,8 @@ export default function UserManagement({
           title={editing === 'create' ? '직원 등록' : '사용자 정보 수정'}
           busy={busy}
           onClose={() => {
-            setEditing(null)
+            if (pending) setPending(null)
+            else setEditing(null)
             setError('')
           }}
         >
@@ -443,7 +464,8 @@ export default function UserManagement({
               {error}
             </div>
           )}
-          <form onSubmit={save}>
+          {pending && <section role="alertdialog" aria-label="사용자 변경 확인"><p>{pending.confirmation}</p><button type="button" className="secondary" disabled={busy} onClick={() => setPending(null)}>취소</button>{' '}<button type="button" className="primary" disabled={busy} onClick={commitSave}>확인</button></section>}
+          <form onSubmit={save} hidden={!!pending}>
             <fieldset disabled={busy}>
               <label>
                 직원 이름
@@ -495,7 +517,7 @@ export default function UserManagement({
                     editing === 'create' ? 'Employee' : editing.role
                   }
                   disabled={
-                    editing !== 'create' && editing.userId === currentUserId
+                    !isMaster || (editing !== 'create' && editing.userId === currentUserId)
                   }
                 >
                   {editing !== 'create' && editing.role === 'Master' && (

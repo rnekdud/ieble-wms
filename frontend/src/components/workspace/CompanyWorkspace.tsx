@@ -6,12 +6,14 @@ import type { Workspace } from '../../types/workspace'
 import { findWorkspacePage, canViewPage } from './navigation'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import { Dashboard, EmptyPage, PageHeading, EmptyState } from './WorkspaceUI'
+import { BillingReminder } from './SubscriptionPanel'
 import BillingNotice from './BillingNotice'
 import PermissionSettings from './PermissionSettings'
 import CompanyManagement from './CompanyManagement'
 import OrganizationItems from './OrganizationItems'
 import OrganizationChart from './OrganizationChart'
 import UserManagement from './UserManagement'
+import WarehouseManagement from './WarehouseManagement'
 import { isManager } from './navigation'
 import UserProfileMenu from '../UserProfileMenu'
 import DefaultTenantGuide from '../DefaultTenantGuide'
@@ -69,7 +71,7 @@ export default function CompanyWorkspace({
       if (!page) return { key, workspace, status: 'missing' }
       if (!canViewPage(page, workspace.role, workspace.permissions))
         return { key, workspace, status: 'forbidden' }
-      if (page.business && !workspace.billingAccess.canAccessWms)
+      if (page.business && !workspace.billingAccess.canAccessWms && !(page.key === 'warehouses' && workspace.warehouseSetupPreview === true))
         return { key, workspace, status: 'blocked' }
       await api(`/api/tenants/${tenantId}/pages/${page.key}`)
       return { key, workspace, status: 'ready' }
@@ -97,6 +99,30 @@ export default function CompanyWorkspace({
       live = false
     }
   }, [tenantId, page, key, onExpired])
+  // Revalidate menus for other active sessions without trusting cached role claims.
+  useEffect(() => {
+    if (!tenantId || !current?.workspace) return
+    let live = true, checking = false
+    const signature = (w: Workspace) => JSON.stringify([w.role, w.permissions, w.billingAccess, w.serviceStatus, w.warehouseSetupPreview])
+    const original = signature(current.workspace)
+    const check = async () => {
+      if (!live || checking || document.visibilityState === 'hidden') return
+      checking = true
+      try {
+        const latest = await api<Workspace>(`/api/tenants/${tenantId}/workspace`)
+        if (live && signature(latest) !== original) { setRevision(x => x + 1); await onResolved() }
+      } catch (e) {
+        if (live && e instanceof ApiError && e.status === 401) onExpired()
+        else if (live && e instanceof ApiError && e.status === 403) { setRevision(x => x + 1); await onResolved().catch(() => {}) }
+      } finally { checking = false }
+    }
+    const timer = window.setInterval(() => { void check() }, 2000)
+    const wake = () => { void check() }
+    window.addEventListener('focus', wake); window.addEventListener('wms-access-changed', wake); document.addEventListener('visibilitychange', wake)
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('wms-access') : null
+    if (channel) channel.onmessage = wake
+    return () => { live = false; clearInterval(timer); window.removeEventListener('focus', wake); window.removeEventListener('wms-access-changed', wake); document.removeEventListener('visibilitychange', wake); channel?.close() }
+  }, [tenantId, current?.workspace, onResolved, onExpired])
   const refresh = () => setRevision((x) => x + 1)
   const name = current?.workspace?.name || membership?.name || '소속 기업 확인'
   return (
@@ -124,6 +150,7 @@ export default function CompanyWorkspace({
           </div>
           <UserProfileMenu session={session} roleLabel={roles[role || ''] || '기업 구성원'} busy={busy} onLogout={onLogout} />
         </header>
+        {current?.workspace?.canManageBilling && <BillingReminder key={tenantId} tenantId={tenantId!} onCard={() => onNavigate('/app/master/billing')} />}
         <main className="wms-content" id="workspace-content">
           <div className="wms-breadcrumb">
             <span>워크스페이스</span>
@@ -188,6 +215,11 @@ export default function CompanyWorkspace({
             </section>
           ) : page?.key === 'dashboard' ? (
             <Dashboard />
+          ) : page?.key === 'warehouses' ? (
+            <>
+              {current.workspace!.warehouseSetupPreview && <div className="alert" role="status">개발 환경의 창고 설정 검증 모드입니다. 카드 등록·결제 상태는 변경되지 않습니다.</div>}
+              <WarehouseManagement key={tenantId!} tenantId={tenantId!} grants={current.workspace!.permissions.warehouses || []} />
+            </>
           ) : page?.key === 'org-chart' ? (
             <OrganizationChart key={tenantId!} tenantId={tenantId!} canManage={isManager(role) && current.workspace!.permissions['organization-items']?.includes('create') === true} onNavigate={onNavigate} />
           ) : page?.key === 'organization-items' ? (
@@ -197,7 +229,7 @@ export default function CompanyWorkspace({
               canUpdate={current.workspace!.permissions.company?.includes('update') === true}
               onSaved={name => setView(previous => previous?.workspace ? { ...previous, workspace: { ...previous.workspace, name } } : previous)} />
           ) : page?.key === 'users' ? (
-            <UserManagement key={tenantId!} tenantId={tenantId!} currentUserId={session.user.id}
+            <UserManagement isMaster={role === 'Master'} onAccessChanged={async () => { await onResolved(); refresh() }} key={tenantId!} tenantId={tenantId!} currentUserId={session.user.id}
               canCreate={isManager(role) && current.workspace!.permissions.users?.includes('create') === true && current.workspace!.permissions.users?.includes('manageUsers') === true}
               canUpdate={isManager(role) && current.workspace!.permissions.users?.includes('update') === true && current.workspace!.permissions.users?.includes('manageUsers') === true} />
           ) : page?.key === 'permissions' ? (

@@ -345,8 +345,9 @@ public sealed class OrganizationTests
         using (var scope = factory.Services.CreateScope())
         {
             var service = scope.ServiceProvider.GetRequiredService<EmployeeService>();
-            // Invalid audit actor injects a relational FK failure after Identity created the account.
-            await Assert.ThrowsAsync<DbUpdateException>(() => service.CreateAsync(f.TenantId, Guid.NewGuid(), new IebleWms.Api.Contracts.CreateEmployeeRequest {
+            // Inject a database audit failure after Identity creation, with a valid authorized actor.
+            await scope.ServiceProvider.GetRequiredService<WmsDbContext>().Database.ExecuteSqlRawAsync("CREATE TRIGGER test_fail_organization_audit BEFORE INSERT ON OrganizationChanges BEGIN SELECT RAISE(ABORT, 'Simulated audit failure'); END;");
+            await Assert.ThrowsAsync<DbUpdateException>(() => service.CreateAsync(f.TenantId, f.Master, new IebleWms.Api.Contracts.CreateEmployeeRequest {
                 Name = "롤백 검증", LoginId = "rollback_staff", Email = "rollback@org.test", Role = "Employee"
             }, default));
         }

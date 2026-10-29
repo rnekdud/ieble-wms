@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IebleWms.Api.Permissions;
 
-public sealed class TenantPermissionService(WmsDbContext db, Services.MembershipAccessService membership, Billing.BillingAccessService billing)
+public sealed class TenantPermissionService(WmsDbContext db, Services.MembershipAccessService membership, Billing.BillingAccessService billing, Warehousing.WarehouseSetupAccess warehouseSetup)
 {
     public async Task<Dictionary<string, Dictionary<string, string[]>>> ReadAsync(Guid tenantId, CancellationToken token = default)
     {
@@ -14,7 +14,10 @@ public sealed class TenantPermissionService(WmsDbContext db, Services.Membership
         // Existing saved grants remain unchanged; new features require an explicit master grant.
         foreach (var role in PermissionCatalog.EditableRoles)
             foreach (var feature in PermissionCatalog.Features)
+            {
                 result[role].TryAdd(feature.Key, []);
+                result[role][feature.Key] = result[role][feature.Key].Intersect(PermissionCatalog.ActionsForRole(feature, role)).ToArray();
+            }
         return result;
     }
 
@@ -37,8 +40,8 @@ public sealed class TenantPermissionService(WmsDbContext db, Services.Membership
         if (feature.Business)
         {
             var tenant = await db.Tenants.AsNoTracking().SingleAsync(x => x.Id == tenantId, token);
-            // Same gate as the existing ActiveTenant policy, including suspension/card/free-month rules.
-            return billing.Evaluate(tenant).CanAccessWms;
+            // Preserve the billing gate; only explicitly enabled development warehouse setup may bypass missing-card status.
+            return billing.Evaluate(tenant).CanAccessWms || (featureKey == "warehouses" && warehouseSetup.AllowsWithoutCard(tenant));
         }
         return true;
     }

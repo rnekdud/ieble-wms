@@ -23,7 +23,7 @@ public sealed class TenantAdministrationService(WmsDbContext db, MembershipAcces
             (TenantServiceStatus.Suspended, "reactivate") => TenantServiceStatus.Active,
             _ => null
         };
-        if (next == TenantServiceStatus.Active && !billing.Evaluate(tenant.CreatedAt, tenant.BillingStatus).CanAccessWms) return new(409, "카드 등록과 무료 이용 기간 또는 결제 완료가 확인되어야 재활성화할 수 있습니다.");
+        if (next == TenantServiceStatus.Active && !billing.EvaluateEntitlement(tenant).CanAccessWms) return new(409, "카드 등록과 무료 이용 기간 또는 결제 완료가 확인되어야 재활성화할 수 있습니다.");
         if (next is null) return new(409, "현재 기업 상태에서는 요청한 변경을 할 수 없습니다.");
         db.TenantStatusChanges.Add(new TenantStatusChange { TenantId = tenant.Id, FromStatus = tenant.ServiceStatus, ToStatus = next.Value, ChangedByUserId = actorId, ChangedAt = clock.GetUtcNow(), Reason = reason.Trim() });
         tenant.ServiceStatus = next.Value;

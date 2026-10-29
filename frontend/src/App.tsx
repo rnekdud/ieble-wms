@@ -7,6 +7,7 @@ import {
   saveRememberedEmail,
   clearRememberedEmail,
 } from './remembered-email'
+import BillingFeedbackAdmin from './components/BillingFeedbackAdmin'
 import AdminTenants from './components/AdminTenants'
 import CompanyWorkspace from './components/workspace/CompanyWorkspace'
 import PasswordChangeGate from './components/PasswordChangeGate'
@@ -505,7 +506,7 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <AdminTenants />
+                <><AdminTenants /><BillingFeedbackAdmin /></>
               )
             ) : (
               <div className="panel">

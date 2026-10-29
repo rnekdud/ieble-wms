@@ -129,14 +129,14 @@ public sealed class TenantPermissionTests
         foreach (var feature in PermissionCatalog.Features)
         {
             settings.Roles["Administrator"][feature.Key] = [];
-            settings.Roles["Employee"][feature.Key] = feature.Key == "organization-items" ? [] : feature.Actions.ToArray();
+            settings.Roles["Employee"][feature.Key] = PermissionCatalog.ActionsForRole(feature, "Employee").ToArray();
         }
         Assert.Equal(HttpStatusCode.OK, (await Save(client, f.TenantId, settings)).StatusCode);
         foreach (var feature in PermissionCatalog.Features)
             foreach (var action in feature.Actions)
             {
                 Assert.False(await Allowed(factory, f.AdministratorId, f.TenantId, feature.Key, action));
-                Assert.Equal(feature.Key != "organization-items", await Allowed(factory, f.EmployeeId, f.TenantId, feature.Key, action));
+                Assert.Equal(PermissionCatalog.ActionsForRole(feature, "Employee").Contains(action), await Allowed(factory, f.EmployeeId, f.TenantId, feature.Key, action));
                 Assert.True(await Allowed(factory, f.MasterId, f.TenantId, feature.Key, action));
             }
         Assert.False(await Allowed(factory, f.MasterId, f.ForeignId, "products", "read"));

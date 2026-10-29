@@ -21,6 +21,9 @@ public static class AuthConfiguration
         services.AddHttpContextAccessor();
         services.AddScoped<IAuditActor, HttpAuditActor>();
         services.AddScoped<CompanyRegistrationService>();
+        services.AddScoped<IebleWms.Api.Organization.MasterTransferService>();
+        services.AddScoped<IebleWms.Api.Warehousing.WarehouseService>();
+        services.AddScoped<IebleWms.Api.Warehousing.WarehouseSetupAccess>();
         services.AddScoped<TenantPermissionService>();
         services.AddScoped<IebleWms.Api.Organization.OrganizationAudit>();
         services.AddScoped<IebleWms.Api.Organization.CompanyService>();

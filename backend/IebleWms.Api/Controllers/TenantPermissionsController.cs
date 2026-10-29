@@ -20,7 +20,9 @@ public sealed class TenantPermissionsController(WmsDbContext db, TenantPermissio
     {
         var row = await db.TenantPermissionSettings.AsNoTracking().SingleOrDefaultAsync(x => x.TenantId == tenantId, token);
         return Ok(new { version = row?.Version ?? Guid.Empty, roles = await permissions.ReadAsync(tenantId, token),
-            defaults = PermissionCatalog.Defaults(), features = PermissionCatalog.Features, row?.UpdatedAt });
+            defaults = PermissionCatalog.Defaults(), features = PermissionCatalog.Features.Select(f => new { f.Key, f.Label, f.Actions,
+                roleActions = PermissionCatalog.EditableRoles.ToDictionary(r => r, r => PermissionCatalog.ActionsForRole(f, r)),
+                implementedActions = PermissionCatalog.ImplementedActions(f) }), row?.UpdatedAt });
     }
 
     [HttpPost]

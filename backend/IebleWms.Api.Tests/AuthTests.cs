@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -50,6 +51,9 @@ public sealed class AuthTests
         Assert.Equal("1234567890", tenant.BusinessRegistrationNumber);
         Assert.Equal(TenantServiceStatus.Active, tenant.ServiceStatus);
         Assert.Equal(TenantBillingStatus.CardRequired, tenant.BillingStatus);
+        Assert.Equal(2, tenant.BillingPolicyVersion);
+        Assert.Equal(tenant.CreatedAt, tenant.TrialStartedAt);
+        Assert.Equal(tenant.TrialEndsAt, tenant.FirstChargeAt);
         Assert.Equal("010-1234-5678", user.PhoneNumber);
         Assert.Equal("담당자", tenant.ContactName); Assert.Equal("010-1234-5678", tenant.ContactPhone);
         Assert.False(user.MustChangePassword);
@@ -206,7 +210,7 @@ public sealed class AuthTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>();
         var membership = await db.TenantMemberships.Include(x => x.User).Include(x => x.Tenant).SingleAsync();
-        membership.Role = role; await db.SaveChangesAsync();
+        membership.Role = role; membership.Tenant.ServiceStatus = TenantServiceStatus.Suspended; await db.SaveChangesAsync();
         var principal = await scope.ServiceProvider.GetRequiredService<IUserClaimsPrincipalFactory<ApplicationUser>>().CreateAsync(membership.User);
         ((System.Security.Claims.ClaimsIdentity)principal.Identity!).AddClaim(new System.Security.Claims.Claim(IebleWms.Api.Auth.AuthConfiguration.TenantClaim, membership.TenantId.ToString()));
         var http = new Microsoft.AspNetCore.Http.DefaultHttpContext { User = principal };
@@ -249,12 +253,15 @@ public sealed class AuthTests
     }
 }
 
-internal sealed class AuthFactory(bool failMembership = false, bool production = false, bool failBootstrap = false, bool staleStatusWrite = false, TimeProvider? clock = null, bool resetTokens = false) : WebApplicationFactory<Program>
+internal sealed class AuthFactory(bool failMembership = false, bool production = false, bool failBootstrap = false, bool staleStatusWrite = false, TimeProvider? clock = null, bool resetTokens = false, bool warehouseSetup = false) : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection connection = new("Data Source=:memory:");
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(production ? "Production" : "Development");
+        builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?> {
+            ["DevelopmentFeatures:AllowWarehouseSetupWithoutCard"] = warehouseSetup.ToString()
+        }));
         builder.ConfigureServices(services =>
         {
             connection.Open();
