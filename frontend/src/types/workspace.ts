@@ -24,5 +24,6 @@ export type Workspace = {
   }
   billingProviderConfigured: boolean
   canManageBilling: boolean
+  permissions: Record<string, string[]>
   latestChange: { reason: string; changedAt: string } | null
 }

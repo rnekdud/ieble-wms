@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
   MessagesSquare,
   Settings2,
+  Shield,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
@@ -28,15 +29,18 @@ const icons: Record<string, LucideIcon> = {
   reports: ChartNoAxesCombined,
   support: MessagesSquare,
   settings: Settings2,
+  shield: Shield,
 }
 export default function WorkspaceSidebar({
   path,
   role,
+  permissions,
   collapsed,
   onToggle,
   onNavigate,
 }: {
   path: string
+  permissions: Record<string, string[]>
   role: string | undefined
   collapsed: boolean
   onToggle: () => void
@@ -93,9 +97,9 @@ export default function WorkspaceSidebar({
       <nav aria-label="WMS 메뉴">
         {workspaceMenus.map((menu) => {
           if (menu.page)
-            return canViewPage(menu.page, role) ? link(menu.page) : null
+            return canViewPage(menu.page, role, permissions) ? link(menu.page) : null
           const children = menu.children!.filter((page) =>
-            canViewPage(page, role),
+            canViewPage(page, role, permissions),
           )
           if (!children.length) return null
           const current = children.some((page) => path === page.path)

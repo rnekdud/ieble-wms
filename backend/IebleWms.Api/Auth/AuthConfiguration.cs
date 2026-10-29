@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using IebleWms.Api.Permissions;
 using System.Threading.RateLimiting;
 using IebleWms.Api.Data;
 using IebleWms.Api.Models;
@@ -20,6 +21,7 @@ public static class AuthConfiguration
         services.AddHttpContextAccessor();
         services.AddScoped<IAuditActor, HttpAuditActor>();
         services.AddScoped<CompanyRegistrationService>();
+        services.AddScoped<TenantPermissionService>();
         services.AddScoped<TenantSessionService>();
         services.AddScoped<IebleWms.Api.Administration.BootstrapAdminService>();
         services.AddScoped<IebleWms.Api.Administration.TenantAdministrationService>();
@@ -67,6 +69,11 @@ public static class AuthConfiguration
             options.AddPolicy("IebleAdministrator", policy => policy.RequireAuthenticatedUser().AddRequirements(new WmsAccessRequirement("platform")));
             options.AddPolicy("TenantMember", policy => policy.RequireAuthenticatedUser().AddRequirements(new WmsAccessRequirement("member")));
             options.AddPolicy("TenantAdministrator", policy => policy.RequireAuthenticatedUser().AddRequirements(new WmsAccessRequirement("manager")));
+            options.AddPolicy("TenantMaster", policy => policy.RequireAuthenticatedUser().AddRequirements(new WmsAccessRequirement("master")));
+            foreach (var feature in PermissionCatalog.Features)
+                foreach (var action in feature.Actions)
+                    options.AddPolicy($"Permission:{feature.Key}:{action}", policy => policy.RequireAuthenticatedUser()
+                        .AddRequirements(new WmsAccessRequirement($"permission:{feature.Key}:{action}")));
             options.AddPolicy("ActiveTenant", policy => policy.RequireAuthenticatedUser().AddRequirements(new WmsAccessRequirement("active")));
         });
         services.AddRateLimiter(options =>
@@ -93,7 +100,7 @@ internal sealed class HttpAuditActor(IHttpContextAccessor accessor) : IAuditActo
 
 public sealed record WmsAccessRequirement(string Scope) : IAuthorizationRequirement;
 
-internal sealed class WmsAuthorizationHandler(WmsDbContext db, MembershipAccessService access, IHttpContextAccessor accessor, IebleWms.Api.Billing.BillingAccessService billing)
+internal sealed class WmsAuthorizationHandler(WmsDbContext db, MembershipAccessService access, IHttpContextAccessor accessor, IebleWms.Api.Billing.BillingAccessService billing, TenantPermissionService permissions)
     : AuthorizationHandler<WmsAccessRequirement>
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, WmsAccessRequirement requirement)
@@ -109,6 +116,13 @@ internal sealed class WmsAuthorizationHandler(WmsDbContext db, MembershipAccessS
             !Guid.TryParse(context.User.FindFirstValue(AuthConfiguration.TenantClaim), out var selected) || selected != tenantId) return;
         var role = await access.GetTenantRoleAsync(userId, tenantId);
         if (role is null) return;
+        if (requirement.Scope == "master" && role != TenantRole.Master) return;
+        if (requirement.Scope.StartsWith("permission:", StringComparison.Ordinal))
+        {
+            var parts = requirement.Scope.Split(':');
+            if (parts.Length == 3 && await permissions.AllowsAsync(userId, tenantId, parts[1], parts[2])) context.Succeed(requirement);
+            return;
+        }
         if (requirement.Scope == "manager" && role is not (TenantRole.Master or TenantRole.Administrator)) return;
         if (requirement.Scope == "active")
         {

@@ -3,6 +3,7 @@ export type WorkspacePage = {
   label: string
   path: string
   managerOnly?: boolean
+  masterOnly?: boolean
   business: boolean
 }
 export type WorkspaceMenu = {
@@ -76,18 +77,19 @@ export const workspaceMenus: WorkspaceMenu[] = [
     page: page('support', '문의하기', '/app/support', false),
   },
   {
-    label: '환경설정',
+    label: '조직관리',
     icon: 'settings',
     children: [
-      page('company', '기업 정보 관리', '/app/settings/company', false, true),
-      page('users', '사용자 및 권한 관리', '/app/settings/users', false, true),
-      page(
-        'billing',
-        '요금제 및 결제 관리',
-        '/app/settings/billing',
-        false,
-        true,
-      ),
+      page('company', '기업 관리', '/app/settings/company', false, true),
+      page('users', '사용자 관리', '/app/settings/users', false, true),
+    ],
+  },
+  {
+    label: '마스터 관리',
+    icon: 'shield',
+    children: [
+      { ...page('billing', '요금제 및 결제 관리', '/app/master/billing', false), masterOnly: true },
+      { ...page('permissions', '권한 설정', '/app/master/permissions', false), masterOnly: true },
     ],
   },
 ]
@@ -96,7 +98,11 @@ export const workspacePages = workspaceMenus.flatMap((menu) =>
 )
 export const isManager = (role: string | undefined) =>
   role === 'Master' || role === 'Administrator'
-export const canViewPage = (page: WorkspacePage, role: string | undefined) =>
-  !page.managerOnly || isManager(role)
+export const canViewPage = (page: WorkspacePage, role: string | undefined, permissions?: Record<string, string[]>) => {
+  if (role === 'Master') return true
+  if (page.masterOnly || !role) return false
+  if (permissions) return permissions[page.key]?.includes('menu') === true && permissions[page.key]?.includes('read') === true
+  return !page.managerOnly || isManager(role)
+}
 export const findWorkspacePage = (path: string) =>
   workspacePages.find((page) => page.path === path)

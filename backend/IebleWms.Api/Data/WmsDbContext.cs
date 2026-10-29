@@ -16,6 +16,9 @@ public sealed class WmsDbContext(
     public DbSet<TenantStatusChange> TenantStatusChanges => Set<TenantStatusChange>();
     public DbSet<AdministratorBootstrap> AdministratorBootstraps => Set<AdministratorBootstrap>();
 
+    public DbSet<TenantPermissionSettings> TenantPermissionSettings => Set<TenantPermissionSettings>();
+    public DbSet<TenantPermissionChange> TenantPermissionChanges => Set<TenantPermissionChange>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -82,6 +85,20 @@ public sealed class WmsDbContext(
         bootstrap.Property(x => x.Id).ValueGeneratedNever();
         bootstrap.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
 
+        var permissions = builder.Entity<TenantPermissionSettings>();
+        permissions.HasKey(x => x.TenantId);
+        permissions.Property(x => x.RolesJson).IsRequired();
+        permissions.Property(x => x.Version).IsConcurrencyToken();
+        permissions.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        permissions.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UpdatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        var permissionHistory = builder.Entity<TenantPermissionChange>();
+        permissionHistory.HasKey(x => x.Id);
+        permissionHistory.Property(x => x.BeforeJson).IsRequired();
+        permissionHistory.Property(x => x.AfterJson).IsRequired();
+        permissionHistory.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        permissionHistory.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ChangedByUserId).OnDelete(DeleteBehavior.Restrict);
+        permissionHistory.HasIndex(x => new { x.TenantId, x.Id });
+
         ConfigureAudit<ApplicationUser>(builder);
         ConfigureAudit<Tenant>(builder);
         ConfigureAudit<TenantMembership>(builder);
@@ -112,7 +129,7 @@ public sealed class WmsDbContext(
 
     private void ApplyAudit()
     {
-        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap) && x.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange) && x.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Administrative history and bootstrap receipts are immutable.");
         var now = clock.GetUtcNow();
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())

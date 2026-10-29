@@ -49,7 +49,9 @@ function App() {
         : '/login'
       : ['/', '/login', '/register'].includes(path)
         ? home(session)
-        : path
+        : path === '/app/settings/billing'
+          ? '/app/master/billing'
+          : path
 
   useEffect(() => {
     const pop = () => {

@@ -39,8 +39,10 @@ public sealed class WorkspacePageTests
             var data = await response.Content.ReadFromJsonAsync<JsonElement>();
             Assert.False(data.GetProperty("hasData").GetBoolean()); Assert.False(data.TryGetProperty("count", out _));
         }
-        foreach (var page in new[] { "company", "users", "billing" })
+        foreach (var page in new[] { "company", "users" })
             Assert.Equal(manager ? HttpStatusCode.OK : HttpStatusCode.Forbidden, (await client.GetAsync($"/api/tenants/{tenantId}/pages/{page}")).StatusCode);
+        foreach (var page in new[] { "billing", "permissions" })
+            Assert.Equal(role == TenantRole.Master ? HttpStatusCode.OK : HttpStatusCode.Forbidden, (await client.GetAsync($"/api/tenants/{tenantId}/pages/{page}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/tenants/{tenantId}/pages/support")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/tenants/{foreignId}/pages/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/tenants/{tenantId}/pages/unknown")).StatusCode);

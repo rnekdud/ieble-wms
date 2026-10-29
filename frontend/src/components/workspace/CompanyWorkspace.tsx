@@ -7,6 +7,7 @@ import { findWorkspacePage, canViewPage } from './navigation'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import { Dashboard, EmptyPage, PageHeading, EmptyState } from './WorkspaceUI'
 import BillingNotice from './BillingNotice'
+import PermissionSettings from './PermissionSettings'
 import DefaultTenantGuide from '../DefaultTenantGuide'
 import './workspace.css'
 const roles: Record<string, string> = {
@@ -60,7 +61,7 @@ export default function CompanyWorkspace({
         `/api/tenants/${tenantId}/workspace`,
       )
       if (!page) return { key, workspace, status: 'missing' }
-      if (!canViewPage(page, workspace.role))
+      if (!canViewPage(page, workspace.role, workspace.permissions))
         return { key, workspace, status: 'forbidden' }
       if (page.business && !workspace.billingAccess.canAccessWms)
         return { key, workspace, status: 'blocked' }
@@ -97,6 +98,7 @@ export default function CompanyWorkspace({
       <WorkspaceSidebar
         path={path}
         role={role}
+        permissions={view?.workspace?.id === tenantId ? view.workspace.permissions : {}}
         collapsed={collapsed}
         onToggle={() => setCollapsed((x) => !x)}
         onNavigate={onNavigate}
@@ -119,7 +121,7 @@ export default function CompanyWorkspace({
               <strong>{session.user.displayName}</strong>
               <span>{roles[role || ''] || '기업 구성원'}</span>
             </div>
-            <button className="wms-logout" disabled={busy} onClick={onLogout}>
+            <button className="wms-logout" aria-label="로그아웃" disabled={busy} onClick={onLogout}>
               <LogOut size={17} aria-hidden="true" />
               <span>로그아웃</span>
             </button>
@@ -168,8 +170,8 @@ export default function CompanyWorkspace({
           ) : current.status === 'forbidden' ? (
             <section className="wms-card">
               <EmptyState title="접근 권한이 없습니다">
-                이 메뉴는 기업 마스터 또는 기업 관리자의 권한이 필요하거나 현재
-                이용 상태에서 접근할 수 없습니다.
+                현재 계정에 이 기능을 이용할 권한이 없습니다. 기업 마스터에게
+                권한과 기업 이용 상태를 확인해 주세요.
               </EmptyState>
             </section>
           ) : current.status === 'missing' ? (
@@ -189,6 +191,8 @@ export default function CompanyWorkspace({
             </section>
           ) : page?.key === 'dashboard' ? (
             <Dashboard />
+          ) : page?.key === 'permissions' ? (
+            <PermissionSettings key={tenantId!} tenantId={tenantId!} />
           ) : page?.key === 'billing' ? (
             <>
               <PageHeading

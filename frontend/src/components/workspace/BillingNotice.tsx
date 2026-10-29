@@ -76,7 +76,7 @@ export default function BillingNotice({
           <p>
             {workspace.canManageBilling
               ? '토스페이먼츠 카드 자동결제 연동을 준비 중입니다. 지금은 카드를 입력하거나 요금을 결제할 수 없습니다.'
-              : '기업 마스터 또는 기업 관리자에게 카드 등록과 결제를 요청해 주세요.'}
+              : '기업 마스터에게 카드 등록과 결제를 요청해 주세요.'}
           </p>
         </div>
       )}
