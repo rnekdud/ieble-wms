@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { api } from '../../api'
+import Pagination from '../Pagination'
+import { editSnapshot, requestNavigation } from '../../navigation-guard'
+import { useUnsavedNavigation } from '../../use-unsaved-navigation'
+import RackFrontDialog from './RackFrontDialog'
 import { formValues } from '../../form-values'
 import type {
   WarehouseList,
@@ -11,6 +15,8 @@ import type {
 } from '../../types/warehouse'
 import OrganizationDialog from './OrganizationDialog'
 import { PageHeading } from './WorkspaceUI'
+const WarehousePlanPanel = lazy(() => import('./WarehousePlanPanel'))
+const WarehouseWorkspaceEditor = lazy(() => import('./WarehouseWorkspaceEditor'))
 
 const labels = {
   warehouse: '창고',
@@ -28,14 +34,17 @@ export default function WarehouseManagement({
   tenantId: string
   grants: string[]
 }) {
+  const [workspace, setWorkspace] = useState<{ id?: string } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [query, setQuery] = useState({ search: '', status: 'all', page: 1 })
-  const [list, setList] = useState<WarehouseList | null>(null)
+  const [listView, setListView] = useState<{ key: string; data: WarehouseList | null } | null>(null)
   const [revision, setRevision] = useState(0)
   const [editing, setEditing] = useState<WarehouseEdit | null>(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const endpoint = `/api/tenants/${tenantId}/warehouses`
+  const listKey = JSON.stringify([endpoint, query, revision])
+  const list = listView?.key === listKey ? listView.data : null
   const canCreate = grants.includes('create'),
     canUpdate = grants.includes('update')
   useEffect(() => {
@@ -45,13 +54,13 @@ export default function WarehouseManagement({
     )
       .then((value) => {
         if (live) {
-          setList(value)
+          setListView({ key: listKey, data: value })
           setError('')
         }
       })
       .catch((e) => {
         if (live) {
-          setList(null)
+          setListView({ key: listKey, data: null })
           setError(
             e instanceof Error ? e.message : '창고를 불러오지 못했습니다.',
           )
@@ -60,7 +69,11 @@ export default function WarehouseManagement({
     return () => {
       live = false
     }
-  }, [endpoint, query, revision])
+  }, [endpoint, query, revision, listKey])
+  function openEditor(edit: WarehouseEdit) {
+    if (edit.kind === 'warehouse' && !edit.item) { setNotice(''); setWorkspace({}) }
+    else requestNavigation(() => setEditing(edit))
+  }
   function search(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const values = formValues(e.currentTarget)
@@ -82,20 +95,26 @@ export default function WarehouseManagement({
           {notice}
         </div>
       )}
-      {selected ? (
+      {workspace ? (
+        <Suspense fallback={<p>통합 편집기를 불러오는 중…</p>}>
+          <WarehouseWorkspaceEditor key={workspace.id || 'new'} endpoint={endpoint} warehouseId={workspace.id} canCreate={canCreate} canUpdate={canUpdate}
+            onBack={() => setWorkspace(null)} onSaved={result => { setWorkspace(null); setEditing(null); setSelected(result.warehouseId); setRevision(r => r + 1); setNotice(`${result.code} 창고와 도면·구조를 함께 저장했습니다.`) }} />
+        </Suspense>
+      ) : selected ? (
         <WarehouseDetail
           key={selected}
           endpoint={endpoint}
           id={selected}
           revision={revision}
-          canCreate={canCreate}
+          canCreate={canCreate && canUpdate}
           canUpdate={canUpdate}
           onBack={() => {
             setSelected(null)
             setNotice('')
           }}
-          onEdit={setEditing}
+          onEdit={openEditor}
           onRefresh={() => setRevision((x) => x + 1)}
+
         />
       ) : (
         <section className="wms-card organization-card">
@@ -115,7 +134,8 @@ export default function WarehouseManagement({
                 <select
                   name="status"
                   aria-label="창고 상태 필터"
-                  defaultValue={query.status}
+                  value={query.status}
+                  onChange={(e) => setQuery((q) => ({ ...q, status: e.target.value, page: 1 }))}
                 >
                   <option value="all">전체</option>
                   <option value="active">사용</option>
@@ -127,7 +147,7 @@ export default function WarehouseManagement({
             {canCreate && (
               <button
                 className="primary"
-                onClick={() => setEditing({ kind: 'warehouse' })}
+                onClick={() => openEditor({ kind: 'warehouse' })}
               >
                 창고 등록
               </button>
@@ -194,17 +214,7 @@ export default function WarehouseManagement({
                               >
                                 상세
                               </button>
-                              {canUpdate && (
-                                <button
-                                  className="text-button"
-                                  aria-label={`${w.name} 수정`}
-                                  onClick={() =>
-                                    setEditing({ kind: 'warehouse', item: w })
-                                  }
-                                >
-                                  수정
-                                </button>
-                              )}
+
                             </div>
                           </td>
                         </tr>
@@ -215,7 +225,8 @@ export default function WarehouseManagement({
               </div>
               <Pagination
                 page={query.page}
-                size={20}
+                label="창고 목록 페이지"
+                pageSize={list.pageSize}
                 total={list.total}
                 onChange={(page) => setQuery((q) => ({ ...q, page }))}
               />
@@ -239,47 +250,11 @@ export default function WarehouseManagement({
             setNotice(`${labels[editing.kind]} 정보를 저장했습니다.`)
             setEditing(null)
             setRevision((x) => x + 1)
-            if (editing.kind === 'warehouse' && !editing.item) setSelected(null)
+
           }}
         />
       )}
     </>
-  )
-}
-
-function Pagination({
-  page,
-  size,
-  total,
-  onChange,
-}: {
-  page: number
-  size: number
-  total: number
-  onChange: (page: number) => void
-}) {
-  return (
-    <div className="organization-toolbar">
-      <span>
-        {page} / {Math.max(1, Math.ceil(total / size))} 페이지
-      </span>
-      <div className="organization-row-actions">
-        <button
-          className="secondary"
-          disabled={page <= 1}
-          onClick={() => onChange(page - 1)}
-        >
-          이전
-        </button>
-        <button
-          className="secondary"
-          disabled={page * size >= total}
-          onClick={() => onChange(page + 1)}
-        >
-          다음
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -298,12 +273,24 @@ function StorageEditor({
     label = labels[kind]
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false)
-  const [levels, setLevels] = useState(item?.levels || 1),
-    [bays, setBays] = useState(item?.bays || 1)
+  const [initial] = useState(() => ({
+    name: item?.name || '', code: item?.code || '', customCode: item?.customCode || '',
+    type: item?.type || '', typeDescription: item?.typeDescription || '', address: item?.address || '',
+    addressDetail: item?.addressDetail || '', contactName: item?.contactName || '', notes: item?.notes || '',
+    zoneId: item?.zoneId || '', levels: String(item?.levels || 1), bays: String(item?.bays || 1),
+    isActive: (item?.isActive ?? true) ? 'on' : '',
+  }))
+  const [values, setValues] = useState(initial)
+  const levels = Number(values.levels), bays = Number(values.bays), warehouseType = values.type
+  const dirty = editSnapshot(values) !== editSnapshot(initial)
   const [pending, setPending] = useState<Record<string, unknown> | null>(null)
-  const [warehouseType, setWarehouseType] = useState(item?.type || '')
   const inFlight = useRef(false)
   const [requestId] = useState(() => crypto.randomUUID())
+  const navigation = useUnsavedNavigation(dirty || busy, busy, () => { setValues(initial); setPending(null); setError('') })
+  function change(e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+    const target = e.target
+    setValues(current => ({ ...current, [target.name]: target instanceof HTMLInputElement && target.type === 'checkbox' ? target.checked ? 'on' : '' : target.value }))
+  }
   function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const values = formValues(e.currentTarget)
@@ -352,9 +339,9 @@ function StorageEditor({
         ? endpoint
         : `${endpoint}/${editing.warehouseId}/${kind}`
     try {
-      onSaved(
-        await api<StorageItem>(`${url}${item ? `/${item.id}` : ''}`, body),
-      )
+      const result = await api<StorageItem>(`${url}${item ? `/${item.id}` : ''}`, body)
+      navigation.saved()
+      onSaved(result)
     } catch (e) {
       setError(e instanceof Error ? e.message : '저장하지 못했습니다.')
       setPending(null)
@@ -365,22 +352,23 @@ function StorageEditor({
   }
   return (
     <OrganizationDialog
-      title={`${label} ${item ? '수정' : '등록'}`}
+      title={navigation.blocked ? '저장하지 않은 창고 작업' : `${label} ${item ? '수정' : '등록'}`}
       busy={busy}
-      onClose={() => pending ? setPending(null) : onClose()}
+      onClose={() => navigation.blocked ? navigation.stay() : pending ? setPending(null) : requestNavigation(onClose)}
     >
       {error && (
         <div role="alert" className="alert error">
           {error}
         </div>
       )}
-      {pending && <section role="alertdialog" aria-label="저장 확인" aria-modal="false" className="alert">
+      {navigation.blocked && <section><p>저장하지 않은 {label} 변경을 버리고 이동하시겠습니까? 이미 저장된 창고·구역·랙·위치는 유지됩니다.</p><button type="button" className="secondary" onClick={navigation.stay}>계속 편집</button>{' '}<button type="button" className="primary" onClick={navigation.discard}>변경 버리고 계속</button></section>}
+      {pending && !navigation.blocked && <section role="alertdialog" aria-label="저장 확인" aria-modal="false" className="alert">
         <p>{label} 정보를 저장하시겠습니까?</p>
         {kind === 'racks' && <p>새 단·칸의 보관 위치가 함께 생성됩니다.</p>}
         <button type="button" className="secondary" disabled={busy} onClick={() => setPending(null)}>취소</button>{' '}
         <button type="button" className="primary" disabled={busy} onClick={confirmSave} autoFocus>{busy ? '저장 중…' : '확인'}</button>
       </section>}
-      <form onSubmit={save} hidden={!!pending}>
+      <form onSubmit={save} hidden={!!pending || navigation.blocked}>
         <fieldset disabled={busy}>
           <label>
             {label}명
@@ -388,33 +376,33 @@ function StorageEditor({
               name="name"
               required
               maxLength={200}
-              defaultValue={item?.name || ''}
+              value={values.name} onChange={change}
               autoFocus
             />
           </label>
           {kind === 'warehouse' ? <>
             <label>시스템 창고 코드<input value={item?.code || '저장 시 자동 생성 (WH-0001…)'} readOnly /></label>
-            <label>자체 창고 코드<input name="customCode" maxLength={64} defaultValue={item?.customCode || ''} /></label>
+            <label>자체 창고 코드<input name="customCode" maxLength={64} value={values.customCode} onChange={change} /></label>
             <p className="organization-help">자체 코드는 선택사항이며 기업 내에서 중복 사용할 수 없습니다. 시스템 코드는 변경할 수 없습니다.</p>
-          </> : <label>{label} 코드<input name="code" required maxLength={kind === 'locations' ? 64 : 32} pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]*" defaultValue={item?.code || ''} /></label>}
+          </> : <label>{label} 코드<input name="code" required maxLength={kind === 'locations' ? 64 : 32} pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]*" value={values.code} onChange={change} /></label>}
           {kind === 'warehouse' && (
             <>
               <label>
                 창고 유형
-                <select name="type" aria-label="창고 유형" value={warehouseType} onChange={e => setWarehouseType(e.target.value)}>
+                <select name="type" aria-label="창고 유형" value={warehouseType} onChange={change}>
                   <option value="">미지정</option>
                   {['일반/상온', '실온', '냉장', '냉동', '저온', '항온·항습', '위험물', '야외', '기타'].map(t => <option key={t}>{t}</option>)}
                   {item?.type && !['일반/상온', '실온', '냉장', '냉동', '저온', '항온·항습', '위험물', '야외', '기타'].includes(item.type) && <option value={item.type}>{item.type} (기존 유형)</option>}
                 </select>
               </label>
-              {warehouseType === '기타' && <label>기타 유형 설명<textarea aria-label="기타 유형 설명" name="typeDescription" maxLength={500} defaultValue={item?.typeDescription || ''} /></label>}
+              {warehouseType === '기타' && <label>기타 유형 설명<textarea aria-label="기타 유형 설명" name="typeDescription" maxLength={500} value={values.typeDescription} onChange={change} /></label>}
               <p className="organization-help">일반/상온: 별도 온도 관리 없음 · 실온: 실내 환경 기준 · 냉장: 냉각 보관 · 냉동: 동결 보관 · 저온: 냉장 외 지정 저온 · 항온·항습: 온도·습도 일정 관리 · 위험물: 위험물 취급 · 야외: 실외 보관. 분류 기준이며 실제 센서·온도 제어 기능은 제공하지 않습니다.</p>
               <label>
                 주소
                 <input
                   name="address"
                   maxLength={500}
-                  defaultValue={item?.address || ''}
+                  value={values.address} onChange={change}
                 />
               </label>
               <label>
@@ -422,7 +410,7 @@ function StorageEditor({
                 <input
                   name="addressDetail"
                   maxLength={300}
-                  defaultValue={item?.addressDetail || ''}
+                  value={values.addressDetail} onChange={change}
                 />
               </label>
               <label>
@@ -430,7 +418,7 @@ function StorageEditor({
                 <input
                   name="contactName"
                   maxLength={200}
-                  defaultValue={item?.contactName || ''}
+                  value={values.contactName} onChange={change}
                 />
               </label>
               <label>
@@ -438,7 +426,7 @@ function StorageEditor({
                 <textarea
                   name="notes"
                   maxLength={2000}
-                  defaultValue={item?.notes || ''}
+                  value={values.notes} onChange={change}
                   rows={3}
                 />
               </label>
@@ -450,7 +438,7 @@ function StorageEditor({
               <select
                 name="zoneId"
                 aria-label="소속 구역"
-                defaultValue={item?.zoneId || ''}
+                value={values.zoneId} onChange={change}
                 disabled={!!item}
               >
                 <option value="">구역 없이 창고에 직접 연결</option>
@@ -474,8 +462,8 @@ function StorageEditor({
                     type="number"
                     min={item?.levels || 1}
                     max={100}
-                    value={levels}
-                    onChange={(e) => setLevels(Number(e.target.value))}
+                    name="levels" value={values.levels}
+                    onChange={change}
                     required
                   />
                 </label>
@@ -485,8 +473,8 @@ function StorageEditor({
                     type="number"
                     min={item?.bays || 1}
                     max={100}
-                    value={bays}
-                    onChange={(e) => setBays(Number(e.target.value))}
+                    name="bays" value={values.bays}
+                    onChange={change}
                     required
                   />
                 </label>
@@ -513,7 +501,7 @@ function StorageEditor({
             <input
               type="checkbox"
               name="isActive"
-              defaultChecked={item?.isActive ?? true}
+              checked={values.isActive === 'on'} onChange={change}
             />
             사용
           </label>
@@ -546,6 +534,7 @@ function WarehouseDetail({
   onRefresh: () => void
 }) {
   const [data, setData] = useState<WarehouseDetailData | null>(null)
+  const [rackFront, setRackFront] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState({
     search: '',
@@ -625,7 +614,7 @@ function WarehouseDetail({
           <button
             className="text-button"
             aria-pressed={filter.parent === `r:${rack.id}`}
-            onClick={() => pick(`r:${rack.id}`)}
+            onClick={() => { pick(`r:${rack.id}`); setRackFront(rack.id) }}
           >
             {rack.code} · {rack.name} ({rack.levels}단 × {rack.bays}칸)
             {rack.isActive ? '' : ' · 미사용'}
@@ -644,12 +633,12 @@ function WarehouseDetail({
     )
   }
   return (
-    <section className="wms-card organization-card">
+    <section className="wms-card organization-card warehouse-detail">
       <div className="organization-toolbar">
-        <button className="secondary" onClick={onBack}>
+        <button className="secondary" onClick={() => requestNavigation(onBack)}>
           창고 목록으로
         </button>
-        <button className="text-button" onClick={onRefresh}>
+        <button className="text-button" onClick={() => requestNavigation(onRefresh)}>
           창고 상세 새로고침
         </button>
       </div>
@@ -671,22 +660,24 @@ function WarehouseDetail({
                 className="secondary"
                 onClick={() => edit('warehouse', data.warehouse)}
               >
-                창고 정보 수정
+                정보 수정
               </button>
             )}
           </div>
+          <h3>창고 기본 정보</h3>
           <dl className="warehouse-details">
-            <dt>상태</dt>
+            <dt>시스템 창고 코드</dt><dd>{data.warehouse.code}</dd>
+            <dt>창고명</dt><dd>{data.warehouse.name}</dd>
+            <dt>사용 여부</dt>
             <dd>{statusLabel(data.warehouse.isActive)}</dd>
             <dt>자체 창고 코드</dt><dd>{data.warehouse.customCode || '미지정'}</dd>
             <dt>유형</dt>
             <dd>{data.warehouse.type || '미지정'}{data.warehouse.typeDescription && ` · ${data.warehouse.typeDescription}`}</dd>
             <dt>주소</dt>
             <dd>
-              {[data.warehouse.address, data.warehouse.addressDetail]
-                .filter(Boolean)
-                .join(' ') || '미지정'}
+              {data.warehouse.address || '미지정'}
             </dd>
+            <dt>상세 주소</dt><dd>{data.warehouse.addressDetail || '미지정'}</dd>
             <dt>담당자</dt>
             <dd>{data.warehouse.contactName || '미지정'}</dd>
             <dt>비고</dt>
@@ -706,6 +697,11 @@ function WarehouseDetail({
               가능 상태는 미사용으로 표시됩니다.
             </p>
           )}
+          <Suspense fallback={<p>창고 도면을 불러오는 중…</p>}>
+            <WarehousePlanPanel key={`${id}:${revision}`} endpoint={`${endpoint}/${id}`} warehouse={data} revision={revision} canUpdate={canUpdate} canCreate={canCreate} onChanged={onRefresh} />
+          </Suspense>
+          <h3 className="warehouse-section-heading">구역·랙·보관 위치 관리</h3>
+          <p className="organization-help">랙을 클릭하면 단·칸별 정면도를 확인할 수 있습니다. 수정 팝업의 사용 설정으로 항목을 미사용 처리할 수 있으며 기존 위치 ID는 유지됩니다.</p>
           <div className="organization-row-actions">
             {canCreate && (
               <>
@@ -820,7 +816,7 @@ function WarehouseDetail({
                 </label>
                 <label>
                   사용 가능 상태
-                  <select name="status" aria-label="위치 상태 필터">
+                  <select name="status" aria-label="위치 상태 필터" value={filter.status} onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value, page: 1 }))}>
                     <option value="all">전체</option>
                     <option value="active">사용 가능</option>
                     <option value="inactive">미사용</option>
@@ -904,7 +900,8 @@ function WarehouseDetail({
                   </div>
                   <Pagination
                     page={filter.page}
-                    size={50}
+                    label="보관 위치 페이지"
+                    pageSize={rows.pageSize}
                     total={rows.total}
                     onChange={(page) => setFilter((f) => ({ ...f, page }))}
                   />
@@ -914,6 +911,7 @@ function WarehouseDetail({
           </div>
         </>
       )}
+      {rackFront && <RackFrontDialog endpoint={`${endpoint}/${id}`} rackId={rackFront} onClose={() => setRackFront(null)} />}
     </section>
   )
 }

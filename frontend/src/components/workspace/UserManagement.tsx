@@ -2,6 +2,7 @@ import { formValues } from '../../form-values'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from '../../api'
+import Pagination from '../Pagination'
 import type {
   Employee,
   EmployeeList,
@@ -407,31 +408,14 @@ export default function UserManagement({
                   </tbody>
                 </table>
               </div>
-              <div className="organization-toolbar">
-                <span>{filters.page}페이지</span>
-                <div className="organization-row-actions">
-                  <button
-                    className="secondary"
-                    disabled={filters.page <= 1 || busy}
-                    onClick={() =>
-                      setFilters((f) => ({ ...f, page: f.page - 1 }))
-                    }
-                  >
-                    이전
-                  </button>
-                  <button
-                    className="secondary"
-                    disabled={
-                      filters.page * data.pageSize >= data.total || busy
-                    }
-                    onClick={() =>
-                      setFilters((f) => ({ ...f, page: f.page + 1 }))
-                    }
-                  >
-                    다음
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                label="사용자 목록 페이지"
+                page={filters.page}
+                pageSize={data.pageSize}
+                total={data.total}
+                disabled={busy}
+                onChange={(page) => setFilters((f) => ({ ...f, page }))}
+              />
               <p className="organization-help">
                 사용자당 월 {data.monthlyPerUserKrw.toLocaleString('ko-KR')}원 ·
                 기업 마스터 포함. 직원 등록 월은 무료이며 다음 달부터 도래하는 기업 정기결제일부터 과금

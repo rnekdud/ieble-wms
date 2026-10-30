@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api, ApiError } from './api'
 import type { Session } from './api'
@@ -19,8 +19,12 @@ import {
   validNewPassword,
 } from './registration-validation'
 
+import { createBrowserNavigation } from './browser-navigation'
+import { requestNavigation } from './navigation-guard'
+
 function App() {
   const [path, setPath] = useState(window.location.pathname)
+  const [navigationRevision, setNavigationRevision] = useState(0)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -32,11 +36,13 @@ function App() {
   const [loginEmail, setLoginEmail] = useState(savedLogin.email)
   const [rememberId, setRememberId] = useState(savedLogin.remember)
   const [autoLogin, setAutoLogin] = useState(false)
-  const navigate = useCallback((to: string) => {
-    window.history.pushState({}, '', to)
-    setPath(to)
-    setError('')
+  const navigation = useRef<ReturnType<typeof createBrowserNavigation> | null>(null)
+  useLayoutEffect(() => {
+    const router = createBrowserNavigation(next => { setPath(next); setNavigationRevision(value => value + 1); setError('') })
+    navigation.current = router
+    return () => { router.dispose(); if (navigation.current === router) navigation.current = null }
   }, [])
+  const navigate = useCallback((to: string) => { navigation.current?.navigate(to) }, [])
   const refresh = useCallback(async () => {
     const current = await api<Session>('/api/auth/me')
     setSession(current)
@@ -58,11 +64,6 @@ function App() {
           : path
 
   useEffect(() => {
-    const pop = () => {
-      setPath(window.location.pathname)
-      setError('')
-    }
-    window.addEventListener('popstate', pop)
     api<Session>('/api/auth/me')
       .then((current) => {
         setSession(current)
@@ -79,11 +80,10 @@ function App() {
         ),
       )
       .catch(() => setHealth('DB 연결 확인 필요'))
-    return () => window.removeEventListener('popstate', pop)
   }, [])
 
   useEffect(() => {
-    if (!loading) window.history.replaceState({}, '', route)
+    if (!loading) navigation.current?.replace(route)
   }, [route, loading])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -161,7 +161,10 @@ function App() {
     setRememberId(saved.remember)
     setAutoLogin(false)
   }
-  async function logout() {
+  function logout(): Promise<void> {
+    return new Promise(resolve => { requestNavigation(() => { void performLogout().finally(resolve) }, resolve) })
+  }
+  async function performLogout() {
     setBusy(true)
     setError('')
     try {
@@ -194,6 +197,7 @@ function App() {
       <CompanyWorkspace
         session={session}
         path={route}
+        navigationRevision={navigationRevision}
         onNavigate={navigate}
         onLogout={logout}
         busy={busy}

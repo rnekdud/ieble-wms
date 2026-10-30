@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api, ApiError } from '../api'
+import Pagination from './Pagination'
 
 import {
   tenantStatuses,
@@ -191,7 +192,12 @@ export default function AdminTenants() {
             <select
               aria-label="기업 상태"
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => {
+                setFilter(e.target.value)
+                setLoading(true)
+                setQuery((q) => ({ ...q, status: e.target.value, page: 1 }))
+                setHistory(null)
+              }}
             >
               <option value="">전체 상태</option>
               {Object.entries(tenantStatuses).map(([value, label]) => (
@@ -231,7 +237,7 @@ export default function AdminTenants() {
               </tr>
             </thead>
             <tbody>
-              {data?.items.map((tenant) => (
+              {!loading && data?.items.map((tenant) => (
                 <tr key={tenant.id}>
                   <td>
                     <strong>{tenant.name}</strong>
@@ -302,31 +308,17 @@ export default function AdminTenants() {
         {!loading && !data?.items.length && (
           <p className="empty-state">조건에 맞는 기업이 없습니다.</p>
         )}
-        <div className="pagination">
-          <button
-            className="secondary"
-            disabled={loading || query.page === 1}
-            onClick={() => {
-              setLoading(true)
-              setQuery((x) => ({ ...x, page: x.page - 1 }))
-            }}
-          >
-            이전
-          </button>
-          <span>
-            {query.page} / {Math.max(1, Math.ceil((data?.total || 0) / 20))}
-          </span>
-          <button
-            className="secondary"
-            disabled={loading || query.page * 20 >= (data?.total || 0)}
-            onClick={() => {
-              setLoading(true)
-              setQuery((x) => ({ ...x, page: x.page + 1 }))
-            }}
-          >
-            다음
-          </button>
-        </div>
+        <Pagination
+          label="기업 목록 페이지"
+          page={query.page}
+          pageSize={data?.pageSize ?? 20}
+          total={data?.total ?? 0}
+          loading={loading || !data}
+          onChange={(page) => {
+            setLoading(true)
+            setQuery((q) => ({ ...q, page }))
+          }}
+        />
       </section>
       {history && (
         <section className="panel">

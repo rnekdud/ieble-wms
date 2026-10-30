@@ -6,6 +6,7 @@ namespace IebleWms.Api.Contracts;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public class StorageItemRequest
 {
+    public Guid? RequestId { get; set; }
     public Guid Version { get; set; }
     [Required, StringLength(200)] public string Name { get; set; } = "";
     [Required, StringLength(64)] public string Code { get; set; } = "";

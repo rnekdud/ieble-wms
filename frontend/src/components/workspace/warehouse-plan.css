@@ -1,0 +1,67 @@
+.warehouse-plan-editor { padding: 24px; min-width: 0; width: 100%; }
+.plan-toolbar, .plan-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+.plan-toolbar button, .plan-actions button { display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
+.plan-toolbar > label { display: flex; flex-direction: row; gap: 6px; align-items: center; margin: 0 4px; }
+.plan-toolbar input[type=checkbox] { width: 16px; height: 16px; accent-color: #17796c; }
+.plan-workbench { display: grid; grid-template-columns: 145px minmax(0, 1fr) 225px; gap: 16px; margin-top: 16px; min-width: 0; align-items: start; }
+.plan-tools, .plan-properties { min-width: 0; padding: 12px; border: 1px solid #dce7e2; border-radius: 8px; background: #fbfdfc; }
+.plan-tools > button { display: block; width: 100%; margin-top: 8px; text-align: left; }
+.plan-tools h3, .plan-properties h3 { font-size: 14px; margin-bottom: 12px; }
+.plan-tools h3:not(:first-child) { margin-top: 20px; }
+.plan-object-list { max-height: 260px; overflow: auto; }
+.plan-object-list button { display: block; width: 100%; text-align: left; overflow-wrap: anywhere; padding: 6px; }
+.plan-object-list button[aria-pressed=true] { background: #e1f0e9; border-radius: 4px; color: #126b59; }
+.plan-properties label { font-size: 12px; margin-top: 10px; }
+.plan-properties input, .plan-properties select { width: 100%; min-width: 0; padding: 8px; }
+.plan-properties input[type=color] { height: 36px; padding: 3px; }
+.warehouse-plan-canvas { min-width: 0; width: 100%; height: clamp(420px, 64vh, 760px); position: relative; border: 1px solid #d2e2db; border-radius: 8px; overflow: hidden; background: #edf2ef; }
+.warehouse-plan-canvas.is-panning { cursor: grab; }
+.warehouse-plan-canvas.is-panning:active { cursor: grabbing; }
+.warehouse-plan-canvas:focus-visible { outline: 2px solid #17796c; }
+.warehouse-plan-scale { position: absolute; bottom: 10px; left: 10px; background: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; pointer-events: none; }
+.plan-empty { padding: 60px 20px; border: 1px dashed #bed2c7; border-radius: 8px; text-align: center; }
+.plan-empty p { margin-top: 12px; }
+.rack-front-scroll { overflow: auto; max-height: 48vh; margin: 20px 0; border: 1px solid #d2e2db; }
+.rack-front-grid { display: grid; gap: 6px; padding: 8px; }
+.rack-front-grid button { display: flex; flex-direction: column; padding: 12px; min-height: 72px; }
+.rack-front-grid button[aria-pressed=true] { background: #dcefe5; border-color: #17796c; }
+.rack-front-grid .is-inactive { background: #f0f1f1; }
+.rack-front-grid small { overflow-wrap: anywhere; }
+.rack-location-detail { border-top: 1px solid #d2e2db; padding-top: 16px; }
+@media(max-width:1100px) { .plan-workbench { grid-template-columns: 120px minmax(0, 1fr); } .plan-properties { grid-column: 1 / -1; } .plan-properties fieldset { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; } }
+@media(max-width:760px) { .warehouse-plan-editor { padding: 16px; } .plan-workbench { grid-template-columns: minmax(0,1fr); } .plan-tools { display:flex; flex-wrap:wrap; gap:8px; } .plan-tools > button { width:auto; } .plan-object-list { width:100%; } .plan-properties fieldset { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+
+.plan-structure-properties { margin-top: 16px; border-top: 1px solid #dce7e2; padding-top: 16px; }
+.plan-structure-properties h3 { margin-top: 12px; }
+.plan-structure-properties .alert { overflow-wrap: anywhere; }
+.plan-structure-dimensions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.plan-structure-properties button { white-space: normal; }
+@media(max-width:1100px) { .plan-structure-properties fieldset { display: block; } }
+
+.plan-geometry { margin-top: 16px; border-top: 1px solid #dce7e2; padding-top: 12px; }
+.plan-geometry summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.plan-structure-properties { margin-top: 8px; padding-top: 8px; }
+
+.warehouse-basic-fields { border: 1px solid #dce7e2; border-radius: 8px; padding: 20px; margin-top: 20px; }
+.warehouse-basic-fields legend { font-weight: 600; padding: 0 8px; }
+.warehouse-basic-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+.warehouse-basic-grid label { margin: 0; min-width: 0; }
+.warehouse-basic-grid input, .warehouse-basic-grid select, .warehouse-basic-grid textarea { width: 100%; min-width: 0; }
+.warehouse-basic-grid .organization-checkbox input { width: auto; }
+.warehouse-basic-notes { grid-column: 1 / -1; }
+.warehouse-workspace-plan { margin-top: 28px; scroll-margin-top: 96px; }
+.workspace-structure-list { margin-top: 24px; border-top: 1px solid #dce7e2; padding-top: 20px; }
+.workspace-structure-list h4 { margin: 16px 0 8px; }
+.workspace-structure-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #e8efeb; padding: 10px 0; }
+.workspace-structure-row > span { overflow-wrap: anywhere; }
+.warehouse-workspace-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #dce7e2; }
+.workspace-structure-fields .organization-checkbox { display: flex; align-items: center; gap: 8px; }
+.workspace-structure-fields .organization-checkbox input { width: auto; }
+@media(max-width:1100px) { .warehouse-basic-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .plan-properties .workspace-structure-fields { display: block; } }
+@media(max-width:760px) { .warehouse-basic-grid { grid-template-columns: minmax(0,1fr); } }
+
+.warehouse-detail-plan { margin: 28px 0; border-top: 1px solid #dce7e2; border-bottom: 1px solid #dce7e2; padding: 24px 0; min-width: 0; }
+.warehouse-detail-plan > .warehouse-plan-editor { padding: 0; border: 0; box-shadow: none; }
+.warehouse-detail-plan > .warehouse-plan-canvas { height: clamp(400px, 55vh, 640px); }
+.warehouse-section-heading { margin: 24px 0 10px; }
+.warehouse-detail .warehouse-details dd { overflow-wrap: anywhere; }

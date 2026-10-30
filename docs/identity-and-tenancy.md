@@ -1072,3 +1072,88 @@ API 요약 (`/api/tenants/{tenantId}/warehouses` 기준):
 ## 통합 변경 GitHub 저장 전 검증 (2026-10-29)
 
 사용자의 GitHub 저장 요청에 따라 창고관리·가입일 기준 결제 정책·권한 설정·마스터 위임·레이아웃 변경을 함께 검토했다. 저장 대상 58개 파일에서 추적 `.env`/실제 DB 비밀번호/API 키/Identity 해시 노출은 발견되지 않았다. 민감정보 정규식의 두 탐지는 랜덤 생성한 테스트 fixture의 `f.Password` 참조로 확인했다. 백엔드 build 경고/오류 0 및 전체 174개 테스트, 프론트엔드 build/lint 및 전체 36개 테스트가 모두 통과했다. 백엔드 자동 테스트는 SQLite 메모리 DB를 사용하며, 이번 저장 단계에서는 PostgreSQL 마이그레이션 적용·업무 데이터 수정·Docker 작업을 수행하지 않는다. 최신 원격 main과 기존 로컬 HEAD 일치도 확인했다.
+
+## 인터랙티브 2D 창고 도면 1차 (2026-10-29)
+
+### 화면과 조작
+
+- 창고관리 → 창고 상세 → **2D 창고 도면**에서 조회하며, 기존 창고 수정 권한이 있으면 생성·편집한다. 사이드바 메뉴를 추가하지 않았다.
+- React 19.3.1과 호환되는 react-konva 19.3.2 / konva 10.9.0을 도입했다. 편집기는 lazy import하여 일반 업무 페이지의 초기 번들에서 분리했다.
+- 왼쪽 객체 도구, 중앙 캔버스, 오른쪽 속성, 상단 저장·실행 취소·다시 실행·확대·축소·맞춤으로 구성했다. 벽/구역/랙/통로/출입문/텍스트/일반 도형을 클릭 또는 끌어놓기로 추가한다. 일반 도형은 사각형·타원을 지원한다.
+- 드래그 이동, 단일 선택 크기 조절·회전, 여러 객체 선택·이동·복제·삭제, 20 좌표 단위 격자 정렬, 최대 100단계 undo/redo를 지원한다. 도면당 최대 500개 객체이며 초과 복제는 부분 처리하지 않고 안내한다.
+- Shift/Ctrl/⌘+클릭 및 빈 영역 드래그로 여러 객체를 선택한다. 화면 이동 버튼으로 팬 모드를 전환한다. 일반 휠은 페이지 세로 스크롤, Ctrl/⌘+휠은 캔버스 확대·축소에 사용한다.
+- 저장 요청 중 중복 전송을 막고 실패하면 초안을 유지한다. 저장되지 않은 내용이 있을 때 상세로 돌아가기·사이드바 이동·브라우저 뒤로가기·새로고침/닫기를 경고한다. 충돌 시 초안 JSON 보관 및 최신 도면 다시 불러오기를 제공한다. 브라우저 저장소에 도면 초안을 자동 저장하지 않는다.
+- 랙 객체는 기존 랙에 연결한다. 조회 모드 클릭 또는 편집 모드 더블클릭/정면도 버튼으로 실제 단×칸과 위치 정보를 확인한다. 재고 API가 없으므로 재고 수량은 생성하거나 표시하지 않는다. 속성의 보관 위치 선택은 검색 결과 첫 50개를 제공하며 코드 검색으로 좁힐 수 있다.
+
+### DB와 보안
+
+- `20261029095831_AddWarehousePlans`는 `WarehousePlans`, `WarehousePlanObjects` 두 테이블과 인덱스·제약만 추가한다. 기존 테이블 데이터의 UPDATE/DELETE, 기존 컬럼 제거 또는 이름 변경이 없다.
+- `WarehousePlans`: 기업·창고 복합 PK, schemaVersion, aspectRatio, 낙관적 동시성 Version, 생성/수정 시각·사용자. 한 창고에 하나의 도면을 저장한다.
+- `WarehousePlanObjects`: 기업·창고·객체 ID 복합 PK, 유형/라벨/정렬/색상/도형, 0~1 정규화 중심 좌표·크기, 회전, 선택적인 RackId/LocationId. 캔버스 화면 크기와 무관하게 동일 비율을 유지한다. schemaVersion=1의 공통 객체 계약을 향후 AI 생성 결과에서도 재사용할 수 있다. 이미지/PDF 분석·AI 생성은 구현하지 않았다.
+- 도면과 실제 창고/랙/보관 위치는 별도 테이블이다. 기업·창고 복합 외래 키로 다른 기업/창고 연결을 차단한다. 도면 객체의 이동·삭제는 물리 위치에 반영되지 않는다. 연결된 물리 위치의 삭제는 Restrict FK로 차단된다.
+- API: `GET/POST /api/tenants/{tenantId}/warehouses/{warehouseId}/plan`, `GET .../plan/history`, `GET .../racks/{rackId}/front`. 기존 TenantMember·CSRF·창고 조회/수정 권한·결제 접근 제어를 그대로 적용한다. UI 권한 유무와 관계없이 서버에서 검증한다.
+- 저장 시 기존 창고 작성자와 같은 PostgreSQL 기업 단위 advisory transaction lock을 사용하고 Version을 비교한다. 동시 최초 생성/동시 수정에서 한 요청만 성공하고 나머지는 409로 거절한다. 객체 수정과 `WarehouseChanges`의 PlanSaved 변경 전후·수정자·시각을 하나의 트랜잭션으로 기록한다. 이력은 최근 50건 조회 가능하다.
+- 개발 DB 적용 전에 SQL과 제약을 검토했고, 적용 직전·직후 기존 22개 테이블의 모든 기존 컬럼 행 수/지문이 같음을 확인했다. 기존 사용자·기업·창고·보관 위치·청구 데이터를 변경하지 않았다. 적용 후 미적용 마이그레이션 0개, 기업 마스터 이상 0건이다.
+
+### 검증 결과
+
+- 백엔드 전체 187/187 통과(기존 174 + 도면 13). 빈 도면 조회, 저장/재조회, 실물 ID 유지, 3×4 랙, 잘못된 객체/좌표/ID/색상/개수, 타 기업·창고 차단, CSRF, 조회/수정 권한, 충돌, 감사 기록 실패 시 전체 롤백을 검증했다.
+- 별도 PostgreSQL 임시 스키마에서 전체 마이그레이션, 최초 생성·수정 경쟁 각각 200/409, 기업·창고 복합 FK, 연결 위치 삭제 차단(23503), 감사 저장 실패 롤백, 기존 물리 위치 불변을 확인했다. 검증 스키마 외 개발 업무 데이터는 수정하지 않았다.
+- 프론트엔드 build/lint 및 전체 40/40 통과(기존 36 + 도면 모델 4). 정규화 직렬화·그룹 정렬·복제·삭제·undo/redo·회전을 검증했다.
+- 실제 Google Chrome에서 격리된 테스트 기업으로 7종 객체, 도구 끌어놓기, 선택 영역, 이동·리사이즈·회전·다중 이동, 복제/삭제, undo/redo, 20 단위 자동 정렬, 저장·재조회, 중복 클릭, 3×4 랙 상세, 충돌, 저장 실패 초안 유지, 직원 직접 API 차단, 미저장 상태 이동/뒤로가기 확인, 줌/팬/휠 분리를 검증했다.
+- 실제 `http://localhost:5173`(프론트엔드 작업 경로 동일)에서도 로그인된 사용자로 기존 창고 상세→도면 편집 초안을 열어 3개 해상도×사이드바 2상태를 검증했다. 이 실제 계정 검증의 API 쓰기 요청은 0건이며 저장된 도면과 물리 위치의 전후 응답이 일치했다. 해당 계정 창고에 랙이 없어 실제 랙 저장/정면도는 위 격리된 PostgreSQL 테스트 기업에서 검증했다.
+
+| 실제 localhost 해상도 | 펼침 메인/캔버스 폭 | 접힘 메인/캔버스 폭 | 메인 right | 가용 화면 폭 |
+|---|---|---|---|---|
+| 1920×1080 | 1657 / 1109 | 1829 / 1281 | 1905 | 1905 |
+| 1440×900 | 1177 / 653 | 1349 / 825 | 1425 | 1425 |
+| 1280×800 | 1017 / 493 | 1189 / 665 | 1265 | 1265 |
+
+- 단위 CSS px. `innerWidth - main.right`의 15px는 세로 스크롤바이며 설명되지 않는 오른쪽 여백은 0이다. 헤더 폭은 메인 폭과 같고 전체 가로 넘침은 없다. 페이지 세로 스크롤 및 기존 모달 최대 폭을 유지했다. 모든 검증에서 JavaScript 오류 0건. 결과 스크린샷을 직접 검토했다.
+- 증적: `/private/tmp/ieble-wms-plan-review/{ui-report,extra-report,live-report}.json`, 같은 폴더의 `screenshots/`, `migration.sql`, `before.json`. 테스트 전용 비밀번호 파일과 임시 스키마는 테스트 서버 종료 시 정리한다. 민감정보 검사 한 건은 `WarehousePlanTests.cs`의 랜덤 fixture 비밀번호 변수 참조로 확인했으며 실제 비밀값이 아니다. 추적 .env 또는 실제 인증정보 추가 없음.
+
+### 변경 파일
+
+- 백엔드: `Auth/AuthConfiguration.cs`, `Contracts/WarehousePlanContracts.cs`, `Controllers/WarehousePlansController.cs`, `Data/WmsDbContext.cs`, `Data/WarehousePlanModel.cs`, `Models/WarehousePlan.cs`, `Warehousing/WarehousePlanService.cs`.
+- EF Core: `Data/Migrations/20261029095831_AddWarehousePlans.cs`, 같은 이름의 `.Designer.cs`, `WmsDbContextModelSnapshot.cs`.
+- 백엔드 테스트: `backend/IebleWms.Api.Tests/WarehousePlanTests.cs`.
+- 프론트엔드: `package.json`, `package-lock.json`, `src/App.tsx`, `src/navigation-guard.ts`, `src/warehouse-plan-model.ts`, `src/components/workspace/CompanyWorkspace.tsx`, `WarehouseManagement.tsx`, `WarehousePlanEditor.tsx`, `PlanCanvas.tsx`, `RackFrontDialog.tsx`, `warehouse-plan.css`, `tests/warehouse-plan.test.mjs`.
+- 이 문서. Git commit/push는 실행하지 않았다.
+
+## 창고 등록·2D 도면 구조 생성 통합 (2026-10-30)
+
+### 작업 흐름과 권한
+
+- 창고 등록 성공 응답의 `id`로 해당 도면 편집기를 바로 연다. 창고는 먼저 저장되며 도면 작성 취소/미작성으로 삭제되지 않는다. 창고 목록에 도면 편집/조회 바로가기 추가. 등록은 `warehouses:create`, 도면 저장·연결 변경은 `warehouses:update`를 각각 검사한다. 수정 권한이 없으면 새 창고도 조회 상태로 연다.
+- 기존 시스템 창고 코드 생성, 자체 코드 유일성, 구역·랙 등록 API와 보관 위치 자동 생성 로직을 재사용한다. 창고 상세의 랙 수정에서 기존 단·칸 확장 정책을 그대로 사용한다.
+- 편집기 속성 패널 상단에서 실제 구역·랙 생성/기존 항목 연결을 수행한다. 단·칸은 숫자 입력이며 랙 등록과 위치 생성은 기존 트랜잭션으로 처리한다. 선택한 구역/랙을 기준으로 위치 검색을 좁히고 생성 후 위치 목록을 갱신한다. 배치·색상·위치 세부 속성은 접어서 표시하며 기존 페이지 세로 스크롤을 유지한다.
+- 연결된 랙 클릭은 실제 정면도를 표시한다. Shift/Ctrl/Command 선택은 정면도를 열지 않아 다중 선택을 유지한다. 정면도에 위치별 사용/미사용 상태를 표시하며 재고 데이터는 표시하지 않는다.
+
+### 저장 및 복구
+
+- `WarehousePlanObject.ZoneId`와 기업·창고 범위 FK를 추가했다. ZoneId는 구역 객체에만 허용된다. 기존 RackId/LocationId 검증과 낙관적 버전 충돌·감사 트랜잭션은 유지한다.
+- 서버에서 한 도면 내 동일 RackId의 중복 연결을 거부한다. UI는 이미 연결된 랙 선택을 비활성화하고 복제된 시각 객체의 물리 참조는 비운다. 기존 도면 데이터를 임의로 고치지 않도록 RackId 유일 인덱스는 추가하지 않았다.
+- 미연결 구역·랙이 있는 도면 저장 시 연결로 돌아가거나 시각 객체로만 저장하도록 명시적으로 선택한다. 연결된 객체 제거에는 실제 구조가 유지됨을 안내한다. 저장 실패 시 초안을 유지하며, 버전 충돌 시 최신 도면 재조회/JSON 보관 흐름을 유지한다.
+- 구역·랙 생성 요청에 선택적 `RequestId`를 추가했다. 같은 기업·창고·유형 범위에서 동일 요청 ID·동일 생성 내용은 기존 엔티티를 반환한다. ID는 같고 내용이 다르면 409로 거부한다. 생성 시 정규화한 내용의 SHA-256을 저장하여 이후 항목 수정에도 요청의 정체성을 유지한다. 기존 클라이언트는 RequestId를 생략할 수 있다.
+- 등록 요청 중 중복 전송을 막고 입력값을 유지한다. 응답이 유실되면 같은 요청을 재시도하거나 구조 목록을 새로고침해 연결한다. 생성 성공 후 도면 저장 실패/취소/undo/객체 삭제가 실제 구역·랙·위치를 삭제하지 않는다. 실제 구조 생성과 도면 저장은 각각 독립된 트랜잭션이다.
+
+### DB 변경과 보존
+
+- 신규 마이그레이션 `20261030001218_LinkWarehousePlanStructure`: `WarehousePlanObjects.ZoneId`, `WarehouseZones`/`WarehouseRacks`의 `CreationRequestId`·`CreationRequestHash` — nullable 컬럼 총 5개, 인덱스 3개, 구역 FK 및 타입 CHECK 추가. 기존 `AddWarehousePlans` 마이그레이션은 수정하지 않았다.
+- SQL 검토 후 개발 DB `ieble_wms_dev`에 적용했다. 적용 전 custom-format 백업을 생성했고, 기존 **24개 업무 테이블의 원래 컬럼·행 수·정렬된 행 지문이 적용 전후 모두 동일**했다. 적용 이력은 13개다. 기존 위치 ID 변경, 데이터 초기화/삭제, Docker 컨테이너·볼륨 변경은 없다.
+- 개발 API 5080을 새 코드로 재시작했다. DB health 200, localhost:5173 경유 CSRF 200 및 OpenAPI의 ZoneId 계약을 확인했다.
+
+### 검증
+
+- 백엔드 전체 192/192 통과. 신규 통합 테스트는 도면 없는 창고 유지, 구역/랙 생성 재시도, 3×4 위치 생성, 도면 저장 실패 후 구조 유지, 재조회 시 연결 복원, 시각 객체 제거 후 위치 ID 보존, 중복 RackId/타 창고 ZoneId/잘못된 객체 유형 거부, 등록·수정 권한 분리를 검증한다. 기존 창고·인증·권한·결제 회귀 테스트를 포함한다.
+- 프론트엔드 production build, lint, 41/41 테스트 통과. 복제 시 물리 참조 분리, 미연결 구조 판정, 중복 랙 연결 검증을 추가했다. EF 모델과 마이그레이션 차이 없음.
+- 실제 **Google Chrome + http://localhost:5173**에서 등록→빈 편집기, 도면 없이 종료, 구역 생성, 랙 생성 응답 유실 후 재시도(랙 1개/위치 12개), 생성 직후 위치 목록, 도면 저장 500 후 재저장, 재조회, 캔버스 클릭 정면도/위치 상세, Shift 선택, 중복 랙 옵션 비활성화, 객체 제거 후 실제 ID 유지, 기존 랙 재연결, 시각 객체 저장 선택, 목록 바로가기를 검증했다.
+- 위 Chrome의 업무 API 요청은 격리된 실제 .NET API/SQLite 메모리 DB로 전달했다. PostgreSQL에 테스트 계정·창고·랙·재고를 만들지 않았다. 업무 PostgreSQL에서의 신규 구조 생성 E2E는 수행하지 않았다. 1920/1440/1280px에서 가로 넘침 및 JavaScript 오류 0건, 캔버스 폭 각각 1124/668/508px. 실제 생성 패널·정면도 스크린샷 검토.
+- 작업 전 미커밋 수정 9개/미추적 15개를 외부 임시 디렉터리에 보관한 뒤 확장했다. 원래 파일 삭제 없음. 독립 3D 프로토타입 21개 파일의 SHA-256 동일. Git commit/push 없음.
+- 증적·백업: `/private/tmp/ieble-plan-integration-p5cjxkl2/`의 `original/`, `manifest.json`, `migration.sql`, `before-migration.dump`, `db-before.json`, `db-after.json`, `browser/report.json`과 스크린샷. DB 백업은 로컬 접근 권한 0600으로 보관한다.
+
+### 이번 변경 파일과 다음 단계
+
+- 프론트엔드: `WarehouseManagement.tsx`, `WarehousePlanEditor.tsx`, 신규 `PlanStructureProperties.tsx`, `PlanCanvas.tsx`, `RackFrontDialog.tsx`, `warehouse-plan.css`, `warehouse-plan-model.ts`, `tests/warehouse-plan.test.mjs`.
+- 백엔드: `WarehouseContracts.cs`, `WarehousePlanContracts.cs`, `Warehouse.cs`, `WarehousePlan.cs`, `WarehouseModel.cs`, `WarehousePlanModel.cs`, `WarehouseService.cs`, `WarehousePlanService.cs`, `WarehousePlanTests.cs`, 신규 마이그레이션/Designer, 모델 스냅샷 및 이 문서. 기존 `WarehousePlansController` 경로·권한을 재사용한다.
+- 다음 3D 단계는 현재 공통 도면의 ZoneId/RackId와 실제 위치 ID, 정규화 좌표/회전/aspectRatio를 입력받는 어댑터, 높이·층 간격 표현 정책, 읽기 전용 2D/3D 전환부터 진행할 수 있다. 이번 단계에서는 3D/바코드 통합과 실제 재고 생성을 하지 않았다.

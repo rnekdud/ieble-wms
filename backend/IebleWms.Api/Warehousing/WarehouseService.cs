@@ -6,7 +6,6 @@ using IebleWms.Api.Data;
 using IebleWms.Api.Models;
 using IebleWms.Api.Organization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 
 namespace IebleWms.Api.Warehousing;
@@ -25,16 +24,18 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
             throw Invalid($"이름과 코드를 확인해 주세요. 코드는 영문·숫자로 시작하는 영문·숫자·점·밑줄·하이픈 {maxCode}자 이내입니다.");
         item.Code = code; item.Name = name; item.IsActive = request.IsActive;
     }
-    private async Task<IDbContextTransaction> Begin(Guid tenantId, CancellationToken token)
+    private static string CreationHash(StorageItemRequest request)
     {
-        var tx = await db.Database.BeginTransactionAsync(token);
-        try
-        {
-            if (db.Database.IsNpgsql()) await db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"warehouse:" + tenantId}, 0))", token);
-            return tx;
-        }
-        catch { await tx.DisposeAsync(); throw; }
+        if (request.RequestId == Guid.Empty) throw Invalid("등록 요청 ID를 확인해 주세요.");
+        var normalized = new { code = request.Code.Trim().Normalize(NormalizationForm.FormKC).ToUpperInvariant(), name = request.Name.Trim(), request.IsActive,
+            zoneId = (request as RackRequest)?.ZoneId, levels = (request as RackRequest)?.Levels, bays = (request as RackRequest)?.Bays };
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(normalized))));
     }
+    private static void CheckReplay(string? original, string current)
+    {
+        if (original != current) throw new OrganizationException(409, "이미 처리한 등록 요청입니다. 기존 구역·랙 목록을 새로고침하여 연결해 주세요.");
+    }
+    private Task<WarehouseWriteScope> Begin(Guid tenantId, CancellationToken token) => WarehouseWriteScope.Begin(db, tenantId, token);
     private async Task<Warehouse> Warehouse(Guid tenantId, Guid id, CancellationToken token) => await db.Warehouses.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.Id == id, token) ?? throw Missing();
     private async Task RequireParents(Guid tenantId, Warehouse warehouse, Guid? zoneId, CancellationToken token, bool activeRequired)
     {
@@ -138,8 +139,15 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
     public async Task<WarehouseZone> SaveZone(Guid tenantId, Guid warehouseId, Guid actor, Guid? id, StorageItemRequest request, CancellationToken token)
     {
         await using var tx = await Begin(tenantId, token); var warehouse = await Warehouse(tenantId, warehouseId, token);
+        var creationHash = CreationHash(request);
+        if (!id.HasValue && request.RequestId is Guid requestId)
+        {
+            var existing = await db.WarehouseZones.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.WarehouseId == warehouseId && x.CreationRequestId == requestId, token);
+            if (existing != null) { CheckReplay(existing.CreationRequestHash, creationHash); await tx.CommitAsync(token); return existing; }
+        }
         var item = id.HasValue ? await db.WarehouseZones.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.WarehouseId == warehouseId && x.Id == id, token) ?? throw Missing() : new WarehouseZone { TenantId = tenantId, WarehouseId = warehouseId };
         if (id.HasValue) Version(item, request.Version);
+        else { item.CreationRequestId = request.RequestId; item.CreationRequestHash = request.RequestId.HasValue ? creationHash : null; }
         await RequireParents(tenantId, warehouse, null, token, !id.HasValue || (!item.IsActive && request.IsActive));
         var before = id.HasValue ? JsonSerializer.SerializeToElement(Snapshot(item)) : JsonSerializer.SerializeToElement(new { });
         Assign(item, request); if (!id.HasValue) db.WarehouseZones.Add(item);
@@ -150,8 +158,15 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
     {
         if (request.Levels is < 1 or > 100 || request.Bays is < 1 or > 100 || request.Levels * request.Bays > 1000) throw Invalid("랙은 1~100단·칸, 총 1,000개 위치 이내로 설정해 주세요.");
         await using var tx = await Begin(tenantId, token); var warehouse = await Warehouse(tenantId, warehouseId, token);
+        var creationHash = CreationHash(request);
+        if (!id.HasValue && request.RequestId is Guid requestId)
+        {
+            var existing = await db.WarehouseRacks.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.WarehouseId == warehouseId && x.CreationRequestId == requestId, token);
+            if (existing != null) { CheckReplay(existing.CreationRequestHash, creationHash); await tx.CommitAsync(token); return existing; }
+        }
         var item = id.HasValue ? await db.WarehouseRacks.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.WarehouseId == warehouseId && x.Id == id, token) ?? throw Missing() : new WarehouseRack { TenantId = tenantId, WarehouseId = warehouseId, ZoneId = request.ZoneId };
         if (id.HasValue) Version(item, request.Version);
+        else { item.CreationRequestId = request.RequestId; item.CreationRequestHash = request.RequestId.HasValue ? creationHash : null; }
         if (id.HasValue && item.ZoneId != request.ZoneId) throw Invalid("기존 랙의 소속 구역은 변경할 수 없습니다.");
         if (request.Levels < item.Levels || request.Bays < item.Bays) throw Invalid("기존 위치를 보존하기 위해 단·칸 수는 확장만 가능합니다. 필요 없는 위치는 미사용으로 설정해 주세요.");
         await RequireParents(tenantId, warehouse, request.ZoneId, token, !id.HasValue || (!item.IsActive && request.IsActive) || request.Levels > item.Levels || request.Bays > item.Bays);

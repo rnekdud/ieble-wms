@@ -985,6 +985,124 @@ namespace IebleWms.Api.Data.Migrations
                     b.ToTable("WarehouseChanges");
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.WarehousePlan", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("AspectRatio")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SchemaVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TenantId", "WarehouseId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("WarehousePlans", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WarehousePlans_Schema", "\"SchemaVersion\" = 1 AND \"AspectRatio\" BETWEEN 0.25 AND 4");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.WarehousePlanObject", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Fill")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<double>("Height")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Rotation")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Shape")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<double>("Width")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("X")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Y")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("ZoneId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TenantId", "WarehouseId", "Id");
+
+                    b.HasIndex("TenantId", "WarehouseId", "LocationId");
+
+                    b.HasIndex("TenantId", "WarehouseId", "RackId");
+
+                    b.HasIndex("TenantId", "WarehouseId", "ZoneId");
+
+                    b.ToTable("WarehousePlanObjects", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PlanObjects_Geometry", "\"X\" BETWEEN 0 AND 1 AND \"Y\" BETWEEN 0 AND 1 AND \"Width\" BETWEEN 0.005 AND 1 AND \"Height\" BETWEEN 0.005 AND 1 AND \"Rotation\" BETWEEN -180 AND 180 AND \"SortOrder\" >= 0");
+
+                            t.HasCheckConstraint("CK_PlanObjects_Type", "\"Type\" IN ('wall','zone','rack','aisle','door','text','shape') AND \"Shape\" IN ('rectangle','ellipse') AND (\"RackId\" IS NULL OR \"Type\" = 'rack')");
+
+                            t.HasCheckConstraint("CK_PlanObjects_Zone", "\"ZoneId\" IS NULL OR \"Type\" = 'zone'");
+                        });
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.WarehouseRack", b =>
                 {
                     b.Property<Guid>("TenantId")
@@ -1008,6 +1126,13 @@ namespace IebleWms.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreationRequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("CreationRequestId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
@@ -1043,6 +1168,9 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasIndex("TenantId", "WarehouseId", "Code")
                         .IsUnique();
 
+                    b.HasIndex("TenantId", "WarehouseId", "CreationRequestId")
+                        .IsUnique();
+
                     b.HasIndex("TenantId", "WarehouseId", "ZoneId");
 
                     b.ToTable("WarehouseRacks", null, t =>
@@ -1053,6 +1181,41 @@ namespace IebleWms.Api.Data.Migrations
 
                             t.HasCheckConstraint("CK_WarehouseRacks_Name", "length(trim(\"Name\")) > 0");
                         });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.WarehouseSaveReceipt", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TenantId", "RequestId");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "WarehouseId");
+
+                    b.ToTable("WarehouseSaveReceipts");
                 });
 
             modelBuilder.Entity("IebleWms.Api.Models.WarehouseZone", b =>
@@ -1075,6 +1238,13 @@ namespace IebleWms.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreationRequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("CreationRequestId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
@@ -1102,6 +1272,9 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.HasIndex("TenantId", "WarehouseId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId", "CreationRequestId")
                         .IsUnique();
 
                     b.ToTable("WarehouseZones", null, t =>
@@ -1453,6 +1626,49 @@ namespace IebleWms.Api.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.WarehousePlan", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.WarehousePlanObject", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.WarehousePlan", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId", "LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.WarehouseRack", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId", "RackId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.WarehouseZone", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId", "ZoneId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.WarehouseRack", b =>
                 {
                     b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
@@ -1481,6 +1697,21 @@ namespace IebleWms.Api.Data.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId", "WarehouseId", "ZoneId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.WarehouseSaveReceipt", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("IebleWms.Api.Models.WarehouseZone", b =>

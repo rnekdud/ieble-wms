@@ -23,6 +23,12 @@ internal static class WarehouseModel
     }
     public static void Configure(ModelBuilder builder)
     {
+        var receipt = builder.Entity<WarehouseSaveReceipt>();
+        receipt.HasKey(x => new { x.TenantId, x.RequestId });
+        receipt.Property(x => x.RequestHash).HasMaxLength(64).IsRequired();
+        receipt.Property(x => x.ResponseJson).IsRequired();
+        receipt.HasOne<Warehouse>().WithMany().HasForeignKey(x => new { x.TenantId, x.WarehouseId }).OnDelete(DeleteBehavior.Restrict);
+        receipt.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ActorId).OnDelete(DeleteBehavior.Restrict);
         var w = Item<Warehouse>(builder, "Warehouses", 32);
         w.HasKey(x => new { x.TenantId, x.Id });
         w.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
@@ -39,10 +45,14 @@ internal static class WarehouseModel
         var z = Item<WarehouseZone>(builder, "WarehouseZones", 32);
         z.HasKey(x => new { x.TenantId, x.WarehouseId, x.Id });
         z.HasIndex(x => new { x.TenantId, x.WarehouseId, x.Code }).IsUnique();
+        z.HasIndex(x => new { x.TenantId, x.WarehouseId, x.CreationRequestId }).IsUnique();
+        z.Property(x => x.CreationRequestHash).HasMaxLength(64);
         z.HasOne<Warehouse>().WithMany().HasForeignKey(x => new { x.TenantId, x.WarehouseId }).OnDelete(DeleteBehavior.Restrict);
         var r = Item<WarehouseRack>(builder, "WarehouseRacks", 32);
         r.HasKey(x => new { x.TenantId, x.WarehouseId, x.Id });
         r.HasIndex(x => new { x.TenantId, x.WarehouseId, x.Code }).IsUnique();
+        r.HasIndex(x => new { x.TenantId, x.WarehouseId, x.CreationRequestId }).IsUnique();
+        r.Property(x => x.CreationRequestHash).HasMaxLength(64);
         r.HasOne<Warehouse>().WithMany().HasForeignKey(x => new { x.TenantId, x.WarehouseId }).OnDelete(DeleteBehavior.Restrict);
         r.HasOne<WarehouseZone>().WithMany().HasForeignKey(x => new { x.TenantId, x.WarehouseId, x.ZoneId }).OnDelete(DeleteBehavior.Restrict);
         r.ToTable("WarehouseRacks", t => t.HasCheckConstraint("CK_Racks_Dimensions", "\"Levels\" BETWEEN 1 AND 100 AND \"Bays\" BETWEEN 1 AND 100 AND \"Levels\" * \"Bays\" <= 1000"));

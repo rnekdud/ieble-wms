@@ -707,15 +707,6 @@ dd {
   padding: 36px !important;
   color: #819087 !important;
 }
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 22px;
-  align-items: center;
-  margin-top: 24px;
-  font-size: 12px;
-  color: #829185;
-}
 .scope-note,
 .history-help {
   font-size: 12px;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Building2, ChevronRight, RefreshCw } from 'lucide-react'
 import { api, ApiError } from '../../api'
+import { requestNavigation } from '../../navigation-guard'
 import type { Session } from '../../api'
 import type { Workspace } from '../../types/workspace'
 import { findWorkspacePage, canViewPage } from './navigation'
@@ -32,6 +33,7 @@ type View = {
 export default function CompanyWorkspace({
   session,
   path,
+  navigationRevision,
   onNavigate,
   onLogout,
   busy,
@@ -42,6 +44,7 @@ export default function CompanyWorkspace({
 }: {
   session: Session
   path: string
+  navigationRevision: number
   onNavigate: (path: string) => void
   onLogout: () => void
   busy: boolean
@@ -57,7 +60,7 @@ export default function CompanyWorkspace({
   const [view, setView] = useState<View | null>(null)
   const tenantId = session.selectedTenantId
   const page = findWorkspacePage(path)
-  const key = `${tenantId}:${path}:${revision}`
+  const key = `${tenantId}:${path}:${revision}:${navigationRevision}`
   const current = view?.key === key ? view : null
   const membership = session.memberships.find((x) => x.tenantId === tenantId)
   const role = current?.workspace?.role || membership?.role
@@ -123,10 +126,10 @@ export default function CompanyWorkspace({
     if (channel) channel.onmessage = wake
     return () => { live = false; clearInterval(timer); window.removeEventListener('focus', wake); window.removeEventListener('wms-access-changed', wake); document.removeEventListener('visibilitychange', wake); channel?.close() }
   }, [tenantId, current?.workspace, onResolved, onExpired])
-  const refresh = () => setRevision((x) => x + 1)
+  const refresh = () => { requestNavigation(() => setRevision((x) => x + 1)) }
   const name = current?.workspace?.name || membership?.name || '소속 기업 확인'
   return (
-    <div className={`wms-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
+    <div data-workspace-path={path} className={`wms-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <WorkspaceSidebar
         path={path}
         role={role}

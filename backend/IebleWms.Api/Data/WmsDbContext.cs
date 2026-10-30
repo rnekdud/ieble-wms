@@ -14,7 +14,10 @@ public sealed class WmsDbContext(
     public DbSet<BillingReminderDismissal> BillingReminderDismissals => Set<BillingReminderDismissal>();
     public DbSet<BillingInvoice> BillingInvoices => Set<BillingInvoice>();
     public DbSet<BillingChange> BillingChanges => Set<BillingChange>();
+    public DbSet<WarehouseSaveReceipt> WarehouseSaveReceipts => Set<WarehouseSaveReceipt>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<WarehousePlan> WarehousePlans => Set<WarehousePlan>();
+    public DbSet<WarehousePlanObject> WarehousePlanObjects => Set<WarehousePlanObject>();
     public DbSet<WarehouseZone> WarehouseZones => Set<WarehouseZone>();
     public DbSet<WarehouseRack> WarehouseRacks => Set<WarehouseRack>();
     public DbSet<StorageLocation> StorageLocations => Set<StorageLocation>();
@@ -36,6 +39,7 @@ public sealed class WmsDbContext(
     {
         base.OnModelCreating(builder);
         WarehouseModel.Configure(builder);
+        WarehousePlanModel.Configure(builder);
         BillingModel.Configure(builder);
         var user = builder.Entity<ApplicationUser>();
         user.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();

@@ -23,6 +23,8 @@ public static class AuthConfiguration
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<IebleWms.Api.Organization.MasterTransferService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseService>();
+        services.AddScoped<IebleWms.Api.Warehousing.WarehouseWorkspaceService>();
+        services.AddScoped<IebleWms.Api.Warehousing.WarehousePlanService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseSetupAccess>();
         services.AddScoped<TenantPermissionService>();
         services.AddScoped<IebleWms.Api.Organization.OrganizationAudit>();

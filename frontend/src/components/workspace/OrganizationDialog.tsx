@@ -31,6 +31,7 @@ export default function OrganizationDialog({
       <div className="organization-dialog-heading">
         <h2 id="organization-dialog-title">{title}</h2>
         <button
+          type="button"
           className="secondary"
           aria-label="상세 창 닫기"
           disabled={busy}

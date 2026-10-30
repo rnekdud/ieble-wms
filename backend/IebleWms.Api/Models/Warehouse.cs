@@ -27,6 +27,8 @@ public sealed class Warehouse : AuditableEntity, IStorageItem
 }
 public sealed class WarehouseZone : AuditableEntity, IStorageItem
 {
+    [System.Text.Json.Serialization.JsonIgnore] public Guid? CreationRequestId { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? CreationRequestHash { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TenantId { get; set; }
     public Guid WarehouseId { get; set; }
@@ -36,6 +38,8 @@ public sealed class WarehouseZone : AuditableEntity, IStorageItem
 }
 public sealed class WarehouseRack : AuditableEntity, IStorageItem
 {
+    [System.Text.Json.Serialization.JsonIgnore] public Guid? CreationRequestId { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? CreationRequestHash { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TenantId { get; set; }
     public Guid WarehouseId { get; set; }
