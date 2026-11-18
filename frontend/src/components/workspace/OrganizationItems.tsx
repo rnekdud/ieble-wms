@@ -1,5 +1,14 @@
+import PageSizeSelect from '../PageSizeSelect'
+import Pagination from '../Pagination'
+import FormLabel from '../FormLabel'
+import SearchFilters from './SearchFilters'
+import PermissionGradeManagement from './PermissionGradeManagement'
+import { departmentHierarchy } from '../../department-hierarchy'
+import './organization-items.css'
+import GuardedForm from './GuardedForm'
+import { requestNavigation } from '../../navigation-guard'
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import { api } from '../../api'
 import { formValues } from '../../form-values'
 import type {
@@ -16,7 +25,9 @@ export default function OrganizationItems({
   tenantId: string
   grants: string[]
 }) {
-  const [tab, setTab] = useState<'departments' | 'positions'>('departments')
+  const [tab, setTab] = useState<'departments' | 'positions' | 'permission-grades'>('departments')
+  const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(20)
+  const [search, setSearch] = useState(''), [appliedSearch, setAppliedSearch] = useState('')
   const [data, setData] = useState<OrganizationOptions | null>(null)
   const [revision, setRevision] = useState(0)
   const [editing, setEditing] = useState<OrganizationItem | 'create' | null>(
@@ -122,19 +133,12 @@ export default function OrganizationItems({
       setBusy(false)
     }
   }
-  return (
-    <>
-      <PageHeading
-        title="항목 관리"
-        description="부서 계층과 직급을 관리하세요. 직급은 시스템 접근 권한과 별개입니다."
-      />
-      <section className="wms-card organization-card">
-        <div
-          className="organization-toolbar"
+  const tabs = (<>        <div
+          className="wms-segmented organization-item-tabs"
           role="tablist"
           aria-label="조직 항목"
         >
-          {(['departments', 'positions'] as const).map((key) => (
+          {(['departments', 'positions', 'permission-grades'] as const).map((key) => (
             <button
               key={key}
               role="tab"
@@ -142,15 +146,39 @@ export default function OrganizationItems({
               className={tab === key ? 'primary' : 'secondary'}
               disabled={busy}
               onClick={() => {
-                setTab(key)
+                setTab(key); setSearch(''); setAppliedSearch(''); setPage(1)
                 setError('')
                 setNotice('')
               }}
             >
-              {key === 'departments' ? '부서 관리' : '직급 관리'}
+              {key === 'departments' ? '부서 관리' : key === 'positions' ? '직급 관리' : '권한 등급 관리'}
             </button>
           ))}
-        </div>
+        </div></>)
+  if (tab === 'permission-grades') return <PermissionGradeManagement tenantId={tenantId} grants={grants} header={actions => <><PageHeading title="항목 관리" actions={actions} />{tabs}</>} />
+  const itemRows = tab==='departments' ? departmentHierarchy(data?.departments||[]) : (data?.positions||[]).map(item=>({item,depth:0,ancestors:[] as string[]}))
+  const visibleItems = itemRows.filter(({item}) => item.name.toLowerCase().includes(appliedSearch.toLowerCase()))
+  return (
+    <>
+      <PageHeading
+        title="항목 관리"
+        actions={<>           {grants.includes('create') && (
+            <button
+              className="primary"
+              disabled={busy || !data}
+              onClick={() => {
+                setEditing('create')
+                setError('')
+              }}
+            >
+              {label} 등록
+            </button>
+          )} </>}
+      />
+      {tabs}
+      <section className="wms-card organization-card mobile-management-list">
+
+
         {!editing && error && (
           <div className="alert error" role="alert">
             {error}
@@ -166,25 +194,15 @@ export default function OrganizationItems({
             사용 중인 항목은 삭제할 수 없습니다. 사용 중지된 항목은 새 직원에게
             지정할 수 없습니다.
           </p>
-          {grants.includes('create') && (
-            <button
-              className="primary"
-              disabled={busy || !data}
-              onClick={() => {
-                setEditing('create')
-                setError('')
-              }}
-            >
-              {label} 등록
-            </button>
-          )}
+
         </div>
+        <SearchFilters className="mobile-management-filters" onReset={() => { setSearch(''); setAppliedSearch(''); setPage(1) }} busy={busy} onSearch={() => { setAppliedSearch(search.trim()); setPage(1) }}><label>{label} 검색<input value={search} onChange={e => setSearch(e.target.value)} maxLength={100} /></label></SearchFilters>
         {!data ? (
           <p>{error ? '목록을 확인할 수 없습니다.' : '불러오는 중…'}</p>
         ) : (
-          <div className="wms-table-scroll">
-            <table className="wms-table">
-              <caption>{label} 목록</caption>
+          <><div className="wms-table-scroll">
+            <table className="wms-table mobile-record-table mobile-management-table organization-items-list" aria-label={`${label} 목록`}>
+
               <thead>
                 <tr>
                   <th>이름</th>
@@ -196,24 +214,24 @@ export default function OrganizationItems({
                 </tr>
               </thead>
               <tbody>
-                {!data[tab].length ? (
+                {!visibleItems.length ? (
                   <tr>
-                    <td colSpan={6}>등록된 {label}가 없습니다.</td>
+                    <td colSpan={tab==='departments'?6:5}>{appliedSearch ? '검색 조건에 맞는 항목이 없습니다.' : `등록된 ${label}가 없습니다.`}</td>
                   </tr>
                 ) : (
-                  data[tab].map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
+                  visibleItems.slice((page - 1) * pageSize, page * pageSize).map(({item,depth,ancestors}) => (
+                    <tr key={item.id} className={tab === 'departments' && depth > 0 ? 'mobile-department-child' : undefined} style={tab === 'departments' ? { '--department-depth': depth } as CSSProperties : undefined}>
+                      <td data-label="이름">{tab==='departments'?<span className={`organization-department-name ${depth===0?'is-root':''}`} style={{'--department-depth':depth} as CSSProperties} title={[...ancestors,item.name].join(' › ')}>{item.name}{appliedSearch&&ancestors.length>0&&<small>{ancestors.join(' › ')}</small>}</span>:item.name}</td>
                       {tab === 'departments' && (
-                        <td>
+                        <td data-label="상위 부서">
                           {data.departments.find((x) => x.id === item.parentId)
                             ?.name || '최상위'}
                         </td>
                       )}
-                      <td>{item.sortOrder}</td>
-                      <td>{item.isActive ? '사용 중' : '사용 중지'}</td>
-                      <td>{item.memberCount}명</td>
-                      <td>
+                      <td data-label="정렬 순서">{item.sortOrder}</td>
+                      <td data-label="상태" className="mobile-card-usage"><span className={`mobile-usage-badge ${item.isActive ? 'is-active' : 'is-inactive'}`}>{item.isActive ? '사용 중' : '사용 중지'}</span></td>
+                      <td data-label="소속 인원">{item.memberCount}명</td>
+                      <td data-label="관리">
                         <div className="organization-row-actions">
                           {grants.includes('update') && (
                             <button
@@ -249,35 +267,28 @@ export default function OrganizationItems({
                 )}
               </tbody>
             </table>
-          </div>
+          </div><Pagination pageSizeControl={<PageSizeSelect value={pageSize} disabled={busy} onChange={size=>{setPageSize(size);setPage(1)}} />} page={page} pageSize={pageSize} total={visibleItems.length} disabled={busy} onChange={setPage} /></>
         )}
-        <button
-          className="text-button"
-          disabled={busy}
-          onClick={() => setRevision((x) => x + 1)}
-        >
-          항목 새로고침
-        </button>
+
       </section>
       {editing && (
         <OrganizationDialog
+          className="organization-item-dialog"
           title={`${label} ${editing === 'create' ? '등록' : '수정'}`}
           busy={busy}
-          onClose={() => {
+          onClose={() => requestNavigation(() => {
             setEditing(null)
             setError('')
-          }}
+          })}
         >
           {error && (
             <div className="alert error" role="alert">
               {error}
             </div>
           )}
-          <form onSubmit={save}>
-            <fieldset disabled={busy}>
-              <label>
-                {label}명
-                <input
+          <GuardedForm className="dialog-form" busy={busy} onSubmit={save}>
+            <div className="dialog-form-scroll"><fieldset disabled={busy}>
+              <label><FormLabel required>{label}명</FormLabel><input aria-label={String(label) + "명"}
                   name="name"
                   required
                   maxLength={100}
@@ -312,9 +323,7 @@ export default function OrganizationItems({
                   </select>
                 </label>
               )}
-              <label>
-                정렬 순서
-                <input
+              <label><FormLabel required>정렬 순서</FormLabel><input aria-label={"정렬 순서"}
                   type="number"
                   name="sortOrder"
                   min={0}
@@ -329,13 +338,14 @@ export default function OrganizationItems({
                   name="isActive"
                   defaultChecked={editing === 'create' || editing.isActive}
                 />
-                사용 중
+                사용
               </label>
-              <button type="submit" className="primary full">
+</fieldset></div><div className="dialog-actions"><button type="button" className="secondary" disabled={busy} onClick={() => requestNavigation(() => { setEditing(null); setError('') })}>취소</button>
+              <button type="submit" className="primary" disabled={busy}>
                 {busy ? '저장 중…' : `${label} 저장`}
               </button>
-            </fieldset>
-          </form>
+            </div>
+          </GuardedForm>
         </OrganizationDialog>
       )}
     </>

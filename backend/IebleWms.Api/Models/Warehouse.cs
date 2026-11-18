@@ -22,6 +22,7 @@ public sealed class Warehouse : AuditableEntity, IStorageItem
     public string? Type { get; set; }
     public string? Address { get; set; }
     public string? AddressDetail { get; set; }
+    public Guid? ContactUserId { get; set; }
     public string? ContactName { get; set; }
     public string? Notes { get; set; }
 }
@@ -38,6 +39,10 @@ public sealed class WarehouseZone : AuditableEntity, IStorageItem
 }
 public sealed class WarehouseRack : AuditableEntity, IStorageItem
 {
+    // Removed from operational queries; identity remains for historical document references.
+    [System.Text.Json.Serialization.JsonIgnore] public DateTimeOffset? DeletedAt { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public StorageBarcode? BarcodeRegistration { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped] public string? Barcode => BarcodeRegistration?.Value;
     [System.Text.Json.Serialization.JsonIgnore] public Guid? CreationRequestId { get; set; }
     [System.Text.Json.Serialization.JsonIgnore] public string? CreationRequestHash { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -54,6 +59,10 @@ public sealed class WarehouseRack : AuditableEntity, IStorageItem
 // visual plan coordinates belong to a separate future layout model.
 public sealed class StorageLocation : AuditableEntity, IStorageItem
 {
+    // Removed from operational queries; identity remains for historical document references.
+    [System.Text.Json.Serialization.JsonIgnore] public DateTimeOffset? DeletedAt { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public StorageBarcode? BarcodeRegistration { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped] public string? Barcode => BarcodeRegistration?.Value;
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TenantId { get; set; }
     public Guid WarehouseId { get; set; }

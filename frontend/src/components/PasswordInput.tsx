@@ -1,3 +1,4 @@
+import FormLabel from './FormLabel'
 import { useId, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
@@ -24,10 +25,11 @@ export default function PasswordInput({
   const message = `비밀번호는 최소 ${minLength}자 이상 입력해 주세요.`
   return (
     <div className="password-field">
-      <label htmlFor={inputId}>{label}</label>
+      <label htmlFor={inputId}><FormLabel required={props.required && !props.readOnly}>{label}</FormLabel></label>
       <div className="password-input-wrap">
         <input
           {...props}
+          aria-label={props['aria-label'] ?? label}
           id={inputId}
           type={visible ? 'text' : 'password'}
           minLength={minLength}

@@ -1,0 +1,14 @@
+/* Scoped to user account dialogs; other modal layouts remain unchanged. */
+.organization-dialog.user-account-dialog .dialog-section-fields { gap: 16px; align-items: start; }
+.organization-dialog.user-account-dialog label { gap: 5px; justify-content: flex-start; }
+.organization-dialog.user-account-dialog .member-credentials { gap: 16px; }
+.organization-dialog.user-account-dialog .member-password-help { font-size: 13px; margin: 5px 0 0; line-height: 1.5; }
+.organization-dialog.user-account-dialog :is(input:not([type=checkbox],[type=hidden]), select, .searchable-choice-trigger) { height: 40px; min-height: 40px; box-sizing: border-box; }
+:root dialog.organization-dialog.dialog-layout.user-credential-dialog { width: min(460px, calc(100vw - 24px)); min-width: 0; }
+.user-credential-dialog .dialog-body { padding: 24px; }
+.user-credential-details { display: grid; gap: 10px; margin: 0 0 16px; }
+.user-credential-details > div { display: grid; grid-template-columns: 90px minmax(0,1fr); gap: 12px; align-items: baseline; }
+.user-credential-details dt { color: var(--text-muted, #64748b); font-size: 13px; }
+.user-credential-details dd { margin: 0; font-weight: 600; color: #16345f; overflow-wrap: anywhere; }
+.organization-dialog.user-credential-dialog .dialog-actions { justify-content: flex-end; gap: 8px; }
+.organization-dialog.user-credential-dialog .dialog-actions button { flex: 0 0 auto; width: auto; min-width: 0; padding-inline: 18px; }

@@ -1,3 +1,7 @@
+using IebleWms.Api.Models;
+using IebleWms.Api.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using IebleWms.Api.Contracts;
 using IebleWms.Api.Organization;
@@ -24,5 +28,14 @@ public sealed class OrganizationStructureController(OrganizationStructureService
     [HttpPost("organization-items/{kind}/{id:guid}/delete"), Authorize(Policy = "TenantAdministrator"), Authorize(Policy = "Permission:organization-items:delete")]
     public async Task<IActionResult> Delete(Guid tenantId, string kind, Guid id, OrganizationItemDeleteRequest request, CancellationToken token) { await service.DeleteAsync(tenantId, Actor, kind, id, request.Version, token); return NoContent(); }
     [HttpPost("users/{userId:guid}/organization"), Authorize(Policy = "TenantMaster")]
-    public async Task<IActionResult> MasterOrganization(Guid tenantId, Guid userId, MemberOrganizationRequest request, CancellationToken token) => Ok(await employees.AssignMasterOrganizationAsync(tenantId, Actor, userId, request, token));
+    public async Task<IActionResult> MasterOrganization(Guid tenantId, Guid userId, MemberOrganizationRequest request, [FromServices] UserManager<ApplicationUser> users, [FromServices] TenantSessionService sessions, CancellationToken token)
+    {
+        var result = await employees.AssignMasterOrganizationAsync(tenantId, Actor, userId, request, token);
+        if (request.EmailSpecified)
+        {
+            var ticket = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+            await sessions.IssueAsync((await users.FindByIdAsync(Actor.ToString()))!, tenantId, ticket.Properties!);
+        }
+        return Ok(result);
+    }
 }

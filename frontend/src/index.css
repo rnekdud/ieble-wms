@@ -878,3 +878,26 @@ textarea:focus {
 .registration .password-field { margin-bottom: 15px; }
 .password-with-help > .password-field { margin-bottom: 7px; }
 .password-with-help > small { display: block; font-size: 11px; margin-bottom: 15px; }
+/* Shared table and administration filters stay inside the available content width. */
+.table-scroll{width:100%;min-width:0;max-width:100%}
+.admin-panel{min-width:0}
+.admin-filters{flex-wrap:wrap}
+.admin-filters label{flex:1 1 160px;min-width:0}
+
+.app-recovery { width: min(100% - 2rem, 42rem); margin: 12vh auto; padding: 1.5rem; line-height: 1.7; }
+
+.auth-header .brand { flex-shrink:0; }
+.auth-service-logo { display:block; flex:none; width:36px; height:36px; object-fit:contain; }
+
+/* First-login gate only: keep optional password-change dialogs unchanged. */
+.password-gate-required h1 { margin-bottom:14px; }
+.password-gate-required > .password-change-intro { margin:0 0 20px; padding:0; line-height:1.4; text-align:left; }
+.password-gate-required .password-field { margin-bottom:16px; }
+.password-gate-required .password-field > label { margin-bottom:5px; }
+.password-gate-required fieldset > small { margin:-10px 0 16px; line-height:1.4; }
+:root .password-gate-required > .password-gate-logout {
+ display:flex; align-items:center; justify-content:center; width:max-content; min-height:40px;
+ margin:14px auto 0; padding:8px 16px; border:0; border-radius:var(--ui-radius-button,12px);
+ background:#f7f7f7; color:#64748b; box-shadow:none;
+}
+:root .password-gate-required > .password-gate-logout:hover:not(:disabled) { background:#eceff3; color:#475569; }

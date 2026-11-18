@@ -15,13 +15,13 @@ public sealed class MembershipAccessService(WmsDbContext db)
     public async Task<bool> CanAuthenticateAsync(Guid userId, CancellationToken token = default) =>
         await IsIebleAdministratorAsync(userId, token) ||
         !await db.TenantMemberships.AsNoTracking().AnyAsync(x => x.UserId == userId, token) ||
-        await db.TenantMemberships.AsNoTracking().AnyAsync(x => x.UserId == userId && x.IsActive && x.Tenant.IsActive, token);
+        await Permissions.CollaboratorAccess.Memberships(db).AsNoTracking().AnyAsync(x => x.UserId == userId, token);
 
     // Platform administrators get no implicit tenant membership or tenant business authority.
     public Task<TenantRole?> GetTenantRoleAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken = default) =>
-        db.TenantMemberships.AsNoTracking()
+        Permissions.CollaboratorAccess.Memberships(db).AsNoTracking()
             .Where(x => x.UserId == userId && x.TenantId == tenantId &&
                 x.IsActive && x.User.IsActive && x.Tenant.IsActive)
-            .Select(x => (TenantRole?)x.Role)
+            .Select(x => (TenantRole?)(x.AccountType == "External" ? TenantRole.Employee : x.Role))
             .SingleOrDefaultAsync(cancellationToken);
 }

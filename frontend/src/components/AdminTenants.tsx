@@ -1,7 +1,13 @@
+import PageSizeSelect from './PageSizeSelect'
+import FormLabel from './FormLabel'
+import ReportPeriodFields from './workspace/ReportPeriodFields'
+import SearchFilters from './workspace/SearchFilters'
+import OrganizationDialog from './workspace/OrganizationDialog'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api, ApiError } from '../api'
 import Pagination from './Pagination'
+import AdminTenantDetail from './AdminTenantDetail'
 
 import {
   tenantStatuses,
@@ -17,6 +23,8 @@ type Tenant = {
   version: string
   isActive: boolean
   billingStatus: string
+  userCount: number
+  estimatedMonthlyKrw: number
   billingAccess: { state: string }
   canReactivate: boolean
   serviceStatus: string
@@ -47,20 +55,18 @@ const actions: Record<string, Action[]> = {
 }
 const date = (value: string) => new Date(value).toLocaleString('ko-KR')
 
-export default function AdminTenants() {
+export default function AdminTenants({ billingOnly = false }: { billingOnly?: boolean }) {
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const [extra, setExtra] = useState({ start: '', end: '', billingStatus: '' })
+  const [appliedExtra, setAppliedExtra] = useState(extra)
   const [filter, setFilter] = useState('')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState({
     status: '',
     search: '',
-    page: 1,
+    page: 1, pageSize: 20,
   })
   const [data, setData] = useState<TenantList | null>(null)
-  const [overview, setOverview] = useState<{
-    tenantCount: number
-    userCount: number
-    billingPendingCount: number
-  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -85,29 +91,21 @@ export default function AdminTenants() {
       historyRequest.current++
     }
     const params = new URLSearchParams({
+      ...appliedExtra,
       status: query.status,
       search: query.search,
-      page: String(query.page),
+      page: String(query.page), pageSize: String(query.pageSize),
     })
-    Promise.all([
-      api<TenantList>(`/api/admin/tenants?${params}`),
-      api<{
-        tenantCount: number
-        userCount: number
-        billingPendingCount: number
-      }>('/api/admin/overview'),
-    ])
-      .then(([list, summary]) => {
+    api<TenantList>(`/api/admin/tenants?${params}`)
+      .then((list) => {
         if (live) {
           setData(list)
-          setOverview(summary)
           setError('')
         }
       })
       .catch((e: unknown) => {
         if (live) {
           setData(null)
-          setOverview(null)
           setError(
             e instanceof Error ? e.message : '기업 목록을 불러오지 못했습니다.',
           )
@@ -123,11 +121,12 @@ export default function AdminTenants() {
       live = false
       cancelHistory()
     }
-  }, [query, revision])
-  function applyFilter(event: FormEvent) {
-    event.preventDefault()
+  }, [query, revision, appliedExtra])
+  function applyFilter() {
+    if (loading) return
+    setAppliedExtra(extra)
     setLoading(true)
-    setQuery({ status: filter, search, page: 1 })
+    setQuery(q => ({ ...q, status: filter, search, page: 1 }))
     setHistory(null)
     setNotice('')
   }
@@ -150,25 +149,7 @@ export default function AdminTenants() {
   }
   return (
     <>
-      <span className="eyebrow">PLATFORM MANAGEMENT</span>
-      <h1>아이블 관리</h1>
-      <p className="subtitle">
-        가입 기업의 결제 준비와 서비스 이용 상태를 확인하세요.
-      </p>
-      <div className="stats">
-        <div>
-          <span>등록 기업</span>
-          <strong>{overview?.tenantCount ?? '—'}</strong>
-        </div>
-        <div>
-          <span>전체 사용자</span>
-          <strong>{overview?.userCount ?? '—'}</strong>
-        </div>
-        <div>
-          <span>미결제 기업 (무료 이용 포함)</span>
-          <strong>{overview?.billingPendingCount ?? '—'}</strong>
-        </div>
-      </div>
+      {detailId && <AdminTenantDetail id={detailId} onClose={() => setDetailId(null)} />}
       {error && (
         <div className="alert error" role="alert">
           {error}
@@ -181,12 +162,13 @@ export default function AdminTenants() {
       )}
       <section className="panel admin-panel">
         <div className="panel-title">
-          <h2>기업 관리</h2>
-          <button className="secondary" onClick={reload} disabled={loading}>
-            새로고침
-          </button>
+          <h2>{billingOnly ? '요금제 및 결제 현황' : '기업 관리'}</h2>
+
         </div>
-        <form className="admin-filters" onSubmit={applyFilter}>
+        {billingOnly && <p className="alert">실제 저장된 결제 상태와 월 예상 요금 조회입니다. 결제·카드 등록·환불은 실행하지 않습니다.</p>}
+        <SearchFilters className="admin-filters" busy={loading} onSearch={applyFilter} onReset={() => { const defaults={start:"",end:"",billingStatus:""}; setExtra(defaults); setAppliedExtra(defaults); setFilter(""); setSearch(""); setQuery({status:"",search:"",page:1,pageSize:20}); setHistory(null); setNotice(""); reload() }}>
+          <label>결제 상태<select value={extra.billingStatus} onChange={e => { setExtra(x => ({...x,billingStatus:e.target.value})) }}><option value="">전체</option>{Object.entries(billingStatuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+          <ReportPeriodFields prefix="가입일" start={extra.start} end={extra.end} onChange={range => setExtra(x => ({ ...x, ...range }))} />
           <label>
             기업 상태
             <select
@@ -194,9 +176,6 @@ export default function AdminTenants() {
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value)
-                setLoading(true)
-                setQuery((q) => ({ ...q, status: e.target.value, page: 1 }))
-                setHistory(null)
               }}
             >
               <option value="">전체 상태</option>
@@ -216,10 +195,8 @@ export default function AdminTenants() {
               placeholder="기업명 또는 사업자등록번호"
             />
           </label>
-          <button className="primary" disabled={loading}>
-            조회
-          </button>
-        </form>
+
+        </SearchFilters>
         <p className="list-count" aria-live="polite">
           {loading
             ? '기업 목록을 불러오는 중…'
@@ -231,6 +208,7 @@ export default function AdminTenants() {
               <tr>
                 <th>기업 / 사업자등록번호</th>
                 <th>가입일</th>
+                <th>활성 사용자 / 예상 요금</th>
                 <th>담당자 (기업 마스터)</th>
                 <th>상태</th>
                 <th>관리</th>
@@ -245,7 +223,8 @@ export default function AdminTenants() {
                       {tenant.businessRegistrationNumber || '미등록'}
                     </small>
                   </td>
-                  <td>{date(tenant.createdAt)}</td>
+                  <td>{date(tenant.createdAt)}<small>최근 접속: 미기록</small></td>
+                  <td>{tenant.userCount}명<small>사용자당 월 요금제</small><small>{tenant.estimatedMonthlyKrw?.toLocaleString()}원 / 월 예상</small></td>
                   <td>
                     {tenant.contacts.length ? (
                       tenant.contacts.map((contact) => (
@@ -272,7 +251,8 @@ export default function AdminTenants() {
                   </td>
                   <td>
                     <div className="row-actions">
-                      {tenant.isActive &&
+                      <button className="secondary" onClick={() => setDetailId(tenant.id)}>상세</button>
+                      {!billingOnly && tenant.isActive &&
                         (actions[tenant.serviceStatus] || [])
                           .filter(
                             (action) =>
@@ -308,7 +288,7 @@ export default function AdminTenants() {
         {!loading && !data?.items.length && (
           <p className="empty-state">조건에 맞는 기업이 없습니다.</p>
         )}
-        <Pagination
+        <Pagination pageSizeControl={<PageSizeSelect value={query.pageSize} onChange={pageSize => { setQuery(v => ({ ...v, pageSize, page: 1 })); setLoading(true); }} />}
           label="기업 목록 페이지"
           page={query.page}
           pageSize={data?.pageSize ?? 20}
@@ -390,16 +370,10 @@ function StatusDialog({
   onDone: () => void
   onConflict: () => void
 }) {
-  const dialog = useRef<HTMLDialogElement>(null)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [conflicted, setConflicted] = useState(false)
-  useEffect(() => {
-    const element = dialog.current!
-    element.showModal()
-    return () => element.close()
-  }, [])
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!reason.trim()) {
@@ -426,18 +400,8 @@ function StatusDialog({
     }
   }
   return (
-    <dialog
-      ref={dialog}
-      className="status-dialog"
-      aria-labelledby="status-dialog-title"
-      onCancel={(e) => {
-        e.preventDefault()
-        if (!busy) onClose()
-      }}
-    >
-      <form onSubmit={submit}>
-        <span className="eyebrow">CONFIRM CHANGE</span>
-        <h2 id="status-dialog-title">기업 {labels[action]}</h2>
+    <OrganizationDialog size="small" title={`기업 ${labels[action]}`} busy={busy} onClose={onClose}>
+      <form className="dialog-form" onSubmit={submit}><div className="dialog-form-scroll"><fieldset disabled={busy}>
         <p>
           <strong>{tenant.name}</strong> 기업을 {labels[action]}하시겠습니까?
         </p>
@@ -447,9 +411,7 @@ function StatusDialog({
             : '처리 후 소속 구성원이 WMS 업무에 접근할 수 있습니다.'}{' '}
           변경 사유는 기업 구성원에게 표시됩니다.
         </p>
-        <label>
-          변경 사유
-          <textarea
+        <label><FormLabel required>변경 사유</FormLabel><textarea
             autoFocus
             required
             maxLength={1000}
@@ -465,7 +427,7 @@ function StatusDialog({
             {error}
           </div>
         )}
-        <div className="dialog-actions">
+        </fieldset></div><div className="dialog-actions">
           <button
             type="button"
             className="secondary"
@@ -479,6 +441,6 @@ function StatusDialog({
           </button>
         </div>
       </form>
-    </dialog>
+    </OrganizationDialog>
   )
 }

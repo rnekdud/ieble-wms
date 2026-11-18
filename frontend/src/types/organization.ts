@@ -1,4 +1,14 @@
 export type Employee = {
+  permissionGradeId?: string | null
+  accountType: 'Internal' | 'External'
+  collaboratorId: string | null
+  useIndividualPermissions: boolean
+  partnerId: string | null
+  companyName: string | null
+  businessRegistrationNumber: string | null
+  companyPhone: string | null
+  contactPhone: string | null
+  contactEmail: string | null
   departmentId: string | null
   positionId: string | null
   departmentName: string | null

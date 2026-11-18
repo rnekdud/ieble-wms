@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace IebleWms.Api.Tests;
-public sealed class WarehouseWorkspaceTests
+public sealed partial class WarehouseWorkspaceTests
 {
     private sealed record Fixture(Guid Tenant, Guid Foreign, string Password)
     { public string Root => $"/api/tenants/{Tenant}/warehouses"; }
@@ -64,7 +64,7 @@ public sealed class WarehouseWorkspaceTests
     {
         using var f = new AuthFactory(); using var c = f.Client(); var t = await Seed(f); await Login(c, t); var req = Draft();
         Assert.Equal(0, (await c.GetFromJsonAsync<JsonElement>(t.Root)).GetProperty("total").GetInt32());
-        var result = await Save(c, t.Root + "/workspace", req); Assert.Equal("WH-0001", result.Code);
+        var result = await Save(c, t.Root + "/workspace", req); Assert.Equal("WH01", result.Code);
         Assert.NotEqual(req.Zones[0].ClientId, result.Zones[req.Zones[0].ClientId]); Assert.Equal(12, result.RackLocations.Count);
         Assert.Equal(result.WarehouseId, (await Save(c, t.Root + "/workspace", req)).WarehouseId);
         var loaded = await Edit(c, t.Root + "/" + result.WarehouseId);
@@ -113,7 +113,7 @@ public sealed class WarehouseWorkspaceTests
         var response = await AuthTests.Post(c, t.Root + "/workspace", req); Assert.False(response.IsSuccessStatusCode);
         using var verify = f.Services.CreateScope(); var final = verify.ServiceProvider.GetRequiredService<WmsDbContext>();
         Assert.Empty(await final.Warehouses.ToListAsync()); Assert.Empty(await final.WarehouseZones.ToListAsync()); Assert.Empty(await final.WarehouseRacks.ToListAsync()); Assert.Empty(await final.StorageLocations.ToListAsync()); Assert.Empty(await final.WarehousePlans.ToListAsync()); Assert.Empty(await final.WarehousePlanObjects.ToListAsync()); Assert.Empty(await final.WarehouseChanges.ToListAsync()); Assert.Empty(await final.WarehouseSaveReceipts.ToListAsync());
-        if (failure is not ("audit" or "receipt")) { var fixedRequest = Draft(); fixedRequest.RequestId = req.RequestId; Assert.Equal("WH-0001", (await Save(c, t.Root + "/workspace", fixedRequest)).Code); }
+        if (failure is not ("audit" or "receipt")) { var fixedRequest = Draft(); fixedRequest.RequestId = req.RequestId; Assert.Equal("WH01", (await Save(c, t.Root + "/workspace", fixedRequest)).Code); }
     }
     [Fact]
     public async Task EditingGeometryAndExpansionPreserveExistingSlotIdsCodesStateAndOmittedStructure()

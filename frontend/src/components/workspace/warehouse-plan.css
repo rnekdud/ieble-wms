@@ -65,3 +65,157 @@
 .warehouse-detail-plan > .warehouse-plan-canvas { height: clamp(400px, 55vh, 640px); }
 .warehouse-section-heading { margin: 24px 0 10px; }
 .warehouse-detail .warehouse-details dd { overflow-wrap: anywhere; }
+
+/* Collapse the object palette without leaving the editor or hiding rack properties. */
+.plan-tools[hidden] { display:none; }
+.plan-workbench.is-tools-hidden { grid-template-columns:minmax(0,1fr) 225px; }
+.plan-toolbar button[aria-pressed=true] { background:#e1f0e9; border-color:#17796c; color:#126b59; }
+@media(max-width:1100px) { .plan-workbench.is-tools-hidden { grid-template-columns:minmax(0,1fr); } }
+
+/* Warehouse creation and editing share a canvas-first, progressively disclosed layout. */
+.warehouse-workspace-editor { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.warehouse-editor-header { position: sticky; top: 64px; z-index: 15; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:16px 0; background:var(--wms-bg, #f5f8fa); border-bottom:1px solid #dce7e2; }
+.warehouse-editor-header h2 { font-size:22px; margin:0 0 4px; }
+.warehouse-editor-header p { margin:0; }
+.warehouse-editor-actions { display:flex; gap:8px; align-items:center; flex-shrink:0; }
+.plan-more summary { cursor:pointer; font-size:12px; padding:10px; white-space:nowrap; }
+.warehouse-basic-fields { border:0; padding:20px 0 0; margin:0; }
+.warehouse-basic-fields legend { padding:0; font-size:15px; padding-top:20px; }
+.warehouse-basic-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 24px; }
+.warehouse-basic-grid small, .warehouse-optional summary small { font-weight:400; color:#647b75; }
+.warehouse-basic-grid textarea { min-height:72px; }
+.warehouse-system-code { margin:0 0 16px; font-size:12px; color:#647b75; }
+.warehouse-system-code strong { margin-left:10px; font-weight:500; }
+.warehouse-optional { margin-top:16px; }
+.warehouse-optional summary, .workspace-structure-list summary { cursor:pointer; font-size:13px; font-weight:600; padding:10px 0; }
+.warehouse-optional summary small, .workspace-structure-list summary small { margin-left:12px; }
+.warehouse-optional[open] > .warehouse-basic-grid { margin-top:12px; }
+.warehouse-field-error { display:block; color:#b23c32 !important; margin-top:4px; }
+.warehouse-workspace-plan { padding-top:20px; margin-top:20px; border-top:1px solid #dce7e2; scroll-margin-top:180px; }
+.warehouse-plan-heading h3 { font-size:16px; margin:0; }
+.warehouse-plan-heading p { margin:6px 0 0; }
+.plan-command-bar { gap:8px; margin:14px 0 8px; padding:8px 0; border-bottom:1px solid #dce7e2; }
+.plan-tool-group { display:flex; gap:4px; align-items:center; padding-right:8px; border-right:1px solid #dce7e2; flex-wrap:wrap; }
+.plan-command-bar button { min-height:34px; padding:7px 9px; font-size:12px; }
+.plan-more { position:relative; }
+.plan-more-content { position:absolute; top:100%; right:0; z-index:12; width:260px; padding:12px; border:1px solid #dce7e2; border-radius:8px; background:#fff; display:flex; flex-wrap:wrap; gap:8px; }
+.plan-more-content label { display:flex; align-items:center; gap:6px; margin:0; }
+.plan-context-bar { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; min-height:36px; font-size:12px; }
+.plan-context-bar p { margin:7px 0; }
+.plan-catalog { flex-shrink:0; max-width:100%; }
+.plan-catalog summary { padding:7px 0; cursor:pointer; }
+.plan-catalog .plan-object-list { display:flex; flex-wrap:wrap; max-height:none; gap:4px; }
+.plan-object-list button { width:auto; max-width:220px; }
+.plan-workbench, .plan-workbench.is-tools-hidden { grid-template-columns:minmax(0,1fr); gap:16px; margin-top:8px; }
+.plan-workbench.has-properties { grid-template-columns:minmax(0,1fr) 300px; }
+.plan-properties { background:#fff; padding:16px; border:0; border-left:1px solid #dce7e2; border-radius:0; }
+.plan-properties > h3 { margin:0 0 12px; font-size:14px; }
+.plan-properties fieldset { display:block; }
+.plan-structure-properties { margin:0; padding:0; border:0; }
+.structure-link-options { margin-bottom:12px; font-size:12px; }
+.structure-link-options summary, .barcode-output-details summary { cursor:pointer; color:#42675d; padding:8px 0; font-size:12px; }
+.plan-properties .workspace-structure-fields label { margin-top:12px; }
+.plan-properties .rack-barcode-fields { margin-top:12px; }
+.plan-geometry-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.workspace-structure-list { padding-top:12px; margin-top:20px; }
+.workspace-structure-list > p { max-width:720px; }
+.warehouse-plan-canvas { height:clamp(440px,65vh,780px); }
+@media(max-width:1100px) {
+  .plan-workbench.has-properties { grid-template-columns:minmax(0,1fr) 280px; }
+  .plan-properties { grid-column:auto; }
+  .plan-more-content { right:auto; left:0; }
+}
+@media(max-width:900px) {
+  .plan-workbench.has-properties { grid-template-columns:minmax(0,1fr); }
+  .plan-properties { border-left:0; border-top:1px solid #dce7e2; }
+}
+@media(max-width:760px) {
+  .warehouse-editor-header { top:60px; flex-wrap:wrap; gap:8px; padding:10px 0; }
+  .warehouse-editor-header h2 { font-size:19px; }
+  .warehouse-editor-header p { display:none; }
+  .warehouse-editor-actions { margin-left:auto; gap:5px; }
+  .warehouse-editor-actions button { padding:8px 10px; }
+  .warehouse-basic-grid { grid-template-columns:minmax(0,1fr); }
+  .warehouse-optional summary small { display:block; margin:6px 0 0; }
+  .plan-context-bar { flex-wrap:wrap; gap:2px; }
+  .warehouse-plan-canvas { height:440px; }
+  .plan-more-content { max-width:calc(100vw - 64px); }
+}
+.wms-content .warehouse-workspace-editor { padding:0; border:0; background:transparent; box-shadow:none; overflow:visible; }
+.warehouse-editor-header { height:auto; min-height:76px; }
+.warehouse-basic-fields { min-width:0; }
+.warehouse-basic-fields legend { float:left; width:100%; margin-bottom:12px; }
+.warehouse-basic-fields legend + * { clear:both; }
+.plan-command-bar { position:relative; }
+.plan-command-bar .plan-more { position:static; }
+.plan-command-bar .plan-more-content { left:auto; right:0; }
+.warehouse-workspace-editor :is(input,select,textarea,summary,button) { scroll-margin-top:180px; scroll-margin-bottom:32px; }
+.warehouse-basic-fields { padding-top:0; }
+.warehouse-basic-fields legend { padding-top:16px; margin-bottom:8px; }
+.warehouse-system-code { margin-bottom:12px; }
+.warehouse-optional { margin-top:10px; }
+.warehouse-workspace-plan { margin-top:14px; padding-top:16px; }
+
+/* Display-only selected rack annotation. It must never intercept canvas gestures. */
+.rack-floating-label { position:absolute; z-index:3; pointer-events:none; user-select:none; visibility:hidden; max-width:calc(100% - 16px); box-sizing:border-box; padding:6px 11px; border:1px solid #9dbdb3; border-radius:7px; background:#fff; color:#203d4b; font-size:13px; line-height:1.45; text-align:center; overflow-wrap:anywhere; box-shadow:0 2px 7px #173f3120; }
+.rack-floating-label strong { font-weight:700; }
+.rack-floating-label::after { content:''; position:absolute; left:var(--rack-label-anchor,50%); top:100%; height:7px; border-left:1px solid #478877; }
+.rack-floating-label[data-below=true]::after { top:auto; bottom:100%; }
+
+.rack-floating-label.rack-floating-editor { pointer-events:auto; user-select:auto; width:252px; padding:10px 12px; text-align:left; }
+.rack-floating-editor > strong { display:block; margin-bottom:8px; overflow-wrap:anywhere; }
+.rack-floating-inputs { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+.rack-floating-inputs > label { display:grid; gap:4px; margin:0!important; min-width:0; color:#405c66; font-size:12px; }
+.rack-floating-inputs input { min-width:0; width:100%; min-height:32px; height:32px; padding:4px 7px; font-size:14px; }
+.rack-floating-inputs input[aria-invalid=true] { border-color:#b63a3a; }
+.rack-floating-inputs .warehouse-field-error { font-size:11px; line-height:1.45; }
+.rack-floating-count { display:block; margin-top:8px; font-size:11px; color:#62766f; }
+
+/* Keep the editable overlay compact and leave the Konva rotation handle accessible. */
+.warehouse-plan-canvas .rack-floating-editor { padding:8px 10px; }
+.warehouse-plan-canvas .rack-floating-editor > strong { margin-bottom:6px; }
+.warehouse-plan-canvas .rack-floating-inputs > label { grid-template-columns:auto minmax(0,1fr); align-items:center; gap:5px; }
+.warehouse-plan-canvas .rack-floating-inputs input { min-height:30px; height:30px; padding:3px 5px; }
+.rack-floating-inputs .warehouse-field-error { grid-column:1/-1; }
+.rack-floating-editor::after { height:57px; pointer-events:none; }
+.rack-floating-editor[data-below=true]::after { height:7px; }
+
+.plan-editor-surface .plan-grid-options label { display:flex; align-items:center; gap:5px; margin:0; font-size:12px; }
+.plan-editor-surface .plan-grid-options input { width:14px; }
+:root .plan-editor-surface .plan-grid-options label { display:flex; flex-direction:row; align-items:center; gap:5px; }
+.plan-editor-surface .plan-command-bar button { min-height:36px; }
+.plan-editor-surface .plan-properties fieldset { display:block; }
+.plan-editor-surface .plan-properties .plan-geometry-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.workspace-structure-fields .rack-dimension-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.workspace-structure-fields .rack-dimension-row label { min-width:0; margin:8px 0; }
+.workspace-structure-fields .rack-dimension-row input { width:100%; min-width:0; height:36px; }
+.workspace-structure-fields input[readonly] { color:#5c6c81; background:#f2f5f9; border-color:#e5eaf1; cursor:default; }
+.plan-editor-surface .rack-secondary-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.plan-editor-surface .rack-barcode-fields { border-top:1px solid #e5eaf1; margin-top:14px; padding-top:12px; }
+.plan-editor-surface .rack-barcode-label { padding:8px 0; margin:0; border:0; background:white; gap:6px; }
+.plan-editor-surface .rack-barcode-label img { max-width:100%; height:70px; object-fit:contain; }
+.plan-editor-surface .rack-barcode-label p { margin:4px 0; }
+.plan-editor-surface .rack-barcode-label .organization-row-actions { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 0; padding:0; border:0; }
+.plan-editor-surface .rack-barcode-label button { padding:7px 9px; font-size:12px; }
+.template-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.workspace-structure-scroll { max-height:360px; overflow:auto; overscroll-behavior:contain; }
+.workspace-rack-node { border-bottom:1px solid #e5eaf1; padding:10px 0; }
+.workspace-rack-node > summary { cursor:pointer; font-weight:600; color:#16345f; }
+.workspace-rack-node small { font-weight:400; color:#627187; margin-left:8px; }
+.workspace-structure-row button[aria-pressed=true] { background:#fff4cc; color:#16345f; }
+.workspace-structure-row button small { display:block; text-align:left; }
+.workspace-location-codes { list-style:none; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:6px 12px; font-size:12px; font-variant-numeric:tabular-nums; }
+.workspace-location-codes li { overflow-wrap:anywhere; padding:4px 8px; background:#f5f7fa; }
+
+/* Rack placement properties share two equal columns; colors retain the native picker. */
+:root body .workspace-structure-fields .rack-secondary-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 12px; margin-top:16px; }
+:root body .workspace-structure-fields .rack-secondary-row > label { display:flex; flex-direction:column; gap:5px; margin:0!important; min-width:0; }
+:root body .workspace-structure-fields .rack-active-field { margin:16px 0 0; gap:8px; }
+:root body .plan-color-control { display:flex; align-items:center; gap:6px; min-width:0; width:100%; height:40px; box-sizing:border-box; padding:0 6px; border:1px solid var(--choice-border,#cbd5e1); border-radius:8px; background:#fff; }
+:root body .plan-color-control > input[type=color] { flex:none; width:22px; height:22px; min-height:0; padding:0; margin:0; border:0; border-radius:3px; background:transparent; cursor:pointer; }
+:root body .plan-color-control > input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
+:root body .plan-color-control > input[type=color]::-webkit-color-swatch { border:1px solid #cbd5e1; border-radius:3px; }
+:root body .plan-color-control > span { min-width:0; font-size:11px; color:#526277; font-variant-numeric:tabular-nums; }
+:root body .plan-color-control:focus-within { outline:2px solid #16345f; outline-offset:2px; }
+:root body .plan-color-control:has(input:disabled) { background:#f1f5f9; opacity:.6; }
+.plan-rotation-hint { position:absolute; left:12px; bottom:12px; pointer-events:none; padding:4px 7px; border-radius:5px; background:#ffffffeb; color:#526277; font-size:11px; }

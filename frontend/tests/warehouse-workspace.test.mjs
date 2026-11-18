@@ -12,6 +12,16 @@ test('3 by 4 draft rack previews twelve deterministic slots without changing dra
  assert.equal(slots.length,12); assert.equal(slots[0].code,'R-1-L01-B01'); assert.equal(slots[11].id,'rack-client:3:4'); assert.equal(JSON.stringify(rack),before)
  assert.deepEqual(previewRack(rack),slots); assert.deepEqual(previewRack({...rack,levels:100,bays:100}),[])
 })
+test('displayed rack capacity matches generated slots and is never a separate saved field', () => {
+ for (const [levels,bays,count] of [[3,4,12],[5,6,30],[2,10,20],[1,8,8]]) {
+  const d=draft(), rack={...newStructure('rack','랙'),code:'R',levels,bays}
+  d.racks=[rack]
+  assert.equal(previewRack(rack).length,count)
+  const saved=workspaceRequest(d,blankPlan(),emptyVersion,false,'request').racks[0]
+  assert.equal(saved.levels*saved.bays,count)
+  assert.equal('totalLocations' in saved,false)
+ }
+})
 test('expanded preview preserves actual IDs, customized location codes and status', () => {
  const rack = {...newStructure('rack','랙'),id:'rack',levels:4,bays:4,minimumLevels:3,minimumBays:4,code:'R'}
  const existing = {...previewRack(rack)[0],id:'real-slot',code:'CUSTOM',isActive:false}

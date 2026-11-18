@@ -12,9 +12,9 @@ public sealed class TenantSessionService(WmsDbContext db, SignInManager<Applicat
 {
     public async Task<Guid?> ResolveAsync(Guid userId, CancellationToken token = default)
     {
-        var memberships = await db.TenantMemberships.AsNoTracking().Where(x => x.UserId == userId && x.IsActive && x.User.IsActive && x.Tenant.IsActive)
+        var memberships = await Permissions.CollaboratorAccess.Memberships(db).AsNoTracking().Where(x => x.UserId == userId)
             .Select(x => new { x.TenantId, x.IsDefault }).ToListAsync(token);
-        return memberships.Count == 1 ? memberships[0].TenantId : memberships.SingleOrDefault(x => x.IsDefault)?.TenantId;
+        return memberships.Count == 1 ? memberships[0].TenantId : null;
     }
     public Task IssueAsync(ApplicationUser user, Guid? tenantId, AuthenticationProperties properties) =>
         signIn.SignInWithClaimsAsync(user, properties, tenantId is Guid id ? new[] { new Claim(AuthConfiguration.TenantClaim, id.ToString()) } : Array.Empty<Claim>());

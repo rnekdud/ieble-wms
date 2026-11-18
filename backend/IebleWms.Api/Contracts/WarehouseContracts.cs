@@ -6,6 +6,7 @@ namespace IebleWms.Api.Contracts;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public class StorageItemRequest
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public RackBarcodeChange? Barcode { get; set; }
     public Guid? RequestId { get; set; }
     public Guid Version { get; set; }
     [Required, StringLength(200)] public string Name { get; set; } = "";
@@ -26,6 +27,8 @@ public sealed class WarehouseRequest
     [StringLength(100)] public string? Type { get; set; }
     [StringLength(500)] public string? Address { get; set; }
     [StringLength(300)] public string? AddressDetail { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? ContactUserId { get; set; }
     [StringLength(200)] public string? ContactName { get; set; }
     [StringLength(2000)] public string? Notes { get; set; }
 }

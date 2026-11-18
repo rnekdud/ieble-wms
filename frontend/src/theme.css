@@ -1,0 +1,225 @@
+/* Shared presentation only. :root raises specificity above lazily loaded page
+   styles so navigation order cannot change the design system. No geometry or
+   object/status palettes are overridden inside Konva / Three.js. */
+:root { color:var(--ui-ink); background:var(--ui-canvas); }
+:root body, :root #root, :root .shell,
+:root :is(.wms-layout,.wms-main,.wms-content,.workspace-content,.password-gate-screen) {
+  background:var(--ui-canvas); color:var(--ui-ink);
+}
+:root :is(.wms-header,.shell > header,.registration-header) {
+  background:var(--ui-surface); border-color:var(--ui-line); box-shadow:none;
+}
+:root :is(h1,h2,h3,.wms-page-heading h1,.wms-company,.wms-company svg,.brand,.user-profile-trigger) { color:var(--ui-navy); }
+:root :is(.wms-breadcrumb,.wms-note,.organization-help,.permission-help,.scope-note,.history-help,.subtitle,.eyebrow,.wms-pagination-summary) { color:var(--ui-muted); }
+:root a { color:var(--ui-navy); }
+:root :is(button,a,input,select,textarea):focus-visible { outline:3px solid var(--ui-focus); outline-offset:3px; }
+:root :is(button,input,select,textarea) { font-family:inherit; }
+
+/* Navigation: keep original routes, collapse behavior, icons and scrolling. */
+:root .wms-layout .wms-sidebar, :root .workspace-layout > aside {
+  background:var(--ui-navy); color:#fff; border-color:var(--ui-light-navy);
+}
+:root .wms-brand { color:#fff; }
+:root .wms-brand small { color:#d6e1ef; border-color:#547092; }
+:root .brand-mark { background:var(--ui-yellow); color:var(--ui-deep-navy); border-radius:var(--ui-radius-badge); }
+:root .wms-sidebar-caption, :root .wms-sidebar-bottom,
+:root .workspace-layout > aside :is(.eyebrow,.sidebar-foot,small) { color:#c4d3e7; }
+:root .wms-sidebar-bottom { border-color:var(--ui-light-navy); }
+:root .wms-subnav { border-color:#547092; }
+:root .wms-sidebar nav { scrollbar-color:#6b84a4 var(--ui-navy); }
+:root .wms-sidebar .wms-nav-link,
+:root .workspace-layout > aside nav button {
+  color:#f2f6fc; border-radius:var(--ui-radius-menu); background:transparent;
+}
+:root .wms-sidebar .wms-nav-link:hover,
+:root .workspace-layout > aside nav button:hover { color:#fff; background:var(--ui-light-navy); }
+:root .wms-sidebar .wms-nav-link.is-current,
+:root .workspace-layout > aside nav .nav-active {
+  background:var(--ui-yellow); color:var(--ui-deep-navy); box-shadow:none; font-weight:700;
+}
+:root .wms-sidebar .wms-nav-link.is-parent-current { color:var(--ui-yellow); }
+:root .wms-sidebar .wms-icon-button { color:#d6e1ef; }
+:root .wms-sidebar .wms-icon-button:hover { color:#fff; background:var(--ui-light-navy); }
+:root .workspace-layout > aside { overflow-y:auto; }
+
+/* Shared actions. Yellow is reserved for primary actions and selection. */
+:root :is(.wms-layout,.organization-dialog,.admin-panel,.status-dialog,.shell,.password-gate-dialog) :is(.primary,.secondary),
+:root :is(.primary,.secondary) { border-radius:var(--ui-radius-button); }
+:root .primary { background:var(--ui-yellow); color:var(--ui-deep-navy); border:1px solid transparent; }
+:root .primary:hover:not(:disabled) { background:var(--ui-yellow-hover); color:var(--ui-deep-navy); }
+:root :is(.wms-layout,.organization-dialog,.admin-panel,.shell) .secondary,
+:root .secondary { background:var(--ui-surface); border:1px solid var(--ui-line); color:var(--ui-navy); }
+:root :is(.wms-layout,.organization-dialog,.admin-panel,.shell) .secondary:hover:not(:disabled),
+:root .secondary:hover:not(:disabled) { background:var(--ui-neutral); border-color:var(--ui-light-navy); }
+:root :is(.text-button,.wms-icon-button,.password-visibility,.warehouse-directory-open) { color:var(--ui-navy); border-radius:var(--ui-radius-button); }
+:root :is(.wms-icon-button,.password-visibility,.user-profile-trigger):hover,
+:root .user-profile-trigger[aria-expanded=true] { background:var(--ui-neutral); }
+:root button:disabled { cursor:not-allowed; }
+:root .user-profile-trigger, :root .user-profile-panel button { border-radius:var(--ui-radius-button); }
+:root .user-profile-panel { border-color:var(--ui-line); border-radius:var(--ui-radius-card); box-shadow:var(--ui-shadow-popover); }
+:root .user-profile-panel button { color:var(--ui-navy); }
+:root .user-profile-panel button:hover { background:var(--ui-neutral); }
+
+/* Forms: retain compact business-field sizing and native validation. */
+:root :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea),
+:root :is(.wms-content,.organization-dialog,.admin-panel) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea),
+:root .warehouse-wizard .warehouse-basic-grid :is(input:not([type=checkbox]),select,textarea) {
+  border-radius:var(--ui-radius-input); border-color:var(--ui-line); background:var(--ui-surface); color:var(--ui-ink);
+}
+:root :is(input,select,textarea):focus { border-color:var(--ui-light-navy); box-shadow:0 0 0 3px rgb(22 52 95 / 9%); }
+:root :is(input,select,textarea):disabled { background:var(--ui-neutral); }
+:root :is(input,select,textarea)[aria-invalid=true],
+:root :is(.registration-form,.dialog-layout) :is(input,select,textarea):user-invalid { border-color:#b8423a; }
+:root :is(input[type=checkbox],input[type=radio]),
+:root :is(.wms-content,.organization-dialog,.admin-panel) :is(input[type=checkbox],input[type=radio]) { accent-color:var(--ui-navy); }
+:root :is(.wms-content,.organization-dialog,.admin-panel) label { color:var(--ui-ink); }
+:root .searchable-choice-trigger { border-radius:var(--ui-radius-input); border-color:var(--ui-line); color:var(--ui-ink); }
+:root .searchable-choice-trigger:focus-visible, :root .searchable-choice-trigger[aria-expanded=true] { outline-color:var(--ui-focus); }
+:root .searchable-choice-popup { border-radius:var(--ui-radius-card); border-color:var(--ui-line); box-shadow:var(--ui-shadow-popover); }
+:root .searchable-choice-options button { border-radius:var(--ui-radius-button); }
+:root .searchable-choice-options button.is-highlighted { background:var(--ui-yellow-soft); }
+:root .searchable-choice-options button[aria-selected=true] { color:var(--ui-navy); font-weight:600; }
+
+/* White surfaces with a quiet boundary, never nested shadow stacks. */
+:root :is(.wms-card,.panel,.admin-panel,.org-department-card,.warehouse-directory-item,
+  .warehouse-info-panel,.warehouse-live-map,.warehouse-live-detail,.warehouse-overview-metrics,
+  .overview-summary,.stocktake-selected-summary,.registration-summary) {
+  background:var(--ui-surface); border:1px solid var(--ui-line);
+  border-radius:var(--ui-radius-card); box-shadow:var(--ui-shadow);
+}
+:root .org-department-card > header { background:var(--ui-surface); border-color:var(--ui-line); }
+:root .warehouse-overview-metrics :is(strong,div), :root .risk-today-work strong { color:var(--ui-navy); }
+:root .warehouse-overview-metrics > div { border-color:var(--ui-line); }
+:root .warehouse-building-icon { background:var(--ui-yellow-soft); color:var(--ui-navy); border-radius:var(--ui-radius-input); }
+:root .warehouse-directory-open { background:var(--ui-neutral); }
+:root .warehouse-directory-open:hover { background:var(--ui-yellow-soft); }
+:root .warehouse-info-next button { background:var(--ui-neutral); color:var(--ui-navy); border-radius:var(--ui-radius-card); }
+:root .risk-today-work button, :root .warehouse-summary-strip > button {
+  border-radius:var(--ui-radius-card); border-color:var(--ui-line); color:var(--ui-navy); box-shadow:var(--ui-shadow);
+}
+:root .warehouse-summary-strip > button[aria-pressed=true] { background:var(--ui-yellow-soft); border-color:var(--ui-yellow); box-shadow:none; }
+:root .registration-form .dialog-work-basic,
+:root .registration-page:has(#receipt-registration, #shipment-registration) :is(.dialog-work-basic,.registration-line-list),
+:root .product-master-sections > .dialog-section {
+  background:var(--ui-surface); border-color:var(--ui-line); border-radius:var(--ui-radius-card);
+}
+:root .registration-form .dialog-actions, :root .dialog-layout .dialog-actions,
+:root .plan-import > .dialog-actions { background:var(--ui-surface); border-color:var(--ui-line); }
+
+/* Tables keep their existing horizontal scrollers and row/column semantics. */
+:root :is(.table-scroll,.wms-table-scroll,.product-selection-table-wrap,.stocktake-selected-scroll,.stocktake-picker-table,.document-line-scroll,.receipt-lines) {
+  border:1px solid var(--ui-line); border-radius:var(--ui-radius-table);
+}
+:root :is(.wms-layout,.admin-panel,.organization-dialog) :is(.organization-table,.wms-table,.admin-table,.tenant-table,.permission-table,.product-selection-table) th,
+:root :is(.stocktake-selected-table,.stocktake-picker-table) th {
+  background:var(--ui-neutral); color:var(--ui-muted); border-color:var(--ui-line);
+}
+:root :is(.wms-layout,.admin-panel,.organization-dialog) :is(.organization-table,.wms-table,.admin-table,.tenant-table,.permission-table,.product-selection-table) td { border-color:var(--ui-line); }
+:root :is(.wms-layout,.admin-panel) tbody tr:hover { background:var(--ui-neutral); }
+:root .product-selection-table tr.is-selected, :root .product-selection-table tr.is-selected td,
+:root .stocktake-picker-table .is-selected, :root .receipt-scan-table .is-scan-selected { background:var(--ui-yellow-soft); }
+:root .wms-pagination-buttons button { border-color:var(--ui-line); border-radius:var(--ui-radius-button); color:var(--ui-navy); }
+:root .wms-pagination-buttons button:hover:not(:disabled) { background:var(--ui-neutral); }
+:root .wms-pagination-buttons button[aria-current=page],
+:root .wms-pagination-buttons button[aria-current=page]:hover { background:var(--ui-navy); border-color:var(--ui-navy); color:#fff; }
+
+/* State badges retain their existing success/warning/error colors. */
+:root :is(.badge,.wms-chip,.status-badge,.warehouse-status,.risk-tag) { border-radius:var(--ui-radius-badge); }
+:root :is(.alert,.risk-product), :root :is(.wms-content,.organization-dialog) .alert { border-radius:var(--ui-radius-input); }
+:root :is(.wms-empty,.empty-state,.loading) { color:var(--ui-muted); }
+:root .danger-text { color:#b43338; }
+
+/* Modal policy: no header X or separator is added; existing guards stay intact. */
+:root dialog.organization-dialog, :root dialog.organization-dialog.dialog-layout,
+:root :is(.status-dialog,.password-gate-dialog) {
+  background:var(--ui-surface); color:var(--ui-ink); border-color:var(--ui-line);
+  border-radius:var(--ui-radius-dialog); box-shadow:0 20px 70px rgb(16 39 71 / 18%);
+}
+:root .organization-dialog::backdrop, :root .status-dialog::backdrop,
+:root .password-gate-dialog::backdrop { background:rgb(16 39 71 / 45%); }
+:root .organization-dialog-heading, :root .dialog-layout > .organization-dialog-heading { background:var(--ui-surface); border-bottom:0; }
+:root .dialog-layout .organization-dialog-heading p { color:var(--ui-muted); }
+
+/* Tabs and editor controls: navigation selection, not rack/stock status. */
+:root :is(.warehouse-detail-tabs,.dashboard-view-tabs,.warehouse-plan-tabs,.dialog-detail-tabs,.overview-tabs) { border-color:var(--ui-line); }
+:root :is(.warehouse-detail-tabs,.dashboard-view-tabs,.warehouse-plan-tabs,.dialog-detail-tabs,.overview-tabs) button { color:var(--ui-muted); }
+:root :is(.warehouse-detail-tabs,.dashboard-view-tabs,.dialog-detail-tabs) button[aria-selected=true] {
+  color:var(--ui-navy); border-bottom-color:var(--ui-yellow);
+}
+:root .dashboard-view-tabs button[aria-selected=true] { background:var(--ui-yellow-soft); }
+:root .warehouse-detail-tabs button[aria-selected=true]::after { background:var(--ui-yellow); }
+:root .warehouse-map-toolbar .warehouse-plan-tabs { background:var(--ui-neutral); border-radius:var(--ui-radius-menu); }
+:root .warehouse-map-toolbar .warehouse-plan-tabs button { border-radius:var(--ui-radius-button); }
+:root .warehouse-map-toolbar .warehouse-plan-tabs button[aria-pressed=true],
+:root .warehouse-map-actions [aria-pressed=true], :root .plan-toolbar button[aria-pressed=true],
+:root .plan-object-list button[aria-pressed=true], :root .template-option[aria-pressed=true],
+:root .warehouse-tree button[aria-pressed=true] { background:var(--ui-yellow-soft); color:var(--ui-navy); border-color:var(--ui-yellow); }
+:root .warehouse-steps button[aria-current=step] { color:var(--ui-navy); }
+:root .warehouse-steps button[aria-current=step] > span { background:var(--ui-navy); border-color:var(--ui-navy); }
+:root .studio-tool-rail { background:var(--ui-neutral); border-color:var(--ui-line); border-radius:var(--ui-radius-card) 0 0 var(--ui-radius-card); }
+:root .studio-tool-rail button { color:var(--ui-navy); border-radius:var(--ui-radius-button); }
+:root .studio-tool-rail button:hover:not(:disabled) { background:var(--ui-yellow-soft); }
+:root .studio-tool-rail button[aria-pressed=true] { color:var(--ui-deep-navy); background:var(--ui-yellow); }
+:root :is(.warehouse-wizard,.warehouse-studio) .plan-studio { border-color:var(--ui-line); border-radius:var(--ui-radius-card); }
+:root :is(.warehouse-live-map,.warehouse-detail-plan,.risk-workspace .warehouse-live-map) .warehouse-plan-canvas,
+:root .wms-content :is(.warehouse-studio,.warehouse-wizard) .plan-studio .warehouse-plan-canvas { background:var(--ui-surface); border-color:var(--ui-line); }
+:root .warehouse-map-toolbar, :root .rack-floating-label,
+:root .warehouse-detail :is(.warehouse-tree,.warehouse-locations,.warehouse-scene-details) { border-radius:var(--ui-radius-card); border-color:var(--ui-line); }
+:root .rack-floating-label { background:var(--ui-surface); box-shadow:var(--ui-shadow-popover); }
+:root :is(.plan-import-upload,.product-image-upload,.product-gallery,.product-image-preview) { border-radius:var(--ui-radius-card); border-color:var(--ui-line); }
+:root .plan-import-upload { background:var(--ui-neutral); }
+:root .plan-import-upload.is-dragging { background:var(--ui-yellow-soft); border-color:var(--ui-navy); }
+
+/* Embedded controls share tokens without turning every sub-section into a card. */
+:root .warehouse-live-map > .warehouse-map-toolbar {
+  border:0; border-bottom:1px solid var(--ui-line); border-radius:0; margin-bottom:0;
+}
+:root .document-line-table th { background:var(--ui-neutral); color:var(--ui-muted); }
+:root :is(.product-gallery-preview,.product-gallery-add,.product-gallery-empty,.product-barcode-preview,.collaborator-empty) {
+  background:var(--ui-neutral); border-radius:var(--ui-radius-card); color:var(--ui-muted);
+}
+:root .product-gallery-add { color:var(--ui-navy); border-color:var(--ui-line); }
+:root .product-gallery-add:hover:not(:disabled) { background:var(--ui-yellow-soft); border-color:var(--ui-navy); }
+:root .product-gallery-add:focus-visible { outline-color:var(--ui-focus); }
+:root .product-gallery-preview > span { background:var(--ui-navy); border-radius:var(--ui-radius-badge); }
+:root .product-thumbnail-placeholder { background:var(--ui-neutral); border-radius:var(--ui-radius-badge); }
+:root .overview-tabs { background:var(--ui-neutral); border-radius:var(--ui-radius-menu); }
+:root .registration-back { color:var(--ui-navy); border-color:var(--ui-line); border-radius:var(--ui-radius-button); }
+:root .wms-breadcrumb strong { color:var(--ui-muted); }
+:root .org-chart-viewport { background:var(--ui-surface); border-color:var(--ui-line); border-radius:var(--ui-radius-card); }
+:root .org-department-card > header { border-radius:var(--ui-radius-card) var(--ui-radius-card) 0 0; }
+:root .permission-review { background:var(--ui-yellow-soft); border-color:var(--ui-line); border-radius:var(--ui-radius-card); }
+:root .permission-table input:focus-visible { outline-color:var(--ui-focus); }
+:root :is(.wizard-eyebrow,.wizard-form-title strong,.rack-location-count,.template-option,.registration-summary strong) { color:var(--ui-navy); }
+:root :is(.warehouse-code,.warehouse-directory-item p,.warehouse-directory-empty,
+  .template-option span,.template-option small,.rack-shelf-preview > small,
+  .structure-additional summary,.structure-link-options summary,.barcode-output-details summary,
+  .user-profile-trigger small,.wms-breadcrumb span:last-child,.org-department-card header p) { color:var(--ui-muted); }
+:root .wms-drawer-backdrop { background:var(--ui-deep-navy); }
+:root .admin-tabs { flex-direction:row; align-items:center; margin-top:0; gap:8px; }
+:root .admin-tabs button { flex:0 1 auto; }
+:root .panel .row-actions .primary { margin-top:0; }
+:root :is(.inventory-move-place,.receipt-scan-summary,.receipt-scan-station,.receipt-scan-manual,.shipment-work-section),
+:root .detail-page:has(.receipt-steps) .detail-content > .products-detail {
+  background:var(--ui-surface); border:1px solid var(--ui-line); border-radius:var(--ui-radius-card);
+}
+:root :is(.inventory-preview,.document-paste-candidates,.receipt-confirm) {
+  background:var(--ui-neutral); color:var(--ui-navy); border-color:var(--ui-line); border-radius:var(--ui-radius-input);
+}
+:root .receipt-steps li { border-radius:var(--ui-radius-badge); }
+:root .inventory-move-form .searchable-choice-trigger:disabled { background:var(--ui-neutral); }
+
+/* The sign-in shell and admin entry share the same brand, not auth policy. */
+:root .intro { background:var(--ui-deep-navy); color:#fff; }
+:root .intro h1 { color:#fff; }
+:root .intro :is(p,.eyebrow,.intro-bottom) { color:#c4d3e7; }
+:root .intro .flow div { border-color:#547092; }
+:root .intro .flow span { color:var(--ui-yellow); }
+:root .auth-layout { border-color:var(--ui-line); border-radius:var(--ui-radius-dialog); box-shadow:var(--ui-shadow); }
+:root .signup-note { background:var(--ui-neutral); border-radius:var(--ui-radius-input); color:var(--ui-muted); }
+:root .wms-layout .wms-footer, :root .shell > footer { border-color:var(--ui-line); color:var(--ui-muted); background:var(--ui-surface); }
+
+@media (max-width:760px) {
+  :root .workspace-layout > aside { width:100%; }
+  :root .workspace-layout > aside nav { margin-top:12px; }
+}

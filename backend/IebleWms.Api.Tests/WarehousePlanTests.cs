@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 namespace IebleWms.Api.Tests;
-public sealed class WarehousePlanTests
+public sealed partial class WarehousePlanTests
 {
     private sealed record Fixture(Guid Tenant,Guid Foreign,Guid Warehouse,Guid OtherWarehouse,Guid Rack,Guid Location,string Password);
     private static async Task<Fixture> Seed(AuthFactory factory)
@@ -36,7 +36,7 @@ public sealed class WarehousePlanTests
         var request=Request(Object(fixture.Rack,fixture.Location),Object());var saved=await AuthTests.Post(c,url+"/plan",request);Assert.Equal(HttpStatusCode.OK,saved.StatusCode);var data=await saved.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2,data.GetProperty("objects").GetArrayLength());Assert.Equal(.4,data.GetProperty("objects")[0].GetProperty("x").GetDouble());request.Version=data.GetProperty("version").GetGuid();request.Objects[0].X=.75;request.Objects[0].Rotation=-90;request.Objects.RemoveAt(1);
         Assert.Equal(HttpStatusCode.OK,(await AuthTests.Post(c,url+"/plan",request)).StatusCode);var loaded=await c.GetFromJsonAsync<JsonElement>(url+"/plan");Assert.Single(loaded.GetProperty("objects").EnumerateArray());Assert.Equal(.75,loaded.GetProperty("objects")[0].GetProperty("x").GetDouble());
-        var front=await c.GetFromJsonAsync<JsonElement>(url+$"/racks/{fixture.Rack}/front");Assert.Equal(12,front.GetProperty("locations").GetArrayLength());Assert.False(front.GetProperty("inventoryAvailable").GetBoolean());
+        var front=await c.GetFromJsonAsync<JsonElement>(url+$"/racks/{fixture.Rack}/front");Assert.Equal(12,front.GetProperty("locations").GetArrayLength());Assert.True(front.GetProperty("inventoryAvailable").GetBoolean());
         Assert.Equal(3,front.GetProperty("rack").GetProperty("levels").GetInt32());Assert.Equal(4,front.GetProperty("rack").GetProperty("bays").GetInt32());
         using var verify=f.Services.CreateScope();var db=verify.ServiceProvider.GetRequiredService<WmsDbContext>();Assert.Equal(12,await db.StorageLocations.CountAsync());var loc=await db.StorageLocations.SingleAsync(x=>x.Id==fixture.Location);Assert.Equal("A01-3-4",loc.Code);Assert.Equal(fixture.Rack,loc.RackId);
         var audit=await db.WarehouseChanges.Where(x=>x.Action=="PlanSaved").ToListAsync();Assert.Equal(2,audit.Count);Assert.Contains("0.75",audit[1].AfterJson);Assert.Contains("0.4",audit[1].BeforeJson);Assert.All(audit,a=>Assert.NotEqual(Guid.Empty,a.ChangedByUserId));
@@ -112,7 +112,7 @@ public sealed class WarehousePlanTests
         Assert.Equal(rackId, saved.GetProperty("objects")[1].GetProperty("rackId").GetGuid());
         var front = await c.GetFromJsonAsync<JsonElement>(root + $"/racks/{rackId}/front");
         Assert.Equal(12, front.GetProperty("locations").GetArrayLength());
-        Assert.False(front.GetProperty("inventoryAvailable").GetBoolean());
+        Assert.True(front.GetProperty("inventoryAvailable").GetBoolean());
         request.Version = saved.GetProperty("version").GetGuid(); request.Objects.Clear();
         Assert.Equal(HttpStatusCode.OK, (await AuthTests.Post(c, root + "/plan", request)).StatusCode);
         var after = await c.GetFromJsonAsync<JsonElement>(root);

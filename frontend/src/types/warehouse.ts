@@ -1,5 +1,7 @@
 export type StorageItem = {
+  warehouseId?: string;
   id: string
+  barcode?: string | null
   code: string
   name: string
   isActive: boolean
@@ -11,6 +13,7 @@ export type StorageItem = {
   type?: string | null
   address?: string | null
   addressDetail?: string | null
+  contactUserId?: string | null
   contactName?: string | null
   notes?: string | null
   zoneId?: string | null
@@ -25,6 +28,7 @@ export type WarehouseDetailData = {
   zones: StorageItem[]
   racks: StorageItem[]
   locationCount: number
+  rackLocationCounts?: Record<string, number>
 }
 export type WarehouseList = {
   items: {
@@ -38,7 +42,8 @@ export type WarehouseList = {
   pageSize: number
 }
 export type LocationList = {
-  items: { location: StorageItem; effectiveActive: boolean }[]
+  items: { location: StorageItem; effectiveActive: boolean; quantities?: {unit: string; quantity: number}[] | null }[]
+  inventoryAvailable?: boolean
   total: number
   page: number
   pageSize: number

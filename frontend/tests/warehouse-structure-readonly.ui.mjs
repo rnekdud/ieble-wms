@@ -1,0 +1,106 @@
+import assert from 'node:assert/strict'
+import { chromium } from 'playwright'
+let input='';for await(const chunk of process.stdin)input+=chunk
+const fixture=JSON.parse(input),origin=process.env.UI_ORIGIN||'http://127.0.0.1:5176'
+assert(['http://127.0.0.1:5176','http://localhost:5174'].includes(origin))
+const root=`/api/tenants/${fixture.tenant}/warehouses/${fixture.warehouse}`,writes=[],errors=[]
+let queue=Promise.resolve()
+const browser=await chromium.launch({channel:'chrome',headless:true})
+try {
+ const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'})
+ await context.route('**/*',async route=>{
+  const request=route.request(),u=new URL(request.url())
+  if(u.origin!==origin)return route.abort()
+  if(u.pathname==='/__structure-live')return route.fulfill({contentType:'text/html',body:'<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>t=>t;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/fixtures/warehouse-structure-live.tsx"></script></html>'})
+  if(!u.pathname.startsWith('/api/'))return route.continue()
+  const previous=queue;let release;queue=new Promise(resolve=>{release=resolve});await previous
+  try {
+   if(request.method()!=='GET' && u.pathname.startsWith(root))writes.push({path:u.pathname,body:request.postDataJSON()})
+   const response=await context.request.fetch('http://localhost:5086'+u.pathname+u.search,{method:request.method(),headers:request.headers(),data:request.postDataBuffer()||undefined,failOnStatusCode:false})
+   if(response.status()>=500)errors.push(`Server ${response.status()} ${u.pathname}`)
+   await route.fulfill({status:response.status(),headers:response.headers(),body:await response.body()})
+  }finally{release()}
+ })
+ const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message))
+ const url=access=>`${origin}/__structure-live?tenant=${fixture.tenant}&warehouseId=${fixture.warehouse}&tab=structure&access=${access}`
+ await page.goto(url('none'))
+ const post=(path,body)=>page.evaluate(async({path,body})=>{const csrf=await(await fetch('/api/auth/csrf')).json();const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf.token},body:JSON.stringify(body)});return{status:r.status,body:await r.json()}},{path,body})
+ assert.equal((await post('/api/auth/login',{email:'Master',password:fixture.password})).status,200)
+ await page.goto(url('edit'))
+ const panel=page.getByRole('tabpanel',{name:'창고 도면'}),inspector=panel.getByRole('complementary',{name:'선택 정보 패널'}),map=panel.getByRole('region',{name:'창고 구조맵'})
+ await panel.getByText('구역 2개 · 랙 3개 · 보관위치 16개',{exact:true}).waitFor()
+ await map.locator('canvas').first().waitFor()
+ assert.equal(await panel.locator('.structure-location-list[open]').count(),0)
+ assert.equal(await panel.getByRole('table').count(),0)
+ assert.equal(await panel.getByRole('button',{name:/등록|삭제|정보 수정|상세 수정|구역 추가|랙 추가|위치 추가/}).count(),0)
+ assert.equal(await panel.locator('input:not([type="search"])').count(),0)
+ const plan=await page.evaluate(async root=>(await(await fetch(root+'/workspace')).json()).plan,root)
+ async function clickMap(type) {
+  const o=plan.objects.find(o=>o.type===type)
+  const position=await map.locator('.warehouse-plan-canvas').evaluate((host,o)=>{
+   const w=host.clientWidth,h=host.clientHeight,ratio=Number(host.dataset.planRatio),padding=Math.min(16,Math.max(4,Math.min(w,h)*.025)),scale=Math.min((w-padding*2)/1200,(h-padding*2)/(1200/ratio))
+   return {x:host.clientLeft+(w-1200*scale)/2+(o.type==='zone'?o.x-o.width*.4:o.x)*1200*scale,y:host.clientTop+(h-1200/ratio*scale)/2+(o.type==='zone'?o.y-o.height*.35:o.y)*1200/ratio*scale}
+  },o)
+  await map.locator('.warehouse-plan-canvas').click({position})
+ }
+ await clickMap('zone');await inspector.getByRole('heading',{name:'구역 상세',exact:true}).waitFor();await inspector.getByText('15개',{exact:true}).waitFor()
+ await clickMap('rack');await inspector.getByRole('heading',{name:'랙 상세',exact:true}).waitFor();await inspector.getByText('12개',{exact:true}).waitFor()
+ const grid=panel.locator('.workspace-rack-node.is-selected').getByRole('region',{name:/보관위치 구성/})
+ await grid.getByRole('button',{name:'1단 1칸 R-L01-B01',exact:true}).waitFor();assert.equal(await grid.getByRole('button').count(),12)
+ await grid.getByRole('button',{name:'1단 1칸 R-L01-B01',exact:true}).click()
+ await inspector.getByRole('heading',{name:'보관위치 상세',exact:true}).waitFor();await inspector.getByText(fixture.location,{exact:true}).waitFor()
+ assert.equal(await grid.getByRole('button',{name:'1단 1칸 R-L01-B01',exact:true}).getAttribute('aria-pressed'),'true')
+ await inspector.locator('summary',{hasText:'현재 재고 조회'}).click();await inspector.getByRole('region',{name:'보관 재고'}).getByText('42.5 EA',{exact:true}).waitFor()
+ await clickMap('shape');await inspector.getByText('F',{exact:true}).waitFor();await inspector.getByText('바닥 위치',{exact:true}).waitFor()
+ await panel.getByLabel('구조 검색',{exact:true}).fill('R-L01-B01');await panel.getByRole('region',{name:'구조 검색 결과'}).getByRole('button',{name:/위치 .*R-L01-B01$/}).click()
+ await inspector.getByText(fixture.location,{exact:true}).waitFor()
+ await panel.getByRole('button',{name:'구역 강조',exact:true}).click();assert.equal(await panel.getByRole('button',{name:'구역 강조',exact:true}).getAttribute('aria-pressed'),'true')
+ await panel.getByRole('button',{name:'전체 보기',exact:true}).click()
+ const host=map.locator('.warehouse-plan-canvas'),scale=Number(await host.getAttribute('data-view-scale'))
+ await panel.getByRole('button',{name:'도면 확대',exact:true}).click();assert(Number(await host.getAttribute('data-view-scale'))>scale)
+ await panel.getByRole('button',{name:'도면 화면 맞춤',exact:true}).click()
+ for(const name of ['미배치 랙','구역 없는 랙']) {
+  const value=await panel.getByLabel('구역·랙 선택',{exact:true}).locator('option').evaluateAll((options,name)=>options.find(o=>o.textContent.includes(name)).value,name)
+  await panel.getByLabel('구역·랙 선택',{exact:true}).selectOption(value)
+  await inspector.getByText(name==='미배치 랙'?'도면 미배치':'구역 미지정',{exact:true}).first().waitFor()
+ }
+ await panel.getByLabel('구역·랙 선택',{exact:true}).selectOption('rack:'+fixture.rack)
+ await grid.getByRole('button',{name:'1단 1칸 R-L01-B01',exact:true}).waitFor()
+ for(const width of [1920,1440,1280,768,390]) {
+  await page.setViewportSize({width,height:1000})
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`page overflow ${width}`)
+  const mb=await map.boundingBox(),ib=await inspector.boundingBox()
+  assert(mb.width>0 && ib.width>0)
+  if(width>=1280)assert(ib.x>=mb.x+mb.width && mb.width>=width*.45)
+  else assert(ib.y>=mb.y+mb.height)
+  await grid.getByRole('button',{name:'1단 1칸 R-L01-B01',exact:true}).click();await inspector.getByText(fixture.location,{exact:true}).waitFor()
+  console.log('PASS map + inspector + slot grid layout '+width+'px')
+ }
+ await page.setViewportSize({width:1440,height:1000})
+ await page.getByRole('tab',{name:'창고 도면',exact:true}).click()
+ const planPanel=page.getByRole('tabpanel',{name:'창고 도면',exact:true})
+ await planPanel.locator('canvas').first().waitFor()
+ await planPanel.getByRole('button',{name:'3D 도면',exact:true}).click()
+ await planPanel.locator('.warehouse-scene-main canvas').waitFor()
+ await page.waitForFunction(()=>{const button=document.querySelector('[aria-label="3D 확대"]');return button&&!button.disabled})
+ await planPanel.getByLabel('3D 랙 선택',{exact:true}).selectOption(fixture.rack)
+ await planPanel.getByRole('complementary',{name:'선택 랙 상세'}).getByRole('button',{name:'1단 1칸 R-L01-B01',exact:true}).waitFor()
+ await planPanel.getByRole('button',{name:'2D 도면',exact:true}).click();await planPanel.locator('canvas').first().waitFor()
+ await page.getByRole('tab',{name:'창고 도면',exact:true}).click();await map.locator('canvas').first().waitFor()
+ assert.equal(writes.length,0,'Read-only map sent a structural mutation')
+ assert.deepEqual(await page.evaluate(async root=>(await(await fetch(root+'/workspace')).json()).plan,root),plan)
+ await page.setViewportSize({width:1440,height:1000})
+ await panel.getByRole('button',{name:'도면 편집',exact:true}).click();await page.locator('.warehouse-workspace-editor.is-design').waitFor()
+ const node=page.locator('.workspace-rack-node').filter({has:page.locator('summary',{hasText:'주 랙'})})
+ await node.locator('summary').click();await node.getByRole('button',{name:'정보 수정',exact:true}).click()
+ let dialog=page.getByRole('dialog',{name:'랙 정보 수정',exact:true});await dialog.getByLabel('랙 이름',{exact:true}).fill('도면 저장 랙');await dialog.getByLabel('랙 단수',{exact:true}).fill('4');await dialog.getByRole('button',{name:'입력 완료',exact:true}).click()
+ await page.getByRole('button',{name:'창고 저장',exact:true}).click();await page.getByRole('dialog',{name:'창고 및 도면 저장 확인',exact:true}).getByRole('button',{name:'확인',exact:true}).click()
+ await panel.getByText('구역 2개 · 랙 3개 · 보관위치 20개',{exact:true}).waitFor()
+ await panel.getByLabel('구역·랙 선택',{exact:true}).selectOption('rack:'+fixture.rack);await inspector.getByText('16개',{exact:true}).waitFor();await grid.getByRole('button',{name:'4단 1칸 R-L04-B01',exact:true}).waitFor();assert.equal(await grid.getByRole('button').count(),16)
+ assert.equal(writes.length,1);assert.equal(writes[0].path,root+'/workspace');assert.equal(writes[0].body.racks.length,3)
+ await post('/api/auth/login',{email:'Administrator',password:fixture.password});await page.goto(url('read'));await panel.getByText('구역 2개 · 랙 3개 · 보관위치 20개',{exact:true}).waitFor()
+ assert.equal(await panel.getByRole('button',{name:'도면 편집'}).count(),0)
+ await panel.getByLabel('구역·랙 선택',{exact:true}).selectOption('rack:'+fixture.rack);await inspector.getByText('재고 조회 권한이 없습니다.',{exact:true}).waitFor()
+ await post('/api/auth/login',{email:'Employee',password:fixture.password});await page.goto(url('none'));await page.getByRole('alert').filter({hasText:'창고 조회 권한이 없습니다.'}).waitFor();assert.equal(await page.getByRole('tabpanel').count(),0)
+ assert.deepEqual(errors,[]);console.log('PASS saved map clicks, floor + rack LocationIds, search, grid, inventory permissions, no tab writes, editor save refresh and preserved unplaced data. Origin='+origin)
+}finally{await browser.close()}

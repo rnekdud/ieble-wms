@@ -1,0 +1,81 @@
+import assert from 'node:assert/strict'
+import {chromium} from 'playwright'
+let input='';for await(const chunk of process.stdin)input+=chunk
+const fixture=JSON.parse(input),origin=process.env.UI_ORIGIN||'http://127.0.0.1:5176',root=`/api/tenants/${fixture.tenant}/receipts`,url=root+'/'+fixture.receipt
+const browser=await chromium.launch({channel:'chrome',headless:true}),errors=[],writes=[]
+try{
+ const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'})
+ await context.routeWebSocket(origin.replace('http:','ws:')+'/**',()=>{})
+ await context.route('**/*',async route=>{
+  const req=route.request(),u=new URL(req.url())
+  if(u.origin!==origin)return route.abort()
+  if(u.pathname==='/__receipt-login')return route.fulfill({contentType:'text/html',body:'<html><body>격리 QA</body></html>'})
+  if(u.pathname==='/__receipt-group')return route.fulfill({contentType:'text/html',body:'<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>t=>t;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/fixtures/receipt-group-live.tsx"></script></html>'})
+  if(!u.pathname.startsWith('/api/'))return route.continue()
+  if(req.method()!=='GET'&&u.pathname.startsWith(root))writes.push({path:u.pathname,body:req.postDataJSON()})
+  const response=await context.request.fetch('http://localhost:5086'+u.pathname+u.search,{method:req.method(),headers:req.headers(),data:req.postDataBuffer()||undefined,failOnStatusCode:false})
+  if(response.status()>=500)errors.push(`API ${response.status()} ${u.pathname}: ${await response.text()}`)
+  return route.fulfill({status:response.status(),headers:response.headers(),body:await response.body()})
+ })
+ const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message))
+ await page.goto(origin+'/__receipt-login')
+ const post=(path,body)=>page.evaluate(async({path,body})=>{const csrf=await(await fetch('/api/auth/csrf')).json();const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf.token},body:JSON.stringify(body)});return {status:r.status,text:await r.text()}},{path,body})
+ assert.equal((await post('/api/auth/login',{email:'Master',password:fixture.password})).status,200)
+ const visit=extra=>page.goto(`${origin}/__receipt-group?tenant=${fixture.tenant}&receipt=${fixture.receipt}${extra||''}`)
+ await visit()
+ for(const width of [1920,1440,1280,768,390]){
+  await page.setViewportSize({width,height:1000});await page.getByRole('button',{name:'검수 확정',exact:true}).waitFor().catch(async e=>{console.error('UI state:',await page.locator('body').innerText(),'Errors:',errors);throw e})
+  assert.equal(await page.locator('.receipt-product-table tbody tr').count(),1)
+  assert.deepEqual(await page.locator('.receipt-product-table th').allTextContents(),['상품','총 수량','차이','검수수량','LOT / 유통기한','시리얼','상태'])
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
+ }
+ await page.setViewportSize({width:1440,height:1000})
+ const quantity=page.getByRole('spinbutton',{name:'검수 수량 1',exact:true})
+ await quantity.fill('80');assert.match(await page.locator('.receipt-product-table tbody tr').innerText(),/-20/)
+ await page.getByRole('button',{name:'수량 반영',exact:true}).click();await page.getByText('저장 완료',{exact:false}).waitFor()
+ const scan=page.getByRole('textbox',{name:'검수 바코드',exact:true});await scan.fill('CANDY-A');await scan.press('Enter')
+ await page.waitForFunction(()=>document.querySelector('input[aria-label="검수 수량 1"]')?.value==='81')
+ await page.getByRole('button',{name:'최근 스캔 1회 되돌리기'}).click();await page.waitForFunction(()=>document.querySelector('input[aria-label="검수 수량 1"]')?.value==='80')
+ await quantity.fill('100');await page.getByRole('button',{name:'수량 반영',exact:true}).click();await page.getByText('100 EA 저장 완료',{exact:false}).waitFor()
+ await page.getByRole('button',{name:'추적 상품 LOT 관리',exact:true}).click()
+ const dialog=page.getByRole('dialog')
+ assert.equal(await dialog.getByRole('button',{name:/닫기|Close/}).count(),0)
+ for(const [i,lot,expiry,amount] of [[1,'LOT-A','2027-05-10','60'],[2,'LOT-B','2027-06-15','30']]){
+  await dialog.getByRole('button',{name:'+ LOT 추가',exact:true}).click();await dialog.getByRole('textbox',{name:`LOT 번호 ${i}`,exact:true}).fill(lot);await dialog.locator(`input[aria-label="LOT 유통기한 ${i}"]`).fill(expiry);await dialog.getByRole('spinbutton',{name:`LOT 수량 ${i}`,exact:true}).fill(amount)
+ }
+ assert.match(await dialog.innerText(),/10개 부족/)
+ await dialog.getByRole('spinbutton',{name:'LOT 수량 2',exact:true}).fill('50');await dialog.getByRole('button',{name:'저장',exact:true}).click();await dialog.getByRole('alert').filter({hasText:'초과'}).waitFor()
+ await dialog.getByRole('spinbutton',{name:'LOT 수량 2',exact:true}).fill('40')
+ await dialog.getByRole('button',{name:'시리얼 0개',exact:true}).click()
+ await dialog.getByRole('combobox',{name:'추가 시리얼 LOT',exact:true}).selectOption({label:'LOT-A · 2027-05-10'})
+ await dialog.getByRole('textbox',{name:'시리얼 일괄 입력',exact:true}).fill('SN-001\nSN-002');await dialog.getByRole('button',{name:'목록에 추가',exact:true}).click()
+ await dialog.getByRole('textbox',{name:'시리얼 일괄 입력',exact:true}).fill('SN-001');await dialog.getByRole('button',{name:'목록에 추가',exact:true}).click();assert.match(await dialog.getByRole('alert').innerText(),/중복/)
+ await dialog.getByRole('textbox',{name:'시리얼 일괄 입력',exact:true}).fill('SN-003');await dialog.getByRole('combobox',{name:'추가 시리얼 LOT',exact:true}).selectOption({label:'LOT-B · 2027-06-15'});await dialog.getByRole('button',{name:'목록에 추가',exact:true}).click()
+ // Editing/removal keeps the other serials and LOT association intact.
+ await dialog.getByRole('textbox',{name:'시리얼 번호 3',exact:true}).fill('SN-003-EDIT')
+ await dialog.getByRole('button',{name:'시리얼 3 제거',exact:true}).click()
+ await dialog.getByRole('textbox',{name:'시리얼 일괄 입력',exact:true}).fill('SN-003');await dialog.getByRole('button',{name:'목록에 추가',exact:true}).click()
+ await dialog.getByRole('button',{name:'LOT / 유통기한 2개',exact:true}).click()
+ await dialog.getByRole('button',{name:'+ LOT 추가',exact:true}).click();await dialog.getByRole('button',{name:'LOT 3 제거',exact:true}).click()
+ await dialog.getByRole('button',{name:'저장',exact:true}).click();await dialog.waitFor({state:'hidden'})
+ await visit();await page.getByRole('button',{name:'추적 상품 LOT 관리',exact:true}).waitFor();assert.match(await page.locator('.receipt-product-table').innerText(),/LOT 2개/);assert.match(await page.locator('.receipt-product-table').innerText(),/시리얼 3개/)
+ await page.getByRole('button',{name:'검수 확정',exact:true}).click();await page.getByRole('button',{name:'보관 위치 지정',exact:true}).waitFor();assert.equal(await page.locator('.receipt-product-table tbody tr').count(),1);assert.equal(await page.getByRole('button',{name:'추적 상품 LOT 관리',exact:true}).count(),0)
+ await page.getByRole('button',{name:'보관 위치 지정',exact:true}).click()
+ const rows=page.locator('tr[aria-label^="입고 상품 "]');assert.equal(await rows.count(),3)
+ for(let i=0;i<3;i++){
+  const row=rows.nth(i);await row.getByRole('button',{name:`위치 추가 ${i+1}`,exact:true}).click()
+  await row.getByRole('button',{name:new RegExp(`^보관 위치 ${i+1}-1 `)}).click();await page.getByRole('combobox',{name:`보관 위치 ${i+1}-1 검색`,exact:true}).fill('FLOOR');await page.getByRole('option').filter({hasText:'FLOOR-1'}).first().click()
+  await row.getByRole('spinbutton',{name:`배치 수량 ${i+1}-1`,exact:true}).fill(i===2?'40':'30')
+  const serialField=row.getByRole('textbox',{name:`배치 시리얼 ${i+1}-1`,exact:true});if(await serialField.count())await serialField.fill(i===0?'SN-001\nSN-002':'SN-003')
+ }
+ await page.getByRole('button',{name:'배치 확정',exact:true}).click();await page.getByRole('button',{name:'확인',exact:true}).click();await page.getByRole('button',{name:'입고 최종 확정',exact:true}).waitFor()
+ await page.getByRole('button',{name:'입고 최종 확정',exact:true}).click();await page.getByRole('button',{name:'확인',exact:true}).click();await page.locator('.receipt-confirm').getByText(/100 EA/).waitFor();assert.match(await page.locator('.receipt-confirm').innerText(),/100 EA/)
+ const detail=await page.evaluate(async url=>(await fetch(url)).json(),url);assert.equal(detail.lines.length,2);assert.equal(detail.receipt.status,'Confirmed');assert.equal(detail.lines.reduce((n,l)=>n+l.inspectedQuantity,0),100)
+ const before=writes.length;await visit('&readonly');await page.locator('.receipt-product-table tbody tr').waitFor().catch(async e=>{console.error('Read-only state:',await page.locator('body').innerText(),'Errors:',errors);throw e});assert.equal(await page.getByRole('button',{name:/검수 확정|입고 정보 수정|보관 위치 지정/}).count(),0);assert.equal(writes.length,before)
+ await visit('&new')
+ await page.getByRole('button',{name:'상품 추가',exact:true}).click();await page.getByRole('checkbox',{name:'SERIAL 선택',exact:true}).check();await page.getByRole('button',{name:'선택 상품 추가',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'})
+ await page.getByRole('button',{name:'상품 추가',exact:true}).click();assert(await page.getByRole('checkbox',{name:'SERIAL 선택',exact:true}).isDisabled());assert.match(await page.getByRole('dialog').innerText(),/이미 등록된 상품/);await page.getByRole('dialog').getByRole('button',{name:'취소',exact:true}).click()
+ assert.equal(writes.length,before)
+ assert.deepEqual(errors,[])
+ console.log('PASS: real authenticated SQLite API, grouped duplicate lines, 5 widths, direct/scan/undo, multiple LOT+expiry, paste/duplicate serials, reload, LOT placement and final 100 EA inventory; no real DB writes')
+}finally{await browser.close()}

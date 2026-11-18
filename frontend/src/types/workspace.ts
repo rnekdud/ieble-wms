@@ -1,4 +1,7 @@
 export type Workspace = {
+  currentAssignee?: import("../business-assignee").BusinessAssignee | null
+  logoVersion?: string | null
+  accountType?: 'Internal' | 'External'
   id: string
   name: string
   businessRegistrationNumber: string | null
@@ -11,6 +14,8 @@ export type Workspace = {
     canAccessWms: boolean
     hasRegisteredCard: boolean
     freeUntil: string
+    developmentTest?: { startsAt: string; endsAt: string }
+    actualBillingState?: string
     firstChargeAt: string
   }
   billingPolicy: {

@@ -36,7 +36,7 @@ public sealed class OrganizationStructureService(WmsDbContext db, OrganizationAu
     public async Task<object> ChartAsync(Guid tenantId, CancellationToken token) => new {
         departments = await db.Departments.AsNoTracking().Where(x => x.TenantId == tenantId).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ThenBy(x => x.Id)
             .Select(x => new { x.Id, x.Name, x.ParentId, x.IsActive, x.SortOrder }).ToListAsync(token),
-        employees = await db.TenantMemberships.AsNoTracking().Where(x => x.TenantId == tenantId && x.IsActive && x.User.IsActive)
+        employees = await db.TenantMemberships.AsNoTracking().Where(x => x.TenantId == tenantId && x.AccountType == "Internal" && x.IsActive && x.User.IsActive)
             .OrderBy(x => x.DisplayName ?? x.User.DisplayName).ThenBy(x => x.UserId)
             .Select(x => new { x.UserId, name = x.DisplayName ?? x.User.DisplayName, x.DepartmentId, x.PositionId,
                 positionName = db.JobPositions.Where(p => p.TenantId == tenantId && p.Id == x.PositionId).Select(p => p.Name).FirstOrDefault() }).ToListAsync(token)

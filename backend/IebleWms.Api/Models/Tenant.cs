@@ -9,6 +9,7 @@ public sealed class Tenant : AuditableEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Code { get; set; } = string.Empty;
+    public Guid? LogoVersion { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? BusinessRegistrationNumber { get; set; }
     public string? RepresentativeName { get; set; }

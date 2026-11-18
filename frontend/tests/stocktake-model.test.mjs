@@ -1,0 +1,11 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { countInput, countState, countError } from '../src/stocktake-model.ts'
+test('missing is distinct from an actual zero count', () => { assert.equal(countInput(''), null); assert.equal(countInput('0'), 0); assert.equal(countState(null, 5), '미실사'); assert.equal(countState(0, 5), '부족'); assert.equal(countState(5, 5), '일치'); assert.equal(countState(6, 5), '초과') })
+test('serial requires an observed identifier and cannot be fractional or duplicated by quantity', () => { assert.ok(countError(1, 'SN', '')); assert.ok(countError(1, 'SN', 'OTHER')); assert.ok(countError(2, 'SN', 'SN')); assert.ok(countError(0, 'SN', 'SN')); assert.equal(countError(1, 'SN', 'SN'), null); assert.equal(countError(0, 'SN', ''), null) })
+test('counts reject negative, nonfinite and excessive precision', () => { for (const n of [-1, NaN, Infinity, 0.0001]) assert.ok(countError(n)); assert.equal(countError(1.125), null); assert.equal(countError(null), null) })
+import { difference, selectedCountError, selectionInput, selectedSummary } from '../src/stocktake-model.ts'
+const row=(quantity,baseline=50,patch={})=>({id:'stock',stockId:'stock',stockVersion:'version',productId:'p',locationId:'l',unit:'EA',baselineQuantity:baseline,baselineReserved:20,quantity,observedSerial:'',reason:'실물 확인',...patch})
+test('선택 실사는 실제 최종 수량과 전산 수량의 차이를 계산한다',()=>{assert.equal(difference(45,50),-5);assert.equal(difference(25,20),5);assert.equal(difference(1.125,1),0.125);assert.equal(selectionInput(row('45')).quantity,45);assert.equal(selectionInput(row('')).quantity,null)})
+test('예약 미만·차이 사유 누락·시리얼 식별 손실을 차단한다',()=>{assert.match(selectedCountError(row('15')),/예약/);assert.match(selectedCountError(row('45',50,{reason:''})),/사유/);assert.equal(selectedCountError(row('50',50,{reason:''})),null);assert.ok(selectedCountError(row('1',1,{baselineReserved:0,serialNumber:'SN'})));assert.equal(selectedCountError(row('0',1,{baselineReserved:0,serialNumber:'SN'})),null)})
+test('선택하지 않은 재고는 요청에 추가하지 않으며 다른 단위 총량을 합산하지 않는다',()=>{const selected=[row('45'),row('25',20,{unit:'kg'}),row('10',10,{baselineReserved:0}),row('',0,{baselineReserved:0})];assert.deepEqual(selectedSummary(selected),{shortages:1,excesses:1,matches:1,missing:1});assert.equal(selected.map(selectionInput).length,4);assert.equal(selected[1].unit,'kg')})

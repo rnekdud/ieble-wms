@@ -1,0 +1,92 @@
+.receipt-scan-summary { display:grid; grid-template-columns:2fr 1fr 1fr 1.4fr; gap:20px; padding:24px; background:#fff; border-radius:10px; margin:22px 0; }
+.receipt-scan-summary small,.receipt-scan-summary strong { display:block; overflow-wrap:anywhere; }
+.receipt-scan-summary small { color:#657b85; margin-bottom:8px; font-size:12px; }
+.receipt-scan-summary strong { font-size:18px; }
+.receipt-scan-summary progress { width:100%; height:7px; accent-color:#168575; }
+.receipt-scan-station,.receipt-scan-manual { padding:24px; background:#fff; border-radius:10px; margin:20px 0; }
+.receipt-scan-station form { display:flex; gap:12px; align-items:end; }
+.receipt-scan-station label { flex:1; display:grid; gap:9px; min-width:0; font-weight:600; }
+.receipt-scan-station input { width:100%; min-width:0; height:52px; font-size:18px; }
+.receipt-scan-station form button { min-height:52px; }
+.receipt-scan-station p { font-size:13px; line-height:1.7; }
+.receipt-scan-candidates { display:grid; gap:8px; margin:16px 0; }
+.receipt-scan-candidates button { text-align:left; white-space:normal; }
+.receipt-scan-table { width:100%; min-width:850px; }
+.receipt-scan-table small { display:block; color:#637b84; font-size:12px; margin-top:5px; }
+.receipt-scan-table :is(th,td):nth-child(n+3):nth-child(-n+5) { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.receipt-scan-table .is-scan-selected { background:#edf8f4; }
+.receipt-scan-manual { display:grid; grid-template-columns:1fr 2fr; gap:18px; }
+.receipt-scan-manual h3,.receipt-scan-manual .receipt-actions { grid-column:1/-1; }
+.receipt-scan-manual label { display:grid; gap:8px; min-width:0; }
+.receipt-scan-manual input { min-width:0; width:100%; }
+.receipt-scan-manual .receipt-actions { justify-content:flex-end; flex-wrap:wrap; }
+.receipt-scan-history { margin:24px 0; }
+.receipt-scan-history summary { cursor:pointer; margin-bottom:14px; }
+@media(max-width:900px){.receipt-scan-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:600px){.receipt-scan-summary,.receipt-scan-manual{grid-template-columns:1fr;gap:14px;padding:18px;}.receipt-scan-station{padding:18px;}.receipt-scan-station form{flex-wrap:wrap;}.receipt-scan-station label{flex-basis:100%;}}
+
+.barcode-input-row { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
+.barcode-input-row label { flex:1 1 260px; }
+.barcode-input-row button { min-height:44px; }
+.barcode-camera { display:grid; gap:12px; max-width:520px; }
+.barcode-camera video { width:100%; max-height:320px; background:#172d35; border-radius:8px; }
+.barcode-context { display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:13px; }
+.receipt-scan-station { border:1px solid #bdd8d4; border-top:3px solid #268578; }
+.receipt-scan-station h3 { margin:0 0 18px; }
+.shipment-work-section { padding:24px; background:#fff; border:1px solid #dce5e9; border-radius:10px; min-width:0; }
+.shipment-work-section .receipt-section-heading { margin:0 0 18px; }
+.shipment-work-section input { width:110px; }
+@media(max-width:600px) { .shipment-work-section { padding:16px; } .barcode-input-row button { flex:1; } }
+
+.barcode-input-row button { white-space:nowrap; }
+@media(max-width:600px) {
+ .receipt-scan-station .barcode-input-row label { flex:1 0 100%; }
+ .barcode-input-row button { min-width:110px; }
+ .shipment-work-section .receipt-scan-table { min-width:0; display:block; }
+ .shipment-work-section .receipt-scan-table thead { display:none; }
+ .shipment-work-section .receipt-scan-table tbody { display:block; }
+ .shipment-work-section .receipt-scan-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); padding:10px; border-bottom:1px solid #dce5e9; }
+ .shipment-work-section .receipt-scan-table tbody td:nth-child(n) { display:block; min-width:0; padding:8px; text-align:left; white-space:normal; overflow-wrap:anywhere; border:0; }
+ .shipment-work-section .receipt-scan-table td:first-child,.shipment-work-section .receipt-scan-table td:last-child { grid-column:1/-1; }
+ .shipment-work-section .receipt-scan-table td::before { content:attr(data-label); display:block; color:#657b85; font-size:11px; margin-bottom:5px; }
+ .shipment-work-section .receipt-scan-table input { width:100%; min-height:44px; }
+}
+
+.receipt-product-table { min-width: 780px; }
+.receipt-product-table th:nth-child(2),.receipt-product-table th:nth-child(3),.receipt-product-table .receipt-number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receipt-product-table .receipt-inspection-quantity input[type=number] { text-align: right; }
+.receipt-product-table td:nth-child(5)>span,.receipt-product-table td:nth-child(6)>span { display:block; margin-bottom:6px; }
+.receipt-product-table .receipt-difference { color: #a14e17; font-weight:600; }
+.receipt-tracking-tabs { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:16px; }
+.receipt-tracking-tabs>span { margin-left:auto; font-variant-numeric:tabular-nums; }
+.receipt-tracking-content { border:0; padding:0; margin:0; min-width:0; }
+.receipt-tracking-content input,.receipt-tracking-content select,.receipt-tracking-content textarea { width:100%; min-width:0; }
+.receipt-lot-table { min-width:530px; }
+.receipt-lot-table td { padding:8px; }
+.receipt-lot-table th:nth-child(3) { width:100px; }
+.receipt-serial-entry { display:grid; grid-template-columns:minmax(0,1fr) minmax(140px,.6fr) auto; gap:10px; align-items:end; margin-bottom:16px; }
+.receipt-serial-entry label { display:grid; gap:6px; }
+.receipt-serial-list { max-height:320px; overflow:auto; }
+.receipt-serial-list table { min-width:500px; }
+@media(max-width:600px) { .receipt-serial-entry { grid-template-columns:1fr; } .receipt-tracking-tabs>span { width:100%; margin-left:0; } }
+.receipt-product-table :is(th,td):nth-child(5) { text-align:left; white-space:normal; }
+.receipt-product-table .receipt-inspection-quantity { min-width:140px; }
+
+/* Receiving-only inspection layout; shipment scanners retain their existing layout. */
+.receipt-scan-station .barcode-input-row { flex-wrap: nowrap; align-items: flex-end; gap: 8px; }
+.receipt-scan-station .barcode-input-row > label { flex: 1; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+.receipt-scan-station .barcode-input-row input { width: 100%; height: var(--choice-height, 40px); min-height: var(--choice-height, 40px); box-sizing: border-box; }
+.receipt-scan-station .barcode-input-row > button { flex: 0 0 auto; height: var(--choice-height, 40px); min-height: var(--choice-height, 40px); margin: 0; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; }
+.receipt-inspection-help { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; text-align: left; }
+.receipt-scan-station .receipt-inspection-help h3 { margin: 0 0 4px; font-size: 13px; font-weight: 500; line-height: 1.4; }
+.receipt-scan-station .receipt-inspection-help p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--ui-muted); }
+:root .receipt-scan-table.receipt-product-table thead th { text-align: center; vertical-align: middle; padding: 12px; white-space: normal; }
+.receipt-scan-table.receipt-product-table td.receipt-inspection-lots { text-align: left; white-space: normal; }
+.receipt-inspection-lot-list { display: grid; gap: 8px; margin-bottom: 8px; max-height: 144px; overflow: auto; overflow-wrap: anywhere; }
+.receipt-inspection-lot-list small { margin-top: 2px; }
+@media (max-width: 760px) { .receipt-inspection-help { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .receipt-scan-station .barcode-input-row { flex-wrap: wrap; }
+  .receipt-scan-station .barcode-input-row > label { flex: 1 0 100%; }
+  .receipt-scan-station .barcode-input-row > button { flex: 0 1 auto; min-width: 0; padding: 0 12px; }
+}

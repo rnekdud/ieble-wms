@@ -5,12 +5,12 @@ import {
   Plus,
   ChevronDown,
   ChevronRight,
-  RefreshCw,
   Scan,
 } from 'lucide-react'
 import { api } from '../../api'
 import type { ChartData } from '../../types/organization-structure'
 import { PageHeading } from './WorkspaceUI'
+import './organization-chart.css'
 
 export default function OrganizationChart({
   tenantId,
@@ -23,7 +23,6 @@ export default function OrganizationChart({
 }) {
   const [data, setData] = useState<ChartData | null>(null)
   const [error, setError] = useState('')
-  const [revision, setRevision] = useState(0)
   const [closed, setClosed] = useState<Set<string>>(new Set())
   const [zoom, setZoom] = useState(100)
   const [dragging, setDragging] = useState(false)
@@ -82,7 +81,7 @@ export default function OrganizationChart({
       window.removeEventListener('focus', refresh)
       document.removeEventListener('visibilitychange', refresh)
     }
-  }, [tenantId, revision])
+  }, [tenantId])
 
   const groups = useMemo(() => {
     const children = new Map<string | null, ChartData['departments']>()
@@ -193,6 +192,8 @@ export default function OrganizationChart({
       <p className="org-card-empty">소속 직원 없음</p>
     )
   }
+  const expandable = (data?.departments || []).filter(d => (groups.children.get(d.id)?.length || 0) > 0).map(d => d.id)
+  const allExpanded = expandable.length > 0 && expandable.every(id => !closed.has(id))
   function branch(parent: string | null, ancestors = new Set<string>()) {
     return (groups.children.get(parent) || []).map((department) => {
       if (ancestors.has(department.id)) return null
@@ -249,7 +250,6 @@ export default function OrganizationChart({
     <>
       <PageHeading
         title="조직도"
-        description="부서별 소속 직원과 직급을 한눈에 확인하세요. 인원수는 활성 계정의 직속 소속 기준입니다."
       />
       {error && (
         <div className="alert error" role="alert">
@@ -258,9 +258,9 @@ export default function OrganizationChart({
       )}
       <section className="wms-card organization-card">
         <div className="organization-toolbar org-chart-toolbar">
-          <div className="organization-row-actions">
+          <div className="org-chart-zoom-controls" role="group" aria-label="조직도 배율">
             <button
-              className="secondary"
+              className="secondary wms-icon-button"
               aria-label="조직도 축소"
               disabled={zoom <= 1}
               onClick={() => setZoom((x) => Math.max(1, x - 10))}
@@ -271,45 +271,27 @@ export default function OrganizationChart({
               {zoom}%
             </span>
             <button
-              className="secondary"
+              className="secondary wms-icon-button"
               aria-label="조직도 확대"
               disabled={zoom >= 200}
               onClick={() => setZoom((x) => Math.min(200, x + 10))}
             >
               <Plus size={16} />
             </button>
+            <button className="secondary org-chart-reset" onClick={() => setZoom(100)}>
+              100% 보기
+            </button>
+          </div>
+          <div className="org-chart-view-controls" role="group" aria-label="조직도 보기">
             <button className="secondary" disabled={!data} onClick={fit}>
               <Scan size={16} /> 전체 화면 맞춤
             </button>
-            <button className="text-button" onClick={() => setZoom(100)}>
-              100% 보기
-            </button>
-            <button
-              className="text-button"
-              onClick={() => setClosed(new Set())}
-            >
-              전체 펼치기
-            </button>
-            <button
-              className="text-button"
-              onClick={() =>
-                setClosed(new Set(data?.departments.map((x) => x.id)))
-              }
-            >
-              전체 접기
+            <button className="secondary" disabled={!expandable.length} onClick={() => setClosed(allExpanded ? new Set(expandable) : new Set())}>
+              {allExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{allExpanded ? '전체 접기' : '전체 펼치기'}
             </button>
           </div>
-          <button
-            className="secondary"
-            onClick={() => setRevision((x) => x + 1)}
-          >
-            <RefreshCw size={14} /> 조직도 새로고침
-          </button>
+
         </div>
-        <p className="organization-help" id="org-chart-help">
-          마우스로 끌거나 스크롤하여 이동하세요. 키보드는 영역을 선택한 뒤
-          방향키를 사용하세요. 변경사항은 15초마다 자동 반영됩니다.
-        </p>
         {!data ? (
           <p>
             {error
@@ -340,7 +322,6 @@ export default function OrganizationChart({
               className={`org-chart-viewport${dragging ? ' is-panning' : ''}`}
               role="region"
               aria-label="부서 계층"
-              aria-describedby="org-chart-help"
               tabIndex={0}
               onPointerDown={startPan}
               onPointerMove={pan}

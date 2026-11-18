@@ -1,0 +1,12 @@
+.form-label-text {
+  font: inherit;
+  color: inherit;
+}
+.form-label-text > .form-required-mark {
+  display: inline;
+  margin: 0 0 0 4px;
+  padding: 0;
+  color: #eb4444;
+  font: inherit;
+  vertical-align: baseline;
+}

@@ -40,3 +40,17 @@ test('unlinked structures require a choice and linked rack duplication is detect
  const moved=movePlanObjects(doc,['z','r'],.1,.1,false)
  assert.equal(moved.objects[0].zoneId,'physical-zone');assert.equal(moved.objects[1].rackId,'physical-rack')
 })
+
+test('overlap ordering preserves geometry and stable links, including multi-selection undo/redo', async()=>{
+ const {orderPlanObjects}=await import('../src/warehouse-plan-model.ts')
+ const a={...createPlanObject('rack','a'),rackId:'rack-a',locationId:'location-a'},b=createPlanObject('wall','b'),c={...createPlanObject('zone','c'),zoneId:'zone-c'},d=createPlanObject('text','d')
+ const original={...blankPlan(),objects:[a,b,c,d]}
+ const front=orderPlanObjects(original,['c','a','stale-selection'],true)
+ assert.deepEqual(front.objects,[b,d,a,c]);assert.equal(front.objects[2],a);assert.equal(front.objects[3],c)
+ assert.deepEqual(orderPlanObjects(original,['c','a'],false).objects,[a,c,b,d])
+ const h=editPlan({past:[],present:original,future:[]},front)
+ assert.deepEqual(undoPlan(h).present,original);assert.deepEqual(redoPlan(undoPlan(h)).present,front)
+ assert.equal(orderPlanObjects(front,['a','c'],true),front)
+ assert.equal(orderPlanObjects(original,[],false),original)
+ assert.deepEqual(original.objects,[a,b,c,d])
+})

@@ -79,20 +79,20 @@ export default function PasswordChangeDialog({
   return (
     <dialog
       ref={dialog}
-      className="password-gate-dialog"
+      className={`password-gate-dialog${required ? ' password-gate-required' : ''}`}
       aria-labelledby="password-change-title"
       onCancel={(e) => {
         e.preventDefault()
         if (!required && !busy) onClose?.()
       }}
     >
-      <span className="eyebrow">IEBLE WMS · 계정 보호</span>
+      <span className="eyebrow">아이블 WMS · 계정 보호</span>
       <h1 id="password-change-title">
         {required ? '개인 비밀번호로 변경해 주세요' : '비밀번호 변경'}
       </h1>
-      <p>
+      <p className="password-change-intro">
         {required
-          ? `${name}님, 비밀번호 변경이 필요한 계정입니다. 변경을 완료해야 업무를 시작할 수 있습니다.`
+          ? <>{name}님, 비밀번호 변경이 필요한 계정입니다.<br />변경을 완료해야 업무를 시작할 수 있습니다.</>
           : `${name}님의 현재 비밀번호를 확인한 후 변경합니다. 이미 변경한 적이 있다면 마지막으로 설정한 비밀번호를 입력해 주세요. 변경하면 다른 기기의 로그인은 해제됩니다.`}
       </p>
       {error && (
@@ -156,7 +156,7 @@ export default function PasswordChangeDialog({
         </form>
       )}
       {required ? (
-        <button className="text-button" disabled={busy} onClick={onLogout}>
+        <button className="text-button password-gate-logout" disabled={busy} onClick={onLogout}>
           로그아웃
         </button>
       ) : (

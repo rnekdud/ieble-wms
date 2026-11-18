@@ -123,7 +123,7 @@ public sealed class TenantPermissionTests
             {
                 Assert.True(await Allowed(factory, f.MasterId, f.TenantId, feature.Key, action));
                 Assert.Equal(feature.Key is not ("org-chart" or "organization-items"), await Allowed(factory, f.AdministratorId, f.TenantId, feature.Key, action));
-                Assert.Equal(feature.Key is not ("users" or "company" or "org-chart" or "organization-items") && action is "menu" or "read", await Allowed(factory, f.EmployeeId, f.TenantId, feature.Key, action));
+                Assert.Equal((feature.Key is not ("users" or "company" or "org-chart" or "organization-items") && action is "menu" or "read") || (feature.Key == "support" && action == "create"), await Allowed(factory, f.EmployeeId, f.TenantId, feature.Key, action));
             }
         var settings = await Read(client, f.TenantId);
         foreach (var feature in PermissionCatalog.Features)

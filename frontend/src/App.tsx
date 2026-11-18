@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import FormLabel from './components/FormLabel'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api, ApiError } from './api'
 import type { Session } from './api'
@@ -7,11 +8,14 @@ import {
   saveRememberedEmail,
   clearRememberedEmail,
 } from './remembered-email'
-import BillingFeedbackAdmin from './components/BillingFeedbackAdmin'
-import AdminTenants from './components/AdminTenants'
-import CompanyWorkspace from './components/workspace/CompanyWorkspace'
+const AdminWorkspace = lazy(() => import('./components/AdminWorkspace'))
+const CompanyWorkspace = lazy(() => import('./components/workspace/CompanyWorkspace'))
 import PasswordChangeGate from './components/PasswordChangeGate'
 import PasswordInput from './components/PasswordInput'
+import OrganizationDialog from './components/workspace/OrganizationDialog'
+import AuthLayout from './components/AuthLayout'
+import RegistrationAgreements from './components/RegistrationAgreements'
+import LoginIdField from './components/workspace/LoginIdField'
 import UserProfileMenu from './components/UserProfileMenu'
 import {
   normalizeBusinessNumber,
@@ -20,9 +24,12 @@ import {
 } from './registration-validation'
 
 import { createBrowserNavigation } from './browser-navigation'
+import { pageTitle } from './page-title'
 import { requestNavigation } from './navigation-guard'
 
 function App() {
+  const [unavailableRegistrationLogin, setUnavailableRegistrationLogin] = useState<string>()
+  const [registrationLoginAvailable, setRegistrationLoginAvailable] = useState(false)
   const [path, setPath] = useState(window.location.pathname)
   const [navigationRevision, setNavigationRevision] = useState(0)
   const [session, setSession] = useState<Session | null>(null)
@@ -36,13 +43,14 @@ function App() {
   const [loginEmail, setLoginEmail] = useState(savedLogin.email)
   const [rememberId, setRememberId] = useState(savedLogin.remember)
   const [autoLogin, setAutoLogin] = useState(false)
+  const [passwordHelp, setPasswordHelp] = useState(false)
   const navigation = useRef<ReturnType<typeof createBrowserNavigation> | null>(null)
   useLayoutEffect(() => {
     const router = createBrowserNavigation(next => { setPath(next); setNavigationRevision(value => value + 1); setError('') })
     navigation.current = router
     return () => { router.dispose(); if (navigation.current === router) navigation.current = null }
   }, [])
-  const navigate = useCallback((to: string) => { navigation.current?.navigate(to) }, [])
+  const navigate = useCallback((to: string, options?: { replace?: boolean }) => { navigation.current?.navigate(to, options) }, [])
   const refresh = useCallback(async () => {
     const current = await api<Session>('/api/auth/me')
     setSession(current)
@@ -63,6 +71,8 @@ function App() {
           ? '/app/master/billing'
           : path
 
+  useEffect(() => { document.title = pageTitle(route, session?.user.mustChangePassword) }, [route, session?.user.mustChangePassword])
+
   useEffect(() => {
     api<Session>('/api/auth/me')
       .then((current) => {
@@ -73,7 +83,7 @@ function App() {
           setError('로그인 상태를 확인하지 못했습니다. 새로고침해 주세요.')
       })
       .finally(() => setLoading(false))
-    api<{ status: string; database: string }>('/api/health/db')
+    api<{ status: string; database?: string }>('/api/health/db')
       .then((d) =>
         setHealth(
           d.status === 'connected' ? 'DB 연결 정상' : 'DB 연결 확인 필요',
@@ -97,12 +107,18 @@ function App() {
     form.forEach((value, key) => {
       values[key] = String(value)
     })
+    if (register && !registrationLoginAvailable) { setError('로그인 아이디 중복 확인을 완료해 주세요.'); setBusy(false); return }
     if (register && values.password !== values.passwordConfirm) {
       setError('비밀번호 확인이 일치하지 않습니다.')
       setBusy(false)
       return
     }
     if (register) {
+      if (values.termsConsent !== 'on' || values.privacyConsent !== 'on') {
+        setError('서비스 이용약관과 개인정보 수집·이용 필수 항목에 동의해 주세요.')
+        setBusy(false)
+        return
+      }
       values.companyName = values.companyName.trim()
       if (
         !values.companyName ||
@@ -130,6 +146,8 @@ function App() {
     }
     setDuplicateCompany(false)
     delete values.passwordConfirm
+    delete values.termsConsent
+    delete values.privacyConsent
     try {
       await api(
         register ? '/api/auth/register' : '/api/auth/login',
@@ -147,6 +165,7 @@ function App() {
         navigate(home(current))
       }
     } catch (e) {
+      if (register && e instanceof ApiError && e.code === 'duplicate_login_id') { setRegistrationLoginAvailable(false); setUnavailableRegistrationLogin(values.loginId.trim()) }
       setError(e instanceof Error ? e.message : '연결에 실패했습니다.')
       setDuplicateCompany(
         e instanceof ApiError && e.code === 'duplicate_company',
@@ -194,7 +213,8 @@ function App() {
     session.user.systemRole !== 'IebleAdministrator'
   )
     return (
-      <CompanyWorkspace
+      <Suspense fallback={<main className="app-recovery" role="status">업무 화면을 불러오는 중…</main>}><CompanyWorkspace
+        key={session.selectedTenantId || 'choose-company'}
         session={session}
         path={route}
         navigationRevision={navigationRevision}
@@ -209,11 +229,11 @@ function App() {
           restoreLoginPreferences()
           navigate('/login')
         }}
-      />
+      /></Suspense>
     )
   return (
-    <div className="shell">
-      <header>
+    <div className={`shell${!session ? ` auth-shell ${register ? 'register-shell' : 'login-shell'}` : ''}`}>
+      {session && <header>
         <a
           className="brand"
           href="/"
@@ -222,59 +242,21 @@ function App() {
             navigate(session ? home(session) : '/login')
           }}
         >
-          <span className="brand-mark">i</span> IEBLE{' '}
-          <span className="brand-sub">WMS</span>
+          <img className="auth-service-logo" src="/wms_logo.svg" alt="" width={36} height={36} />
+          <span>아이블 WMS</span>
         </a>
         <span className="header-caption">기업을 연결하는 물류의 시작</span>
         {session && (
           <UserProfileMenu session={session} roleLabel={session.user.systemRole === 'IebleAdministrator' ? '아이블 관리자' : '기업 구성원'} busy={busy} onLogout={logout} />
         )}
-      </header>
+      </header>}
       {loading ? (
         <main className="loading" aria-live="polite">
           로그인 상태를 확인하고 있습니다…
         </main>
       ) : !session ? (
-        <main className={`auth-layout ${register ? 'registration' : ''}`}>
-          <section className="intro">
-            <span className="eyebrow">YOUR OPERATIONS, CONNECTED</span>
-            <h1>
-              흐름을 잇고,
-              <br />
-              업무를 가볍게.
-            </h1>
-            <p>
-              기업과 구성원이 함께하는
-              <br />
-              아이블 물류 관리 워크스페이스
-            </p>
-            <div className="flow" aria-hidden="true">
-              <div>
-                입고 <span>01</span>
-              </div>
-              <div>
-                재고 <span>02</span>
-              </div>
-              <div>
-                출고 <span>03</span>
-              </div>
-            </div>
-            <div className="intro-bottom">
-              <span className="dot" /> 하나의 계정으로 여러 기업을 관리하세요.
-            </div>
-          </section>
-          <section className="auth-card">
-            <div className="card-heading">
-              <span className="eyebrow">
-                {register ? 'CREATE YOUR WORKSPACE' : 'WELCOME BACK'}
-              </span>
-              <h2>{register ? '기업 회원가입' : '로그인'}</h2>
-              <p>
-                {register
-                  ? '기업 정보를 등록하고 마스터 계정을 만드세요.'
-                  : '아이블 계정으로 업무를 시작하세요.'}
-              </p>
-            </div>
+        <>
+          <AuthLayout register={register}>
             {error && (
               <div className="alert error" role="alert">
                 {error}
@@ -302,9 +284,7 @@ function App() {
               <fieldset disabled={busy}>
                 {register && (
                   <>
-                    <label>
-                      기업명
-                      <input
+                    <label><FormLabel required>기업명</FormLabel><input aria-label={"기업명"}
                         name="companyName"
                         required
                         maxLength={200}
@@ -312,9 +292,7 @@ function App() {
                         placeholder="주식회사 아이블"
                       />
                     </label>
-                    <label>
-                      사업자등록번호
-                      <input
+                    <label><FormLabel required>사업자등록번호</FormLabel><input aria-label={"사업자등록번호"}
                         name="businessRegistrationNumber"
                         required
                         maxLength={64}
@@ -327,9 +305,7 @@ function App() {
                       </small>
                     </label>
                     <div className="form-grid">
-                      <label>
-                        담당자 이름
-                        <input
+                      <label><FormLabel required>담당자 이름</FormLabel><input aria-label={"담당자 이름"}
                           name="contactName"
                           required
                           maxLength={200}
@@ -337,9 +313,7 @@ function App() {
                           placeholder="홍길동"
                         />
                       </label>
-                      <label>
-                        연락처
-                        <input
+                      <label><FormLabel required>연락처</FormLabel><input aria-label={"연락처"}
                           name="contactPhone"
                           type="tel"
                           required
@@ -352,9 +326,7 @@ function App() {
                     </div>
                   </>
                 )}
-                <label>
-                  {register ? '이메일' : '로그인 아이디 또는 이메일'}
-                  <input
+                <label><FormLabel required>{register ? '이메일' : '아이디'}</FormLabel><input aria-label={String(register ? '이메일' : '아이디')}
                     name="email"
                     value={register ? undefined : loginEmail}
                     onChange={
@@ -366,9 +338,10 @@ function App() {
                     required
                     maxLength={256}
                     autoComplete="username"
-                    placeholder={register ? "name@company.com" : "직원 아이디 또는 이메일"}
+                    placeholder={register ? "name@company.com" : "아이디 또는 이메일"}
                   />
                 </label>
+                {register && <LoginIdField unavailableValue={unavailableRegistrationLogin} endpoint="/api/auth" onAvailable={setRegistrationLoginAvailable} />}
                 <div className={register ? 'password-with-help' : undefined}>
                   <PasswordInput label="비밀번호" key={register ? 'register-password' : 'login-password'}
                     name="password"
@@ -411,12 +384,10 @@ function App() {
                     등록·결제 연동은 준비 중입니다.
                   </p>
                 )}
-                <button className="primary full" type="submit">
-                  {busy ? '처리 중…' : register ? '기업 계정 만들기' : '로그인'}
-                  <span aria-hidden="true">→</span>
-                </button>
+                {register && <RegistrationAgreements />}
                 {!register && (
-                  <div className="login-preferences">
+                  <div className="login-options">
+                   <div className="login-preferences">
                     <label>
                       <input
                         type="checkbox"
@@ -436,14 +407,20 @@ function App() {
                       />
                       자동 로그인
                     </label>
+                   </div>
+                   <button className="login-password-help" type="button" onClick={() => setPasswordHelp(true)}>비밀번호를 잊으셨나요?</button>
                   </div>
                 )}
+                <button className="primary full" type="submit" disabled={busy || (register && !registrationLoginAvailable)}>
+                  {busy ? '처리 중…' : register ? '기업 계정 만들기' : '로그인'}
+                </button>
+
               </fieldset>
             </form>
             <p className="switch-auth">
               {register
-                ? '이미 아이블 계정이 있으신가요?'
-                : '아이블이 처음이신가요?'}{' '}
+                ? '이미 계정이 있으신가요?'
+                : '아이블 WMS가 처음이신가요?'}{' '}
               <a
                 href={register ? '/login' : '/register'}
                 onClick={(e) => {
@@ -452,11 +429,15 @@ function App() {
                   navigate(register ? '/login' : '/register')
                 }}
               >
-                {register ? '로그인' : '기업 회원가입'}
+                {register ? '로그인' : '회원가입'}
               </a>
             </p>
-          </section>
-        </main>
+          </AuthLayout>
+          {!register && passwordHelp && <OrganizationDialog title="비밀번호 찾기" size="small" onClose={() => setPasswordHelp(false)}>
+            <p>구성원 계정은 기업 마스터 또는 권한 있는 관리자에게 비밀번호 초기화를 요청해 주세요.</p>
+            <p>기업 마스터 계정은 이 화면에서 직접 초기화할 수 없습니다.</p>
+          </OrganizationDialog>}
+        </>
       ) : (
         <main className="workspace-layout">
           <aside>
@@ -510,7 +491,7 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <><AdminTenants /><BillingFeedbackAdmin /></>
+                <Suspense fallback={<p role="status">관리자 화면을 불러오는 중…</p>}><AdminWorkspace /></Suspense>
               )
             ) : (
               <div className="panel">
@@ -526,13 +507,9 @@ function App() {
           </section>
         </main>
       )}
-      <footer>
-        <span>© {new Date().getFullYear()} IEBLE. All rights reserved.</span>
-        <span className="health">
-          <span className="dot" />
-          {health}
-        </span>
-      </footer>
+      {session && <footer>
+        <span>© {new Date().getFullYear()} 아이블소프트(주)</span>
+      </footer>}
     </div>
   )
 }

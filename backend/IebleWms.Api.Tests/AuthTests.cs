@@ -183,7 +183,8 @@ public sealed class AuthTests
         var me = await client.GetFromJsonAsync<JsonElement>("/api/auth/me");
         Assert.Equal(2, me.GetProperty("memberships").GetArrayLength());
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/overview")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/tenants/{first}/workspace")).StatusCode);
+        Assert.Equal(JsonValueKind.Null, me.GetProperty("selectedTenantId").ValueKind);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/tenants/{first}/workspace")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await Post(client, "/api/auth/select-tenant", new { tenantId = foreign })).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await Post(client, "/api/auth/select-tenant", new { tenantId = first })).StatusCode);
         Assert.Equal("Master", (await client.GetFromJsonAsync<JsonElement>($"/api/tenants/{first}/workspace")).GetProperty("role").GetString());
@@ -253,9 +254,10 @@ public sealed class AuthTests
     }
 }
 
-internal sealed class AuthFactory(bool failMembership = false, bool production = false, bool failBootstrap = false, bool staleStatusWrite = false, TimeProvider? clock = null, bool resetTokens = false, bool warehouseSetup = false) : WebApplicationFactory<Program>
+internal sealed class AuthFactory(bool failMembership = false, bool production = false, bool failBootstrap = false, bool staleStatusWrite = false, TimeProvider? clock = null, bool resetTokens = false, bool warehouseSetup = false, bool isolatedConnections = false) : WebApplicationFactory<Program>
 {
-    private readonly SqliteConnection connection = new("Data Source=:memory:");
+    // Browser requests run concurrently: retain a named in-memory database, with one connection per context.
+    private readonly SqliteConnection connection = new(isolatedConnections ? $"Data Source=receipt-qa-{Guid.NewGuid():N};Mode=Memory;Cache=Shared;Pooling=False" : "Data Source=:memory:");
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(production ? "Production" : "Development");
@@ -272,7 +274,9 @@ internal sealed class AuthFactory(bool failMembership = false, bool production =
             services.RemoveAll<WmsDbContext>();
             services.AddDbContext<WmsDbContext>(options =>
             {
-                options.UseSqlite(connection).ReplaceService<IModelCustomizer, SqliteTimestampModelCustomizer>();
+                if (isolatedConnections) options.UseSqlite(connection.ConnectionString);
+                else options.UseSqlite(connection);
+                options.ReplaceService<IModelCustomizer, SqliteTimestampModelCustomizer>();
                 if (failMembership) options.AddInterceptors(new FailMembershipInterceptor());
                 if (failBootstrap || staleStatusWrite) options.AddInterceptors(new AdministrativeFailureInterceptor(failBootstrap, staleStatusWrite));
             });

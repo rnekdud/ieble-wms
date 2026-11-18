@@ -10,8 +10,9 @@ using Npgsql;
 
 namespace IebleWms.Api.Warehousing;
 
-public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
+public sealed class WarehouseService(WmsDbContext db, TimeProvider clock, RackBarcodeCandidates barcodeCandidates, IebleWms.Api.Barcodes.InternalBarcodeCandidates internalCandidates)
 {
+    public Task<RackBarcodeCandidate> GenerateBarcode(Guid tenantId, CancellationToken token) => barcodeCandidates.Generate(db, tenantId, token);
     private static OrganizationException Missing() => new(404, "현재 기업의 창고 또는 보관 항목을 찾을 수 없습니다.");
     private static OrganizationException Invalid(string message) => new(400, message);
     private static void Version(AuditableEntity item, Guid version) { if (item.Version != version) throw new OrganizationException(409, "다른 사용자가 변경했습니다. 새로고침 후 다시 저장해 주세요."); }
@@ -29,7 +30,7 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         if (request.RequestId == Guid.Empty) throw Invalid("등록 요청 ID를 확인해 주세요.");
         var normalized = new { code = request.Code.Trim().Normalize(NormalizationForm.FormKC).ToUpperInvariant(), name = request.Name.Trim(), request.IsActive,
             zoneId = (request as RackRequest)?.ZoneId, levels = (request as RackRequest)?.Levels, bays = (request as RackRequest)?.Bays };
-        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(normalized))));
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(request is RackRequest { Barcode: not null } rack ? (object)new { normalized, rack.Barcode } : normalized))));
     }
     private static void CheckReplay(string? original, string current)
     {
@@ -47,9 +48,9 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         }
     }
     private static object Snapshot(IStorageItem item) => item switch {
-        Warehouse w => new { w.Id, w.Code, w.Name, w.IsActive, w.CustomCode, w.TypeDescription, w.Type, w.Address, w.AddressDetail, w.ContactName, w.Notes },
+        Warehouse w => new { w.Id, w.Code, w.Name, w.IsActive, w.CustomCode, w.TypeDescription, w.Type, w.Address, w.AddressDetail, w.ContactUserId, w.ContactName, w.Notes },
         WarehouseZone z => new { z.Id, z.Code, z.Name, z.IsActive },
-        WarehouseRack r => new { r.Id, r.Code, r.Name, r.IsActive, r.ZoneId, r.Levels, r.Bays },
+        WarehouseRack r => new { r.Id, r.Code, r.Name, r.IsActive, r.ZoneId, r.Levels, r.Bays, r.Barcode },
         StorageLocation l => new { l.Id, l.Code, l.Name, l.IsActive, l.ZoneId, l.RackId, l.Level, l.Bay },
         _ => throw new InvalidOperationException("Unknown storage entity")
     };
@@ -61,7 +62,7 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         try { await db.SaveChangesAsync(token); }
         catch (DbUpdateConcurrencyException) { throw new OrganizationException(409, "정보가 변경되었습니다. 새로고침 후 다시 시도해 주세요."); }
         catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: "23505" } || e.InnerException?.Message.Contains("UNIQUE constraint failed") == true)
-        { throw new OrganizationException(409, "같은 범위에 이미 사용 중인 코드 또는 랙 위치입니다. 미사용 항목의 코드도 재사용할 수 없습니다."); }
+        { throw new OrganizationException(409, "같은 범위에 이미 사용 중인 코드·바코드 또는 랙 위치입니다. 미사용 항목의 코드도 재사용할 수 없습니다."); }
     }
     public async Task<object> List(Guid tenantId, string? search, string status, int page, CancellationToken token)
     {
@@ -81,27 +82,44 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         var zones = await db.WarehouseZones.AsNoTracking().Where(x => x.TenantId == tenantId && x.WarehouseId == id).OrderBy(x => x.Code).ToListAsync(token);
         var racks = await db.WarehouseRacks.AsNoTracking().Where(x => x.TenantId == tenantId && x.WarehouseId == id).OrderBy(x => x.Code).ToListAsync(token);
         var locationCount = await db.StorageLocations.CountAsync(x => x.TenantId == tenantId && x.WarehouseId == id, token);
-        return new { warehouse, zones, racks, locationCount };
+        var rackLocationCounts = await db.StorageLocations.Where(x => x.TenantId == tenantId && x.WarehouseId == id && x.RackId != null)
+            .GroupBy(x => x.RackId!.Value).ToDictionaryAsync(g => g.Key, g => g.Count(), token);
+        return new { warehouse, zones, racks, locationCount, rackLocationCounts };
     }
     private static void ValidateFilter(string? search, string status, int page)
     {
         if (search?.Length > 100 || status is not ("all" or "active" or "inactive") || page is < 1 or > 100000) throw Invalid("검색 조건을 확인해 주세요.");
     }
-    public async Task<object> Locations(Guid tenantId, Guid warehouseId, string? search, string status, Guid? zoneId, Guid? rackId, bool floorOnly, int page, CancellationToken token)
+    public async Task<object> Locations(Guid tenantId, Guid warehouseId, string? search, string status, Guid? zoneId, Guid? rackId, bool floorOnly, int page, CancellationToken token, bool includeStock = false)
     {
         ValidateFilter(search, status, page); var warehouse = await Warehouse(tenantId, warehouseId, token);
         var query = db.StorageLocations.AsNoTracking().Where(x => x.TenantId == tenantId && x.WarehouseId == warehouseId);
         if (zoneId.HasValue) query = query.Where(x => x.ZoneId == zoneId || db.WarehouseRacks.Any(r => r.TenantId == tenantId && r.WarehouseId == warehouseId && r.Id == x.RackId && r.ZoneId == zoneId));
         if (rackId.HasValue) query = query.Where(x => x.RackId == rackId);
         if (floorOnly) query = query.Where(x => x.RackId == null);
-        if (!string.IsNullOrWhiteSpace(search)) { var term = search.Trim().ToLowerInvariant(); query = query.Where(x => x.Code.ToLower().Contains(term) || x.Name.ToLower().Contains(term)); }
+        if (!string.IsNullOrWhiteSpace(search)) {
+            var term = search.Trim().ToLowerInvariant();
+            var matchingZones = db.WarehouseZones.Where(z => z.TenantId == tenantId && z.WarehouseId == warehouseId && (z.Name.ToLower().Contains(term) || z.Code.ToLower().Contains(term))).Select(z => z.Id);
+            var matchingRacks = db.WarehouseRacks.Where(r => r.TenantId == tenantId && r.WarehouseId == warehouseId && (r.Name.ToLower().Contains(term) || r.Code.ToLower().Contains(term) || (r.ZoneId.HasValue && matchingZones.Contains(r.ZoneId.Value)))).Select(r => r.Id);
+            query = query.Where(x => x.Code.ToLower().Contains(term) || x.Name.ToLower().Contains(term) || (x.ZoneId.HasValue && matchingZones.Contains(x.ZoneId.Value)) || (x.RackId.HasValue && matchingRacks.Contains(x.RackId.Value)));
+        }
         var views = query.Select(x => new { location = x, effectiveActive = warehouse.IsActive && x.IsActive &&
             (!x.ZoneId.HasValue || db.WarehouseZones.Any(z => z.TenantId == tenantId && z.WarehouseId == warehouseId && z.Id == x.ZoneId && z.IsActive)) &&
             (!x.RackId.HasValue || db.WarehouseRacks.Any(r => r.TenantId == tenantId && r.WarehouseId == warehouseId && r.Id == x.RackId && r.IsActive &&
                 (!r.ZoneId.HasValue || db.WarehouseZones.Any(z => z.TenantId == tenantId && z.WarehouseId == warehouseId && z.Id == r.ZoneId && z.IsActive)))) });
         if (status != "all") views = views.Where(x => x.effectiveActive == (status == "active"));
-        return new { items = await views.OrderBy(x => x.location.Code).ThenBy(x => x.location.Id).Skip((page - 1) * 50).Take(50).ToListAsync(token), total = await views.CountAsync(token), page, pageSize = 50 };
+        var items = await views.OrderBy(x => x.location.Code).ThenBy(x => x.location.Id).Skip((page - 1) * 50).Take(50).ToListAsync(token);
+        var quantities = new List<LocationQuantity>();
+        if (includeStock && items.Count > 0) {
+            var ids = items.Select(x => x.location.Id).ToArray(); var pg = db.Database.IsNpgsql();
+            // Same stored inventory quantities as the stock overview. Never infer stock from rack capacity.
+            quantities = await db.StockBalances.AsNoTracking().Where(x => x.TenantId == tenantId && x.WarehouseId == warehouseId && ids.Contains(x.LocationId))
+                .GroupBy(x => new { x.LocationId, x.Unit }).Select(g => new LocationQuantity(g.Key.LocationId, g.Key.Unit,
+                    pg ? g.Sum(x => x.Quantity) : (decimal)Math.Round(g.Sum(x => (double)x.Quantity), 3))).ToListAsync(token);
+        }
+        return new { items = items.Select(x => new { x.location, x.effectiveActive, quantities = includeStock ? quantities.Where(q => q.LocationId == x.location.Id).ToArray() : null }), total = await views.CountAsync(token), page, pageSize = 50, inventoryAvailable = includeStock };
     }
+    private sealed record LocationQuantity(Guid LocationId, string Unit, decimal Quantity);
     public async Task<Warehouse> SaveWarehouse(Guid tenantId, Guid actor, Guid? id, WarehouseRequest request, CancellationToken token)
     {
         await using var tx = await Begin(tenantId, token);
@@ -114,10 +132,7 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         if (id.HasValue && !string.IsNullOrEmpty(request.Code) && request.Code != item.Code) throw Invalid("시스템 창고 코드는 변경할 수 없습니다.");
         if (!id.HasValue)
         {
-            var codes = await db.Warehouses.Where(x => x.TenantId == tenantId).Select(x => x.Code).ToListAsync(token);
-            long number = codes.Where(x => x.StartsWith("WH-", StringComparison.Ordinal)).Select(x => long.TryParse(x[3..], out var n) && n >= 0 ? n : 0).DefaultIfEmpty().Max();
-            if (number == long.MaxValue) throw Invalid("창고 코드 범위를 초과했습니다.");
-            item.Code = $"WH-{number + 1:D4}";
+            item.Code = await IebleWms.Api.Services.BusinessCodes.Next(db,tenantId,"WH",token);
         }
         if (id.HasValue) Version(item, request.Version);
         var before = id.HasValue ? JsonSerializer.SerializeToElement(Snapshot(item)) : JsonSerializer.SerializeToElement(new { });
@@ -131,7 +146,7 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         if (item.CustomCode?.Any(char.IsControl) == true || item.CustomCode?.Length > 64) throw Invalid("자체 창고 코드를 확인해 주세요.");
         item.NormalizedCustomCode = item.CustomCode?.ToUpperInvariant();
         item.TypeDescription = type == "기타" ? Optional(request.TypeDescription) : type == item.Type ? item.TypeDescription : null;
-        item.Type = type; item.Address = Optional(request.Address); item.AddressDetail = Optional(request.AddressDetail); item.ContactName = Optional(request.ContactName); item.Notes = Optional(request.Notes);
+        item.Type = type; item.Address = Optional(request.Address); item.AddressDetail = Optional(request.AddressDetail); var assignee = await BusinessAssignees.Resolve(db,tenantId,actor,request.ContactUserId,!id.HasValue,item.ContactUserId,item.ContactName,token); item.ContactUserId = assignee.Id; item.ContactName = assignee.Name; item.Notes = Optional(request.Notes);
         if (!id.HasValue) db.Warehouses.Add(item);
         Audit(tenantId, item.Id, actor, item.Id, id.HasValue ? "WarehouseUpdated" : "WarehouseCreated", before, Snapshot(item));
         await Save(token); await tx.CommitAsync(token); return item;
@@ -156,6 +171,7 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
     }
     public async Task<WarehouseRack> SaveRack(Guid tenantId, Guid warehouseId, Guid actor, Guid? id, RackRequest request, CancellationToken token)
     {
+        RackBarcodePolicy.Validate(request.Barcode);
         if (request.Levels is < 1 or > 100 || request.Bays is < 1 or > 100 || request.Levels * request.Bays > 1000) throw Invalid("랙은 1~100단·칸, 총 1,000개 위치 이내로 설정해 주세요.");
         await using var tx = await Begin(tenantId, token); var warehouse = await Warehouse(tenantId, warehouseId, token);
         var creationHash = CreationHash(request);
@@ -178,9 +194,31 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
                 added.Add(new StorageLocation { TenantId = tenantId, WarehouseId = warehouseId, RackId = item.Id, Level = level, Bay = bay,
                     Code = $"{item.Code}-L{level:D2}-B{bay:D2}", Name = $"{item.Name} {level}단 {bay}칸" });
         item.Levels = request.Levels; item.Bays = request.Bays;
+        var beforeBarcode = item.Barcode;
+        await RackBarcodePolicy.Apply(db, barcodeCandidates, item, request.Barcode, !id.HasValue, token);
+        if (beforeBarcode != item.Barcode)
+        {
+            if (id.HasValue) db.Entry(item).Property(x => x.UpdatedAt).IsModified = true;
+            Audit(tenantId, warehouseId, actor, item.Id, "RackBarcodeChanged", new { barcode = beforeBarcode }, new { barcode = item.Barcode });
+        }
         db.StorageLocations.AddRange(added);
         Audit(tenantId, warehouseId, actor, item.Id, id.HasValue ? "RackUpdated" : "RackCreated", before, new { rack = Snapshot(item), generated = added.Select(x => new { x.Id, x.Code, x.Level, x.Bay }) });
         await Save(token); await tx.CommitAsync(token); return item;
+    }
+    public async Task<WarehouseRack> SaveRackBarcode(Guid tenantId, Guid warehouseId, Guid rackId, Guid actor, UpdateRackBarcodeRequest request, CancellationToken token)
+    {
+        RackBarcodePolicy.Validate(request.Barcode);
+        await using var tx = await Begin(tenantId, token);
+        var rack = await db.WarehouseRacks.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.WarehouseId == warehouseId && x.Id == rackId, token) ?? throw Missing();
+        Version(rack, request.Version);
+        var before = rack.Barcode;
+        await RackBarcodePolicy.Apply(db, barcodeCandidates, rack, request.Barcode, false, token);
+        if (before != rack.Barcode)
+        {
+            db.Entry(rack).Property(x => x.UpdatedAt).IsModified = true;
+            Audit(tenantId, warehouseId, actor, rack.Id, "RackBarcodeChanged", new { barcode = before }, new { barcode = rack.Barcode });
+        }
+        await Save(token); await tx.CommitAsync(token); return rack;
     }
     public async Task<StorageLocation> SaveLocation(Guid tenantId, Guid warehouseId, Guid actor, Guid? id, StorageItemRequest request, Guid? zoneId, CancellationToken token)
     {
@@ -198,6 +236,9 @@ public sealed class WarehouseService(WmsDbContext db, TimeProvider clock)
         await RequireParents(tenantId, warehouse, parentZone, token, activeRequired);
         var before = id.HasValue ? JsonSerializer.SerializeToElement(Snapshot(item)) : JsonSerializer.SerializeToElement(new { });
         Assign(item, request, 64); if (!id.HasValue) db.StorageLocations.Add(item);
+        var beforeBarcode=item.Barcode;
+        await IebleWms.Api.Barcodes.LocationBarcodePolicy.Apply(db,internalCandidates,item,request.Barcode,token);
+        if(beforeBarcode!=item.Barcode) { if(id.HasValue)db.Entry(item).Property(x=>x.UpdatedAt).IsModified=true; Audit(tenantId,warehouseId,actor,item.Id,"LocationBarcodeChanged",new{barcode=beforeBarcode},new{barcode=item.Barcode}); }
         Audit(tenantId, warehouseId, actor, item.Id, id.HasValue ? "LocationUpdated" : "LocationCreated", before, Snapshot(item));
         await Save(token); await tx.CommitAsync(token); return item;
     }

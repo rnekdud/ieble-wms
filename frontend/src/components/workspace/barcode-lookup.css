@@ -1,0 +1,72 @@
+.barcode-lookup-page { min-width: 0; }
+.barcode-lookup-search { padding: 20px; border: 1px solid var(--ui-line); border-radius: var(--ui-radius-card); box-shadow: var(--ui-shadow); margin-bottom: 24px; }
+.barcode-lookup-search > label { display: block; font-weight: 700; color: var(--ui-navy); margin-bottom: 10px; }
+.barcode-lookup-search > div { display: flex; gap: 12px; align-items: center; }
+.barcode-lookup-search svg { color: var(--ui-navy); flex-shrink: 0; }
+.barcode-lookup-search input { min-width: 0; flex: 1; font-size: 17px; height: 48px; }
+.barcode-lookup-search button { min-height: 48px; flex-shrink: 0; }
+.barcode-lookup-search small { display: block; margin-top: 10px; color: var(--ui-muted); }
+.barcode-lookup-empty { min-height: 260px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; text-align: center; color: var(--ui-muted); }
+.barcode-result-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.barcode-result-heading > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.barcode-result-heading h2 { font-size: 20px; margin: 0; overflow-wrap: anywhere; }
+.barcode-result-heading h2 small { font-size: 13px; color: var(--ui-muted); font-weight: 400; }
+.barcode-result-heading p { font-size: 13px; margin: 0; overflow-wrap: anywhere; color: var(--ui-muted); }
+.barcode-result-heading strong { color: var(--ui-navy); }
+.barcode-product-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); align-items: start; gap: 24px; }
+.barcode-product-information, .barcode-label-panel { min-width: 0; }
+.barcode-label-panel { position: sticky; top: 94px; max-height: calc(100dvh - 110px); overflow-y: auto; width: 100%; box-sizing: border-box; border: 1px solid var(--ui-line); border-radius: var(--ui-radius-card); padding: 20px; box-shadow: var(--ui-shadow); }
+.barcode-label-panel h3 { margin: 0 0 12px; color: var(--ui-navy); }
+.barcode-label-panel > p { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+.barcode-scanned-tag { padding: 4px 8px; border-radius: var(--ui-radius-badge); background: var(--ui-yellow-soft); color: var(--ui-navy); }
+.barcode-aliases { display: grid; gap: 8px; margin-top: 18px; }
+.barcode-aliases button { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 4px; overflow-wrap: anywhere; min-width: 0; }
+.barcode-aliases small { color: var(--ui-muted); font-weight: 400; }
+#root .barcode-aliases button[aria-pressed="true"] { background: var(--ui-yellow-soft); border-color: var(--ui-yellow); color: var(--ui-navy); }
+#root .barcode-product-information .product-master-sections { margin-top: 18px; gap: 0; }
+#root .barcode-product-information .dialog-section { padding: 14px 0; border: 0; border-top: 1px solid var(--ui-line); border-radius: 0; box-shadow: none; }
+#root .barcode-product-information .dialog-section-heading { margin-bottom: 8px; }
+#root .barcode-product-information .products-detail { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+#root .barcode-product-information .products-detail > div { padding: 4px 0; border: 0; }
+.barcode-product-information .products-detail dd { overflow-wrap: anywhere; }
+.barcode-product-information .product-gallery-featured { display: grid; gap: 12px; }
+.product-gallery-featured > .product-gallery-preview, .product-gallery-featured > .product-gallery-empty { height: 200px; width: 100%; aspect-ratio: auto; border: 1px solid var(--ui-line); border-radius: var(--ui-radius-card); background: var(--ui-neutral); }
+.product-gallery-featured > .product-gallery-preview img { width: 100%; height: 100%; object-fit: contain; }
+.product-gallery-thumbnails { display: flex; flex-wrap: wrap; gap: 8px; }
+.product-gallery-thumbnails button { position: relative; padding: 4px; height: 64px; width: 72px; }
+.product-gallery-thumbnails img { width: 100%; height: 100%; object-fit: contain; }
+.product-gallery-thumbnails small { position: absolute; bottom: 2px; right: 2px; padding: 1px 4px; background: var(--ui-yellow-soft); color: var(--ui-navy); border-radius: 4px; }
+#root .product-gallery-thumbnails button[aria-pressed="true"] { border: 2px solid var(--ui-yellow); }
+.barcode-history { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--ui-line); font-size: 13px; overflow-wrap: anywhere; }
+.barcode-history ul { padding-left: 20px; }
+.barcode-lookup-page .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 1000px) { .barcode-product-layout { grid-template-columns: minmax(0, 1fr); } .barcode-label-panel { position: static; max-height: none; overflow-y: visible; } }
+@media (max-width: 600px) {
+  .barcode-lookup-search { padding: 14px; }
+  .barcode-lookup-search > div { gap: 8px; }
+  .barcode-lookup-search svg { display: none; }
+  .barcode-lookup-search input { font-size: 16px; }
+  .barcode-label-panel { padding: 14px; }
+  #root .barcode-product-information .products-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .barcode-result-heading > div { flex-wrap: wrap; }
+}
+
+.barcode-result-heading:has(+ .barcode-package-summary) { margin-bottom: 6px; }
+.barcode-package-summary { margin: 0 0 12px; color: var(--ui-navy); font-size: 14px; overflow-wrap: anywhere; }
+.barcode-product-stock { margin: 16px 0; padding: 16px 0; border-top: 1px solid var(--ui-line); }
+.barcode-product-stock h3 { margin: 0 0 12px; color: var(--ui-navy); font-size: 16px; }
+.barcode-stock-totals { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin: 0; }
+.barcode-stock-totals > div { display: flex; align-items: baseline; gap: 8px; }
+.barcode-stock-totals dt { white-space: nowrap; font-size: 13px; color: var(--ui-muted); }
+.barcode-stock-totals dd { margin: 0; text-align: right; font-size: 22px; font-weight: 700; color: var(--ui-navy); overflow-wrap: anywhere; }
+.barcode-stock-totals small { margin-left: 4px; font-size: 13px; font-weight: 400; }
+@media (max-width: 600px) { .barcode-stock-totals { gap: 8px; } .barcode-stock-totals dd { font-size: 18px; } }
+
+.barcode-result-heading > div:has(.barcode-find-location) { flex-wrap: wrap; gap: 12px; }
+.barcode-find-location { flex: 0 0 auto; }
+
+@media(max-width:1024px) {
+  :root body .barcode-lookup-page > .wms-page-heading { flex-direction:row; flex-wrap:nowrap; align-items:center; gap:8px; }
+  :root body .barcode-lookup-page > .wms-page-heading .wms-page-actions { flex:0 0 auto; width:auto; margin:0 0 0 auto; }
+  :root body .barcode-lookup-page > .wms-page-heading .mobile-camera-button { margin:0; }
+}

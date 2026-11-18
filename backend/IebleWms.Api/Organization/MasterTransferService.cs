@@ -12,7 +12,7 @@ public sealed class MasterTransferService(WmsDbContext db, SignInManager<Applica
     {
         var owner = await db.TenantMemberships.AsNoTracking().SingleAsync(x => x.TenantId == tenantId && x.UserId == actor, ct);
         var candidates = await db.TenantMemberships.AsNoTracking().Where(x => x.TenantId == tenantId && x.UserId != actor && x.IsActive && x.User.IsActive
-            && !x.User.MustChangePassword && x.User.SystemRole == SystemRole.None && x.Role != TenantRole.Master)
+            && x.AccountType == "Internal" && !x.User.MustChangePassword && x.User.SystemRole == SystemRole.None && x.Role != TenantRole.Master)
             .OrderBy(x => x.DisplayName ?? x.User.DisplayName).Select(x => new { x.UserId, name = x.DisplayName ?? x.User.DisplayName, loginId = x.User.UserName, role = x.Role.ToString(), x.Version }).ToListAsync(ct);
         return new { currentMasterVersion = owner.Version, candidates };
     }
@@ -27,7 +27,7 @@ public sealed class MasterTransferService(WmsDbContext db, SignInManager<Applica
         if (owner is null || owner.Role != TenantRole.Master || !owner.IsActive || !owner.User.IsActive || owner.User.SystemRole != SystemRole.None || owner.User.MustChangePassword)
             throw new OrganizationException(403, "현재 기업 마스터만 위임할 수 있습니다.");
         var target = members.SingleOrDefault(x => x.UserId == request.TargetUserId);
-        if (target is null || !target.IsActive || !target.User.IsActive || target.User.MustChangePassword || target.User.SystemRole != SystemRole.None || target.Role == TenantRole.Master)
+        if (target is null || target.AccountType != "Internal" || !target.IsActive || !target.User.IsActive || target.User.MustChangePassword || target.User.SystemRole != SystemRole.None || target.Role == TenantRole.Master)
             throw new OrganizationException(400, "같은 기업의 활성 직원 중 최초 비밀번호 변경을 완료한 직원을 선택해 주세요.");
         if (owner.Version != request.CurrentMasterVersion || target.Version != request.TargetVersion)
             throw new OrganizationException(409, "사용자 정보가 변경되었습니다. 대상을 다시 확인해 주세요.");
@@ -39,14 +39,14 @@ public sealed class MasterTransferService(WmsDbContext db, SignInManager<Applica
             await tx.CommitAsync(ct);
             throw new OrganizationException(400, verified.IsLockedOut ? "인증 시도가 많아 잠겼습니다. 잠시 후 다시 시도해 주세요." : "현재 비밀번호가 일치하지 않습니다.");
         }
-        var before = new { formerMaster = new { owner.UserId, role = owner.Role.ToString() }, successor = new { target.UserId, role = target.Role.ToString() } };
-        owner.Role = TenantRole.Administrator;
+        var before = new { formerMaster = new { owner.UserId, owner.PermissionGradeId, role = owner.Role.ToString() }, successor = new { target.UserId, target.PermissionGradeId, role = target.Role.ToString() } };
+        owner.PermissionGradeId = null; owner.Role = TenantRole.Administrator;
         // Two writes inside ONE transaction avoid transient duplicate keys in the immediate unique index.
         // The deferred DB constraint validates exactly one active master at COMMIT.
         await db.SaveChangesAsync(ct);
-        target.Role = TenantRole.Master;
+        target.PermissionGradeId = null; target.Role = TenantRole.Master;
         audit.Add(tenantId, actor, "MasterTransferred", before,
-            new { formerMaster = new { owner.UserId, role = owner.Role.ToString() }, successor = new { target.UserId, role = target.Role.ToString() } }, target.UserId, request.Reason.Trim());
+            new { formerMaster = new { owner.UserId, owner.PermissionGradeId, role = owner.Role.ToString() }, successor = new { target.UserId, target.PermissionGradeId, role = target.Role.ToString() } }, target.UserId, request.Reason.Trim());
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         // Roles are read from DB on every API request; cookies (including persistent cookies) contain no trusted role grant.

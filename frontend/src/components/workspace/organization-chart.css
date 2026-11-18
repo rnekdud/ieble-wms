@@ -1,0 +1,22 @@
+/* Keep zoom controls together and wrap view actions as a group. */
+:root body .organization-card .org-chart-toolbar {
+  display:flex; align-items:center; justify-content:flex-start; flex-wrap:wrap;
+  gap:8px 16px; margin:0 0 12px; padding:0; min-width:0;
+}
+.org-chart-zoom-controls,.org-chart-view-controls { display:flex; align-items:center; gap:8px; min-width:0; }
+.org-chart-zoom-controls { flex-wrap:nowrap; }
+.org-chart-view-controls { flex-wrap:wrap; }
+:root body .organization-card .org-chart-toolbar button {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  width:auto; min-width:0; height:36px !important; min-height:36px !important; flex:0 0 auto;
+  padding:0 14px; white-space:nowrap;
+}
+:root body .organization-card .org-chart-toolbar .wms-icon-button { width:36px; height:36px; padding:0; }
+.org-chart-toolbar .org-zoom-label { width:44px; min-width:44px; line-height:1.3; font-variant-numeric:tabular-nums; }
+.org-chart-toolbar button svg { flex:none; margin:0; }
+@media(max-width:600px) {
+  .org-chart-zoom-controls,.org-chart-view-controls { width:100%; }
+  :root body .organization-card .org-chart-toolbar .org-chart-reset { margin-left:auto; }
+  :root body .organization-card .org-chart-toolbar button { padding-inline:12px; font-size:12px; }
+  :root body .organization-card .org-chart-toolbar .wms-icon-button { padding:0; }
+}

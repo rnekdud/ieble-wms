@@ -1,3 +1,4 @@
+import FormLabel from './FormLabel'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from '../api'
@@ -18,11 +19,11 @@ export default function DefaultTenantGuide({
     setBusy(true)
     setError('')
     try {
-      await api('/api/auth/default-tenant', { tenantId })
+      await api('/api/auth/select-tenant', { tenantId })
       await onResolved()
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : '기본 기업을 지정하지 못했습니다.',
+        e instanceof Error ? e.message : '기업에 접속하지 못했습니다.',
       )
     } finally {
       setBusy(false)
@@ -30,28 +31,22 @@ export default function DefaultTenantGuide({
   }
   return (
     <section className="panel">
-      <h2>기본 기업 지정이 필요합니다</h2>
-      <p>
-        여러 기업에 소속되어 있어 자동 접속할 기업을 확인해야 합니다. 기본
-        기업을 한 번 지정하면 다음 로그인부터 바로 접속합니다. 소속이 잘못된
-        경우 기업 관리자에게 문의해 주세요.
-      </p>
+      <h2>접속할 기업 선택</h2>
+      <p>접근할 기업을 선택해 주세요. 기업별 업무 권한은 각각 적용됩니다.</p>
       {error && (
         <div role="alert" className="alert error">
           {error}
         </div>
       )}
       <form onSubmit={submit}>
-        <label>
-          기본 기업
-          <select
-            aria-label="기본 기업"
+        <label><FormLabel required>접속할 기업</FormLabel><select
+            aria-label="접속할 기업"
             required
             value={tenantId}
             onChange={(e) => setTenantId(e.target.value)}
             disabled={busy}
           >
-            <option value="">기본 기업을 지정하세요</option>
+            <option value="">접속할 기업을 선택하세요</option>
             {memberships.map((m) => (
               <option key={m.tenantId} value={m.tenantId}>
                 {m.name}
@@ -60,7 +55,7 @@ export default function DefaultTenantGuide({
           </select>
         </label>
         <button className="primary" disabled={busy || !tenantId}>
-          {busy ? '저장 중…' : '기본 기업 저장 후 접속'}
+          {busy ? '저장 중…' : '선택한 기업 접속'}
         </button>
       </form>
     </section>

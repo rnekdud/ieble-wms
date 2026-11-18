@@ -1,0 +1,12 @@
+.rack-barcode-fields, .rack-barcode-label { min-width: 0; width: 100%; margin-block: 12px; }
+.rack-barcode-label img { display: block; max-width: 100%; height: auto; background: #fff; }
+.rack-barcode-value { overflow-wrap: anywhere; white-space: pre-wrap; font-family: monospace; }
+.rack-barcode-warning { color: #99602e; font-size: 12px; }
+.rack-barcode-fields input { font-family: monospace; }
+
+.rack-barcode-input-row { display: flex; align-items: stretch; gap: 8px; width: 100%; min-width: 0; }
+.rack-barcode-input-row input { flex: 1; min-width: 0; width: 100%; }
+.rack-barcode-input-row button { flex-shrink: 0; white-space: nowrap; }
+.rack-barcode-downloads { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+.barcode-lookup-open{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.barcode-result{margin-top:20px;overflow-wrap:anywhere}.barcode-result .rack-barcode-label{max-width:100%}.barcode-result .warehouse-details dd{min-width:0}@media(max-width:600px){.barcode-lookup-open span{display:none}.barcode-lookup-open{padding:8px}}

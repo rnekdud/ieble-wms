@@ -1,0 +1,46 @@
+.movement-stats{min-width:0}.stats-filter-card{padding:22px;margin-bottom:22px}.stats-period{display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr;gap:16px}.stats-period label,.stats-search label,.stats-chart-heading label{margin:0;min-width:0}.stats-search{display:flex;gap:12px;align-items:end;margin-top:16px}.stats-search label{flex:1}.stats-search button{height:40px;display:flex;align-items:center;gap:7px}.stats-chart-card{padding:22px;margin-bottom:22px;min-width:0}.stats-chart-heading{display:flex;justify-content:space-between;align-items:start;gap:16px}.stats-chart-heading h2{font-size:16px;margin:0 0 7px}.stats-chart-heading p{font-size:12px;color:var(--ui-muted);margin:0}.stats-chart-heading label{width:120px;font-size:12px}.stats-chart{min-width:0;margin-top:20px}.stats-trend-data{font-size:12px;color:var(--ui-muted);margin-top:15px}.stats-trend-data summary{cursor:pointer;padding:6px 0}.stats-trend-data .table-scroll{max-height:260px;margin-top:10px}.stats-trend-data table{width:100%}.stats-table{width:100%;min-width:750px;border-collapse:collapse}.stats-table.stats-detail{min-width:1400px}.stats-table.stats-product{min-width:1050px}.stats-table td{max-width:280px;overflow-wrap:anywhere}.stats-table td small{display:block;margin-top:4px;white-space:normal;line-height:1.6}.stats-table :is(td,th).quantity{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.stats-direction{font-weight:700}.stats-receipt{color:#177d70}.stats-shipment{color:#517ac2}.stats-table td:first-child{min-width:150px}.stats-trend-data :is(td,th):not(:first-child){text-align:right}.movement-stats .recharts-default-tooltip{border-radius:6px;font-size:12px;max-width:260px}.movement-stats .recharts-legend-wrapper{font-size:12px}
+@media(max-width:1100px){.stats-period{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.stats-filter-card,.stats-chart-card{padding:16px}.stats-search{flex-wrap:wrap}.stats-search label{flex-basis:100%}.stats-search button{flex:1;justify-content:center}.stats-period{gap:12px}.stats-period input{min-width:0;width:100%}.movement-stats .overview-tabs{display:grid;grid-template-columns:1fr 1fr}.stats-chart-heading{gap:8px}.stats-chart-heading p{line-height:1.6}.stats-chart-heading label{flex-shrink:0;width:100px}}
+
+/* Mobile reporting follows the stock overview summary, filters and record cards. */
+@media(max-width:1024px) {
+  .movement-stats { display:flex; flex-direction:column; }
+  .movement-stats > .wms-page-heading { order:-3; }
+  .movement-stats > .overview-summary { order:-2; margin-bottom:12px; }
+  .movement-stats > .overview-summary > div { padding:10px 12px; }
+  .movement-stats > .overview-summary > div > div { font-size:12px; line-height:1.35; }
+  .movement-stats > .overview-summary strong { margin-top:6px; font-size:22px; line-height:1.3; }
+  .movement-stats > .overview-summary p { display:none; }
+  .movement-stats > .stats-chart-card { order:1; margin:16px 0 0; padding:16px; }
+  .movement-stats .stats-filter-row { min-width:0; }
+  :root body .wms-content .movement-stats .list-search-filters {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 8px; width:100%; min-width:0; align-items:end;
+  }
+  :root body .wms-content .movement-stats .list-search-filters > .stats-period { display:contents; }
+  :root body .wms-content .movement-stats .list-search-filters .report-period-range { grid-column:1/-1; grid-row:1; width:100%; min-width:0; max-width:100%; }
+  :root body .wms-content .movement-stats .list-search-filters .report-period-tabs { grid-column:1/-1; grid-row:2; width:fit-content; margin:0; }
+  :root body .wms-content .movement-stats .list-search-filters .stats-period > label { grid-column:1/-1; grid-row:3; width:100%; max-width:100%; margin:0; }
+  :root body .wms-content .movement-stats .list-search-filters > .overview-filter-toggle {
+    grid-column:1/-1; grid-row:4; display:flex; align-items:center; justify-content:flex-start; gap:6px;
+    width:100%; min-width:0; min-height:40px; padding:8px 12px; border:1px solid var(--ui-line);
+    border-radius:8px; background:#f3f6fa; box-shadow:none; color:var(--ui-ink); font-size:13px; font-weight:600;
+  }
+  .movement-stats .overview-filter-toggle[aria-expanded="true"] svg { transform:rotate(180deg); }
+  :root body .wms-content .movement-stats .list-search-filters > .overview-advanced {
+    grid-column:1/-1; grid-row:5; display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px 8px; width:100%; min-width:0; margin:0; padding:0; background:transparent;
+  }
+  :root body .wms-content .movement-stats .list-search-filters > .overview-advanced[hidden] { display:none; }
+  :root body .wms-content .movement-stats .overview-advanced > .searchable-choice { width:100%; min-width:0; max-width:100%; margin:0; }
+  :root body .wms-content .movement-stats .list-search-filters > label:has(input) { grid-column:1/-1; grid-row:6; width:100%; max-width:100%; min-width:0; }
+  :root body .wms-content .movement-stats .list-search-filters > .list-search-actions { grid-column:1/-1; grid-row:7; width:auto; margin:0; }
+  :root body .wms-content .movement-stats .list-search-filters > .overview-help { grid-column:1/-1; grid-row:8; margin:0; }
+  :root body .wms-content .movement-stats .list-search-filters::after { display:none; }
+  .movement-stats .stats-mobile-list { display:grid; gap:12px; min-width:0; }
+  .movement-stats .stats-mobile-list > .mobile-stock-card { padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:#fff; min-width:0; }
+  .movement-stats .stats-mobile-list h3 { overflow-wrap:anywhere; }
+  .movement-stats .stats-mobile-list dl { grid-template-columns:minmax(85px,1fr) minmax(0,1.5fr); }
+  .movement-stats .stats-mobile-list dd { overflow-wrap:anywhere; }
+  .movement-stats .stats-mobile-actions { display:flex; justify-content:flex-end; margin-top:12px; }
+  .movement-stats .stats-results { min-width:0; }
+}

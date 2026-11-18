@@ -1,0 +1,73 @@
+/* Shared tracking dialog geometry; each workflow retains its own input behavior. */
+:root dialog.organization-dialog.dialog-layout:is(.receipt-planned-tracking,.receipt-inspection-tracking) { width:min(800px,calc(100vw - 24px)); max-height:85dvh; min-height:0; padding:0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) > .organization-dialog-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:0; padding:24px 24px 0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-dialog-heading h2 { margin:0; font-size:20px; font-weight:700; color:#16345f; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-dialog-heading p { margin:5px 0 0; font-size:13px; overflow-wrap:anywhere; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .dialog-close-icon { display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; height:36px; padding:0; border:0; background:transparent; color:#16345f; font-size:24px; border-radius:6px; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .dialog-close-icon:hover { background:#f1f5f9; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) > .dialog-body { padding:20px 24px; scrollbar-gutter:auto; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-planned-tabs { width:fit-content; max-width:100%; justify-content:flex-start; margin:0 0 16px; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-planned-content { display:flex; flex-direction:column; align-items:stretch; gap:10px; margin:0; padding:0; border:0; min-width:0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-tracking-empty { display:grid; gap:4px; padding:0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-tracking-empty p { margin:0; font-size:13px; line-height:1.5; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-tracking-empty p + p { color:var(--ui-muted); }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-tracking-add { align-self:flex-start; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) :is(.receipt-tracking-summary,.receipt-tracking-note) { margin:0; font-size:13px; line-height:1.5; color:var(--ui-muted); }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-tracking-note { margin-top:16px; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-tracking-summary { text-align:right; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .table-scroll { margin:0; min-width:0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-table { width:100%; table-layout:fixed; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-planned-lots { min-width:560px; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-table :is(th,td) { padding:8px; vertical-align:middle; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-table th { height:36px; text-align:left; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-table :is(th,td):last-child { width:76px; text-align:center; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-planned-lots th:nth-child(3) { width:112px; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-table :is(input,select) { width:100%; min-width:0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-serial-entry { margin:8px 0 0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-serial-bulk { margin:0; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) > .dialog-actions { padding:16px 24px; gap:8px; background:white; }
+:is(.receipt-planned-tracking,.receipt-inspection-tracking) > .dialog-actions > button { min-width:0; min-height:40px; padding:8px 16px; }
+@media(max-width:600px) {
+  :is(.receipt-planned-tracking,.receipt-inspection-tracking) > .organization-dialog-heading { padding:20px 16px 0; }
+  :is(.receipt-planned-tracking,.receipt-inspection-tracking) > .dialog-body { padding:20px 16px; }
+  :is(.receipt-planned-tracking,.receipt-inspection-tracking) > .dialog-actions { padding:16px; }
+  :is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-serial-entry { grid-template-columns:1fr; }
+}
+
+:root dialog.organization-dialog.dialog-layout.receipt-inspection-tracking { width:min(780px,calc(100vw - 24px)); }
+.receipt-inspection-tracking .receipt-inspection-serial-entry { display:grid; gap:12px; min-width:0; margin-bottom:6px; }
+.receipt-inspection-tracking .receipt-inspection-serial-entry label { display:grid; grid-template-columns:minmax(0,1fr); gap:5px; min-width:0; margin:0; font-size:13px; }
+.receipt-inspection-tracking .receipt-inspection-serial-entry textarea { width:100%; height:100px; min-height:90px; box-sizing:border-box; resize:vertical; border:1px solid var(--choice-border,#cbd5e1); border-radius:var(--choice-radius,8px); padding:8px 12px; }
+.receipt-inspection-tracking .receipt-inspection-serial-actions { display:flex; align-items:flex-end; gap:8px; }
+.receipt-inspection-tracking .receipt-inspection-serial-actions > label { flex:1; min-width:0; }
+.receipt-inspection-tracking .receipt-inspection-serial-actions > button { flex:none; width:auto; margin:0; height:var(--choice-height,40px); min-height:var(--choice-height,40px); padding:0 16px; }
+.receipt-inspection-tracking .receipt-serial-list { max-height:280px; }
+.receipt-inspection-tracking > .dialog-actions { justify-content:flex-end; }
+.receipt-inspection-tracking > .dialog-actions > button { flex:0 0 auto; width:auto; height:40px; }
+
+/* Keep one set of LOT inputs and handlers across desktop and mobile. */
+.receipt-inspection-tracking .receipt-lot-field { display:contents; }
+.receipt-inspection-tracking .receipt-lot-mobile-label { display:none; }
+@media (max-width:1024px) {
+  :root .receipt-inspection-tracking .receipt-lot-scroll { overflow:visible; max-height:none; }
+  :root .receipt-inspection-tracking .receipt-inspection-lot-cards { display:block; min-width:0; width:100%; border:0; }
+  .receipt-inspection-tracking .receipt-inspection-lot-cards > thead { display:none; }
+  .receipt-inspection-tracking .receipt-inspection-lot-cards > tbody { display:grid; gap:12px; }
+  .receipt-inspection-tracking .receipt-inspection-lot-cards > tbody > tr {
+    display:grid; grid-template-columns:minmax(0,1fr); gap:14px; min-width:0;
+    padding:12px; border:1px solid #dfe7eb; border-radius:12px; background:#fff; box-shadow:none;
+  }
+  :root .receipt-inspection-tracking .receipt-inspection-lot-cards td { display:block; width:auto; min-width:0; padding:0; border:0; text-align:left; background:transparent; }
+  :root .receipt-inspection-tracking .receipt-inspection-lot-cards .receipt-lot-card-heading { display:flex; grid-row:1; grid-column:1/-1; align-items:center; justify-content:space-between; padding:4px; }
+  :root body .receipt-inspection-tracking .receipt-lot-field { display:grid; grid-template-columns:minmax(0,1fr); gap:5px; margin:0; min-width:0; justify-content:stretch; font-size:13px; }
+  .receipt-inspection-tracking .receipt-lot-mobile-label { display:block; }
+  .receipt-inspection-tracking .receipt-lot-desktop-delete { display:none; }
+  :root body .receipt-inspection-tracking .receipt-lot-delete { --ui-action-width:36px; --ui-action-height:36px; --ui-action-padding:0; --ui-icon-min-height:36px; position:relative; display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; height:36px; min-width:36px; min-height:36px; padding:0; margin:0; }
+  .receipt-inspection-tracking .receipt-lot-delete::before { content:""; position:absolute; inset:-4px; }
+  :root body .receipt-inspection-tracking .receipt-lot-field input { box-sizing:border-box; width:100%; min-width:0; max-width:100%; }
+  .receipt-inspection-tracking .receipt-inspection-lot-cards .quantity-input-error { white-space:normal; overflow-wrap:anywhere; }
+}
+@media (min-width:600px) and (max-width:1024px) and (max-height:500px) {
+  .receipt-inspection-tracking .receipt-inspection-lot-cards > tbody > tr { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .receipt-inspection-tracking .receipt-inspection-lot-cards td:first-child { grid-column:1/-1; }
+}

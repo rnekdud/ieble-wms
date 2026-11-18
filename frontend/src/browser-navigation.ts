@@ -56,7 +56,7 @@ export function createBrowserNavigation(onChange: (path: string) => void, browse
   }
   browser.addEventListener('popstate', pop)
   return {
-    navigate(to: string) {
+    navigate(to: string, options?: { replace?: boolean }) {
       const destination = new URL(to, browser.location.origin)
       const next = destination.pathname + destination.search + destination.hash
       requestNavigation(() => ready(() => {
@@ -64,8 +64,9 @@ export function createBrowserNavigation(onChange: (path: string) => void, browse
         // The same menu URL can contain an editor or detail view. Re-enter its root
         // after the guard without adding a duplicate browser history entry.
         if (next === current.url) { accept(current); return }
-        const entry = { index: current.index + 1, url: next }
-        history.pushState({ [stateKey]: { stack, index: entry.index } }, '', next)
+        const entry = { index: current.index + (options?.replace ? 0 : 1), url: next }
+        if (options?.replace) history.replaceState({ ...history.state, [stateKey]: { stack, index: entry.index } }, '', next)
+        else history.pushState({ [stateKey]: { stack, index: entry.index } }, '', next)
         accept(entry)
       }))
     },

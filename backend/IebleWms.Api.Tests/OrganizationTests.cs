@@ -13,7 +13,7 @@ using Xunit;
 
 namespace IebleWms.Api.Tests;
 
-public sealed class OrganizationTests
+public sealed partial class OrganizationTests
 {
     private sealed record Fixture(Guid TenantId, Guid ForeignId, Guid Master, Guid Admin, Guid Employee, string Password);
     private static async Task<Fixture> Seed(AuthFactory factory)

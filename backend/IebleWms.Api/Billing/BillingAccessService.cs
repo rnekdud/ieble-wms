@@ -4,9 +4,15 @@ using Microsoft.Extensions.Options;
 namespace IebleWms.Api.Billing;
 
 public sealed record BillingAccess(string State, bool CanAccessWms, bool HasRegisteredCard,
-    DateTimeOffset FreeUntil, DateTimeOffset FirstChargeAt);
+    DateTimeOffset FreeUntil, DateTimeOffset FirstChargeAt)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public DevelopmentAccessPeriod? DevelopmentTest { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ActualBillingState { get; init; }
+}
 
-public sealed class BillingAccessService(IOptions<BillingPolicyOptions> options, TimeProvider clock)
+public sealed class BillingAccessService(IOptions<BillingPolicyOptions> options, TimeProvider clock, DevelopmentAccessService? development = null)
 {
     public BillingPolicyOptions Policy => options.Value;
     private TimeZoneInfo Zone => TimeZoneInfo.FindSystemTimeZoneById(Policy.TimeZoneId);
@@ -23,6 +29,15 @@ public sealed class BillingAccessService(IOptions<BillingPolicyOptions> options,
         tenant.FirstChargeAt = tenant.TrialEndsAt;
         if (Policy.RecurringAnchorDay != 0)
             tenant.FirstChargeAt = CycleAtOrAfter(tenant, tenant.TrialEndsAt.Value);
+    }
+
+    // Business access only. Financial calculations/reactivation continue using the real entitlement below.
+    public async Task<BillingAccess> EvaluateWorkspace(Tenant tenant, CancellationToken ct = default)
+    {
+        var actual = Evaluate(tenant);
+        if (development == null || !tenant.IsActive || tenant.ServiceStatus != TenantServiceStatus.Active || actual.State == "RegistrationInvalid") return actual;
+        var period = await development.Active(tenant.Id, ct);
+        return period == null ? actual : actual with { State = "DevelopmentTest", CanAccessWms = true, ActualBillingState = actual.State, DevelopmentTest = period };
     }
 
     public BillingAccess Evaluate(Tenant tenant)

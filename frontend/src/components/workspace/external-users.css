@@ -1,0 +1,14 @@
+.external-grants { min-width:0; }
+.external-grants .dialog-actions { position:sticky; bottom:-24px; margin:20px -26px -24px; }
+@media(max-width:600px) {
+  .external-grants .dialog-actions { bottom:-16px; margin:18px -16px -16px; flex-wrap:wrap; }
+  .permission-settings .permission-table { display:block; width:100%; min-width:0; table-layout:auto; }
+  .permission-settings .permission-table thead { display:none; }
+  .permission-settings .permission-table caption,.permission-settings .permission-table tbody { display:block; }
+  .permission-settings .permission-table tr { display:block; border-bottom:1px solid #dfe7eb; }
+  .permission-settings .permission-table th:first-child { display:block; width:auto; white-space:normal; padding:12px; }
+  .permission-settings .permission-table td { display:block; width:auto; padding:12px; }
+  .permission-settings .permission-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 10px; }
+  .permission-settings .permission-option { min-width:0; white-space:normal; overflow-wrap:anywhere; }
+  .permission-settings .permission-option input { flex:none; }
+}

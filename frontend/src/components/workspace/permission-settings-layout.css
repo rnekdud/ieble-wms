@@ -1,0 +1,17 @@
+/* Save and restore stay adjacent at the right edge of the permission tabs. */
+:root body .permission-viewbar { gap:8px; }
+.permission-view-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:nowrap; gap:8px; margin-left:auto; }
+:root body .permission-view-actions > button { flex:0 0 auto; width:auto; margin:0; white-space:nowrap; }
+@media(max-width:600px) {
+  :root body .permission-viewbar { row-gap:8px; }
+  .permission-view-actions { max-width:100%; }
+}
+
+:root body .permission-settings > .permission-role-toolbar {
+  display:flex; flex-wrap:nowrap; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 0 20px;
+}
+:root body .permission-role-toolbar > .searchable-choice { flex:0 1 320px; width:320px; min-width:0; margin:0; }
+.permission-change-count { display:flex; align-items:center; justify-content:flex-end; min-height:40px; margin-left:auto; text-align:right; font-size:13px; line-height:1.4; }
+@media(max-width:600px) {
+  .permission-change-count { flex:none; max-width:48%; font-size:12px; }
+}

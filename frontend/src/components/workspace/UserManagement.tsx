@@ -1,3 +1,14 @@
+import PageSizeSelect from '../PageSizeSelect'
+import FormLabel from '../FormLabel'
+import SearchFilters from './SearchFilters'
+import LoginIdField from './LoginIdField'
+import PermissionGradeChoice from './PermissionGradeChoice'
+import type { PermissionGrade } from './PermissionGradeChoice'
+import ContactLink from './ContactLink'
+import ExternalCompanyFields from './ExternalCompanyFields'
+import DialogSection from './DialogSection'
+import GuardedForm from './GuardedForm'
+import { requestNavigation } from '../../navigation-guard'
 import { formValues } from '../../form-values'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -13,6 +24,7 @@ import { PageHeading } from './WorkspaceUI'
 import MasterTransferDialog from './MasterTransferDialog'
 import { notifyAccessChanged } from '../../access-events'
 import OrganizationDialog from './OrganizationDialog'
+import './user-account-dialog.css'
 
 const roles: Record<string, string> = {
   Master: '기업 마스터',
@@ -34,12 +46,18 @@ export default function UserManagement({
   isMaster: boolean
   onAccessChanged: () => Promise<unknown>
 }) {
+  const [grades, setGrades] = useState<PermissionGrade[]>([])
+  const [gradeKey, setGradeKey] = useState('Employee')
+  const gradeLabel = (key: string) => grades.find(x => x.id === key)?.name || roles[key] || '사용자 정의 권한'
   const [filters, setFilters] = useState({
     search: '',
     role: '',
+    accountType: '',
     status: 'all',
-    page: 1,
+    page: 1, pageSize: 20,
   })
+  const [filterDraft, setFilterDraft] = useState(filters)
+  const [accountType, setAccountType] = useState('Internal')
   const [options, setOptions] = useState<OrganizationOptions | null>(null)
   const [revision, setRevision] = useState(0)
   const [view, setView] = useState<{
@@ -54,13 +72,15 @@ export default function UserManagement({
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [transferring, setTransferring] = useState(false)
+  const [loginAvailable, setLoginAvailable] = useState(false)
   const saving = useRef(false)
   const [pending, setPending] = useState<{ values: Record<string, string>; assignment: { departmentId: string | null; positionId: string | null }; active: boolean; selectedRole: string; confirmation: string } | null>(null)
   const endpoint = `/api/tenants/${tenantId}/users`
+  useEffect(() => { let live = true; api<PermissionGrade[]>(`${endpoint}/permission-grades`).then(x => { if (live) setGrades(x) }).catch(e => { if (live) setError(e.message) }); return () => { live = false } }, [endpoint, revision, editing])
   const query = new URLSearchParams({
     ...filters,
     page: String(filters.page),
-    pageSize: '20',
+    pageSize: String(filters.pageSize),
   }).toString()
   const key = `${endpoint}?${query}:${revision}`
   const current = view?.key === key ? view : null
@@ -107,48 +127,56 @@ export default function UserManagement({
   function openEditor(value: Employee | 'create') {
     setError('')
     setNotice('')
+    setAccountType(value === 'create' ? 'Internal' : value.accountType)
+    setGradeKey(value === 'create' ? 'Employee' : value.permissionGradeId || value.role)
+    setLoginAvailable(false)
     setEditing(value)
   }
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!editing || busy || pending) return
+    if (editing === 'create' && !loginAvailable) { setError('로그인 아이디 중복 확인을 완료해 주세요.'); return }
     const values = formValues(event.currentTarget)
     if (editing !== 'create' && editing.role === 'Master')
       values.name = editing.name
+    values.accountType = accountType
     const assignment = {
-      departmentId: values.departmentId || null,
-      positionId: values.positionId || null,
+      departmentId: accountType === 'External' ? null : values.departmentId || null,
+      positionId: accountType === 'External' ? null : values.positionId || null,
     }
     if (!String(values.name).trim()) {
-      setError('직원 이름을 입력해 주세요.')
+      setError('사용자 이름을 입력해 주세요.')
       return
     }
-    const active =
-      editing === 'create' || editing.userId === currentUserId
-        ? editing === 'create' || editing.membershipIsActive
-        : values.isActive === 'on'
-    const selectedRole =
-      values.role || (editing === 'create' ? 'Employee' : editing.role)
+    if (accountType === 'External' && !values.companyName?.trim()) {
+      setError('소속 업체를 선택하거나 새 업체명을 입력해 주세요.')
+      return
+    }
+    const active = editing !== 'create' && editing.userId === currentUserId ? editing.membershipIsActive : values.isActive === 'on'
+    const selectedKey = accountType === 'External' || (editing !== 'create' && editing.accountType !== accountType) ? 'Employee' : gradeKey
+    const selectedRole = roles[selectedKey] ? selectedKey : 'Employee'
+    values.permissionGradeId = roles[selectedKey] ? '' : selectedKey
     const confirmation =
       editing === 'create'
-        ? `${values.name.trim()}님을 ${roles[selectedRole]}로 등록하시겠습니까? 첫 로그인 시 비밀번호 변경이 필요합니다.`
+        ? `${values.name.trim()}님을 ${values.accountType === 'External' ? '외부 협력사' : gradeLabel(selectedKey)}로 등록하시겠습니까? 첫 로그인 시 비밀번호 변경이 필요합니다.`
         : editing.membershipIsActive && !active
           ? `${values.name.trim()}님을 비활성화하시겠습니까? 해당 기업의 로그인·API 접근이 차단됩니다. 과거 이력은 유지되며 과금 종료일은 변경하지 않습니다.`
-          : `${values.name.trim()}님의 정보를 저장하시겠습니까? 시스템 권한: ${roles[editing.role]} → ${roles[selectedRole]}, 소속 상태: ${active ? '활성' : '비활성'}`
-    setPending({ values, assignment, active, selectedRole, confirmation })
+          : `${values.name.trim()}님의 정보를 저장하시겠습니까? 시스템 권한: ${gradeLabel(editing.permissionGradeId || editing.role)} → ${gradeLabel(selectedKey)}, 계정 활성화: ${active ? '활성' : '비활성'}`
+    setPending({ values, assignment, active, selectedRole, confirmation: confirmation + (editing !== 'create' && editing.accountType !== accountType ? ' 계정 유형 변경 시 기존 외부 개별 권한은 모두 해제됩니다. 내부 직원으로 변경하면 일반 직원 역할 권한이 적용됩니다.' : '') })
   }
   async function commitSave() {
     if (!pending || !editing || saving.current) return
     saving.current = true
     const { values, assignment, active, selectedRole } = pending
+    const external = { collaboratorId: values.collaboratorId || null, accountType: values.accountType, partnerId: values.partnerId || null, companyName: values.companyName || null, businessRegistrationNumber: values.businessRegistrationNumber || null, companyPhone: values.companyPhone || null, contactPhone: values.contactPhone || null, contactEmail: values.contactEmail || null }
     setBusy(true)
     setError('')
     setNotice('')
     try {
       if (editing === 'create') {
         const result = await api<EmployeeCredentialResult>(endpoint, {
-          ...values,
-          ...assignment,
+          name: values.name, loginId: values.loginId, email: values.email, role: selectedRole, permissionGradeId: values.permissionGradeId || null, isActive: active,
+          ...assignment, ...external,
         })
         setRegistrationResult(result)
         setEditing(null)
@@ -156,13 +184,15 @@ export default function UserManagement({
         if (editing.role === 'Master')
           await api(`${endpoint}/${editing.userId}/organization`, {
             ...assignment,
+            contactPhone: values.contactPhone || null,
+            email: values.email,
             version: editing.version,
           })
         else
           await api(`${endpoint}/${editing.userId}`, {
-            ...assignment,
+            ...assignment, ...external,
             name: values.name,
-            role: selectedRole,
+            role: selectedRole, permissionGradeId: values.permissionGradeId || null,
             isActive: active,
             version: editing.version,
           })
@@ -208,16 +238,24 @@ export default function UserManagement({
       setBusy(false)
     }
   }
+  const contactField = editing && (<label className="member-contact">연락처 (선택)<input name="contactPhone" type="text" inputMode="tel" autoComplete="tel" maxLength={50} placeholder="010-1234-5678" defaultValue={editing === 'create' ? '' : editing.contactPhone || ''} /></label>)
   const data = current?.data
   return (
     <>
       <PageHeading
         title="사용자 관리"
-        description="소속 직원의 계정과 권한, 활성 상태를 관리하세요."
+        actions={<>           {canCreate && (
+            <button
+              className="primary"
+              disabled={busy || !options}
+              onClick={() => openEditor('create')}
+            >
+              사용자 등록
+            </button>
+          )} {isMaster && <button className="secondary" disabled={busy} onClick={() => setTransferring(true)}>마스터 위임</button>}</>}
       />
-      {isMaster && <div className="organization-toolbar"><p className="organization-help">기업 관리자는 시스템 접근 권한입니다. 부서·직급과 별개로 여러 명을 지정할 수 있습니다.</p><button className="secondary" disabled={busy} onClick={() => setTransferring(true)}>마스터 위임</button></div>}
       {transferring && isMaster && <MasterTransferDialog tenantId={tenantId} onClose={() => setTransferring(false)} onTransferred={async () => { setNotice('마스터 위임이 완료되었습니다.'); setRevision(x => x + 1); await onAccessChanged() }} />}
-      <section className="wms-card organization-card">
+      <section className="wms-card organization-card mobile-management-list">
         {!editing && error && (
           <div className="alert error" role="alert">
             {error}
@@ -229,36 +267,18 @@ export default function UserManagement({
           </div>
         )}
         <div className="organization-toolbar">
-          <form
-            className="organization-filters"
-            onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              setFilters((f) => ({
-                ...f,
-                search: String(form.get('search') || '').trim(),
-                page: 1,
-              }))
-            }}
-          >
-            <label>
-              사용자 검색
-              <input
-                name="search"
-                maxLength={100}
-                placeholder="이름, 아이디, 이메일"
-              />
-            </label>
-            <button className="secondary" type="submit">
-              검색
-            </button>
+          <SearchFilters className="organization-filters mobile-management-filters" busy={!current}
+            onSearch={() => { setFilters({ ...filterDraft, search:filterDraft.search.trim(), page:1 }); setRevision(n=>n+1) }}
+            onReset={() => { const next={ search:'', role:'', accountType:'', status:'all', page:1, pageSize:20 }; setFilterDraft(next); setFilters(next); setRevision(n=>n+1) }}>
+
+            <label>계정 유형 필터<select aria-label="계정 유형 필터" value={filterDraft.accountType} onChange={e=>setFilterDraft(f=>({...f,accountType:e.target.value,page:1}))}><option value="">전체 사용자</option><option value="Internal">내부 직원</option><option value="External">외부 협력사</option></select></label>
             <label>
               권한 필터
               <select
                 aria-label="권한 필터"
-                value={filters.role}
+                value={filterDraft.role}
                 onChange={(e) =>
-                  setFilters((f) => ({ ...f, role: e.target.value, page: 1 }))
+                  setFilterDraft((f) => ({ ...f, role: e.target.value, page: 1 }))
                 }
               >
                 <option value="">전체 권한</option>
@@ -270,12 +290,12 @@ export default function UserManagement({
               </select>
             </label>
             <label>
-              상태 필터
+              계정 활성화 필터
               <select
-                aria-label="상태 필터"
-                value={filters.status}
+                aria-label="계정 활성화 필터"
+                value={filterDraft.status}
                 onChange={(e) =>
-                  setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))
+                  setFilterDraft((f) => ({ ...f, status: e.target.value, page: 1 }))
                 }
               >
                 <option value="all">전체 상태</option>
@@ -283,16 +303,19 @@ export default function UserManagement({
                 <option value="inactive">비활성</option>
               </select>
             </label>
-          </form>
-          {canCreate && (
-            <button
-              className="primary"
-              disabled={busy || !options}
-              onClick={() => openEditor('create')}
-            >
-              직원 등록
-            </button>
-          )}
+
+          <label>
+              사용자 검색
+              <input
+                name="search"
+                value={filterDraft.search}
+                onChange={e => setFilterDraft(f => ({ ...f, search: e.target.value }))}
+                maxLength={100}
+                placeholder="이름, 아이디, 이메일, 연락처, 소속 업체"
+              />
+            </label>
+</SearchFilters>
+
         </div>
         {!current ? (
           <p role="status">사용자 목록을 불러오는 중입니다.</p>
@@ -305,18 +328,17 @@ export default function UserManagement({
             <>
               <p aria-live="polite">검색 결과 {data.total}명</p>
               <div className="wms-table-scroll">
-                <table className="wms-table organization-user-table">
+                <table className="wms-table organization-user-table mobile-record-table mobile-management-table">
                   <thead>
                     <tr>
-                      <th>이름</th>
+                      <th>이름</th><th>계정 유형 / 소속 업체</th>
                       <th>로그인 아이디 / 이메일</th>
                       <th>부서</th>
                       <th>직급</th>
-                      <th>접근 권한</th>
-                      <th>상태</th>
+                      <th>연락처</th>
+                      <th>권한 등급</th>
+                      <th>계정 활성화</th>
                       <th>등록일</th>
-                      <th>최근 로그인</th>
-                      <th>과금 시작일 (서울)</th>
                       <th>관리</th>
                     </tr>
                   </thead>
@@ -328,16 +350,34 @@ export default function UserManagement({
                     ) : (
                       data.items.map((user) => (
                         <tr key={user.userId}>
-                          <td>{user.name}</td>
-                          <td>
+                          <td data-label="이름">
+                            <div className="user-card-heading"><span className="user-card-name">{user.name}</span>
+                              <div className="user-card-mobile-badges">
+                                <span className="badge account-type-tag" data-account-type={user.accountType}>{user.accountType === 'External' ? '외부 협력사' : '내부 직원'}</span>
+                                <span className={`badge ${user.isActive ? 'active' : ''}`}>{user.isActive ? '활성' : '비활성'}</span>
+                              </div>
+                            </div>
+                            <div className="user-card-mobile-meta">
+                              {user.accountType === 'External' && <small>소속 업체 · {user.companyName || '—'}</small>}
+                              {user.mustChangePassword && <small className="organization-password-required">비밀번호 변경 필요</small>}
+                            </div>
+                          </td>
+                          <td data-label="계정 유형 / 소속 업체">
+                            <div className="organization-account-company">
+                              <span className="badge account-type-tag" data-account-type={user.accountType}>{user.accountType === 'External' ? '외부 협력사' : '내부 직원'}</span>
+                              {user.accountType === 'External' && <span>{user.companyName || '—'}</span>}
+                            </div>
+                          </td>
+                          <td data-label="로그인 아이디 / 이메일">
                             {user.loginId}
                             <br />
                             <small>{user.email}</small>
                           </td>
-                          <td>{user.departmentName || '미지정'}</td>
-                          <td>{user.positionName || '미지정'}</td>
-                          <td>{roles[user.role]}</td>
-                          <td>
+                          <td data-label="부서">{user.departmentName || '미지정'}</td>
+                          <td data-label="직급">{user.positionName || '미지정'}</td>
+                          <td data-label="연락처"><ContactLink value={user.contactPhone} /></td>
+                          <td data-label="권한 등급">{user.accountType === 'External' ? '협력사 업무 권한' : gradeLabel(user.permissionGradeId || user.role)}</td>
+                          <td data-label="계정 활성화">
                             <span
                               className={`badge ${user.isActive ? 'active' : ''}`}
                             >
@@ -349,30 +389,22 @@ export default function UserManagement({
                               </small>
                             )}
                           </td>
-                          <td>
+                          <td data-label="등록일">
                             {new Date(user.registeredAt).toLocaleDateString(
                               'ko-KR',
                             )}
                           </td>
-                          <td>
-                            {user.lastLoginAt
-                              ? new Date(user.lastLoginAt).toLocaleString(
-                                  'ko-KR',
-                                )
-                              : '미수집'}
-                          </td>
-                          <td>{new Date(user.billingStartsAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}</td>
-                          <td>
+
+                          <td data-label="관리">
                             {user.role === 'Master' ? (
                               <>
-                                <span>마스터 보호</span>
                                 {user.userId === currentUserId && canUpdate && (
                                   <button
                                     className="secondary"
                                     disabled={busy || !options}
                                     onClick={() => openEditor(user)}
                                   >
-                                    부서·직급 설정
+                                    수정
                                   </button>
                                 )}
                               </>
@@ -386,7 +418,7 @@ export default function UserManagement({
                                 >
                                   수정
                                 </button>
-                                {user.userId !== currentUserId &&
+                                {user.accountType !== 'External' && user.userId !== currentUserId &&
                                   user.isActive && (
                                     <button
                                       className="text-button"
@@ -399,7 +431,7 @@ export default function UserManagement({
                                   )}
                               </div>
                             ) : (
-                              '조회 전용'
+                              '—'
                             )}
                           </td>
                         </tr>
@@ -408,7 +440,7 @@ export default function UserManagement({
                   </tbody>
                 </table>
               </div>
-              <Pagination
+              <Pagination pageSizeControl={<PageSizeSelect value={filters.pageSize} onChange={pageSize => { setFilters(v => ({ ...v, pageSize, page: 1 })); setFilterDraft(v => ({ ...v, pageSize, page: 1 }));  }} />}
                 label="사용자 목록 페이지"
                 page={filters.page}
                 pageSize={data.pageSize}
@@ -416,31 +448,29 @@ export default function UserManagement({
                 disabled={busy}
                 onChange={(page) => setFilters((f) => ({ ...f, page }))}
               />
-              <p className="organization-help">
-                사용자당 월 {data.monthlyPerUserKrw.toLocaleString('ko-KR')}원 ·
-                기업 마스터 포함. 직원 등록 월은 무료이며 다음 달부터 도래하는 기업 정기결제일부터 과금
-                대상입니다. 비활성화에 따른 과금 종료 규칙은 미정이며 실제
-                결제·청구는 실행하지 않습니다.
-              </p>
+
             </>
           )
         )}
-        <button
-          className="text-button"
-          disabled={busy}
-          onClick={() => setRevision((x) => x + 1)}
-        >
-          사용자 목록 새로고침
-        </button>
+        {data && (
+              <p className="organization-help">
+                사용자당 월 {data.monthlyPerUserKrw.toLocaleString('ko-KR')}원 ·
+                기업 마스터 포함. 사용자 등록 월은 무료이며 다음 달부터 도래하는 기업 정기결제일부터 과금
+                대상입니다. 비활성화에 따른 과금 종료 규칙은 미정이며 실제
+                결제·청구는 실행하지 않습니다.
+              </p>
+        )}
       </section>
       {editing && (
         <OrganizationDialog
-          title={editing === 'create' ? '직원 등록' : '사용자 정보 수정'}
+          title={editing === 'create' ? '사용자 등록' : '사용자 정보 수정'}
+          detailHeader={{code:editing === 'create' ? undefined : editing.loginId,status:editing !== 'create' && <span className="status-badge">{editing.isActive ? '사용' : '사용 중지'}</span>,actions:<button className="primary" form="user-account-editor" disabled={busy || (editing === 'create' && !loginAvailable)} type="submit">{busy ? '저장 중…' : editing === 'create' ? '계정 생성' : '사용자 정보 저장'}</button>}}
+          className="user-account-dialog"
+          confirmation={!!pending}
           busy={busy}
           onClose={() => {
             if (pending) setPending(null)
-            else setEditing(null)
-            setError('')
+            else requestNavigation(() => { setEditing(null); setError('') })
           }}
         >
           {error && (
@@ -449,11 +479,9 @@ export default function UserManagement({
             </div>
           )}
           {pending && <section role="alertdialog" aria-label="사용자 변경 확인"><p>{pending.confirmation}</p><button type="button" className="secondary" disabled={busy} onClick={() => setPending(null)}>취소</button>{' '}<button type="button" className="primary" disabled={busy} onClick={commitSave}>확인</button></section>}
-          <form onSubmit={save} hidden={!!pending}>
-            <fieldset disabled={busy}>
-              <label>
-                직원 이름
-                <input
+          <GuardedForm id="user-account-editor" className="dialog-form" busy={busy} onSubmit={save} hidden={!!pending}>
+<div className="dialog-form-scroll"><fieldset disabled={busy}><DialogSection title="계정 정보" description="로그인 및 사용자 식별">
+              <label><FormLabel required={editing === 'create' || isMaster && editing.userId !== currentUserId && editing.role !== 'Master'}>계정 유형</FormLabel><select aria-required="true" name="accountType" aria-label="계정 유형" value={accountType} disabled={editing !== 'create' && (!isMaster || editing.userId === currentUserId || editing.role === 'Master')} onChange={e=>setAccountType(e.target.value)}><option value="Internal">내부 직원</option><option value="External">외부 협력사</option></select></label>              <label><FormLabel required={editing === 'create' || editing.role !== 'Master'}>{accountType === 'External' ? '담당자명' : '사용자 이름'}</FormLabel><input aria-label={String(accountType === 'External' ? '담당자명' : '사용자 이름')}
                   name="name"
                   required
                   maxLength={200}
@@ -462,59 +490,27 @@ export default function UserManagement({
                   autoFocus
                 />
               </label>
-              {editing === 'create' && (
-                <>
-                  <label>
-                    로그인 아이디
-                    <input
-                      name="loginId"
-                      required
-                      minLength={3}
-                      maxLength={64}
-                      pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,63}"
-                      autoComplete="off"
-                      aria-describedby="employee-login-id-help"
-                    />
-                  </label>
-                  <small id="employee-login-id-help">
-                    영문·숫자로 시작하는 3~64자. 영문, 숫자, 점, 밑줄, 하이픈을
-                    사용할 수 있습니다.
-                  </small>
-                  <label>
-                    이메일
-                    <input
-                      name="email"
-                      type="email"
-                      required
-                      maxLength={256}
-                      autoComplete="off"
-                    />
-                  </label>
-                </>
-              )}
-              <label>
-                권한
-                <select
-                  name="role"
-                  aria-label="권한"
-                  defaultValue={
-                    editing === 'create' ? 'Employee' : editing.role
-                  }
-                  disabled={
-                    !isMaster || (editing !== 'create' && editing.userId === currentUserId)
-                  }
-                >
-                  {editing !== 'create' && editing.role === 'Master' && (
-                    <option value="Master">기업 마스터</option>
-                  )}
-                  <option value="Employee">일반 직원</option>
-                  <option value="Administrator">기업 관리자</option>
-                </select>
-              </label>
-              <label>
+              <div className="dialog-span member-credentials">
+              {editing === 'create' ? <LoginIdField endpoint={endpoint} onAvailable={setLoginAvailable} /> : <label>로그인 아이디<input value={editing.loginId} readOnly autoComplete="off" /></label>}
+              <div className="member-password">
+                <label>
+                  비밀번호
+                  <input type="text" value="자동 생성 · 직접 입력 불가" readOnly autoComplete="off" aria-describedby="employee-password-help" />
+                </label>
+                <p id="employee-password-help" className="organization-help member-password-help" style={editing === 'create' ? { fontSize: 13, margin: '6px 0 0' } : undefined}>
+                  {editing === 'create'
+                    ? '초기 비밀번호는 로그인 아이디와 동일하게 생성됩니다. 구성원에게 로그인 정보를 안내하고, 첫 로그인 후 반드시 비밀번호를 변경하도록 안내해 주세요.'
+                    : editing.role === 'Master' ? '비밀번호는 본인 계정에서 변경할 수 있습니다.' : '초기 비밀번호는 로그인 아이디와 동일하며, 첫 로그인 후 변경해야 합니다.'}
+                </p>
+              </div>
+              </div>
+              <label><FormLabel required={editing === 'create' || editing.role === 'Master'}>이메일</FormLabel><input aria-label={"이메일"} name={editing === 'create' || editing.role === 'Master' ? 'email' : undefined} type="email" required readOnly={editing !== 'create' && editing.role !== 'Master'} defaultValue={editing === 'create' ? '' : editing.email || ''} maxLength={256} autoComplete="off" /></label>
+{contactField}
+</DialogSection>{accountType === 'External' ? <ExternalCompanyFields tenantId={tenantId} user={editing === 'create' ? undefined : editing} /> : <DialogSection title="조직 정보" description="부서와 직급">              <label>
                 부서
                 <select
                   name="departmentId"
+                  aria-label="부서"
                   defaultValue={
                     editing === 'create' ? '' : editing.departmentId || ''
                   }
@@ -538,6 +534,7 @@ export default function UserManagement({
                 직급
                 <select
                   name="positionId"
+                  aria-label="직급"
                   defaultValue={
                     editing === 'create' ? '' : editing.positionId || ''
                   }
@@ -557,57 +554,29 @@ export default function UserManagement({
                     ))}
                 </select>
               </label>
-              <p className="organization-help">
-                직급은 조직 내 직함이며 시스템 접근 권한과 별개입니다.
-              </p>
-              {editing !== 'create' && (
-                <label className="organization-checkbox">
+</DialogSection>}<DialogSection title="접근 권한" description={accountType === 'External' ? '협력사 공통 권한과 개인별 추가 제한' : '직급과 별도로 관리'}>{accountType === 'External' ? <p className="organization-help">신규 협력사는 업무 권한 없이 생성됩니다. 기존 업체에 연결된 계정은 해당 업체의 공통 권한이 적용됩니다. 기업 마스터는 권한 설정의 외부 협력사 탭에서 권한을 지정하고 사용자별로 추가 제한할 수 있습니다. 관리자·결제·사용자 관리 권한은 부여할 수 없습니다.</p> : <PermissionGradeChoice name="permissionGrade" label="권한 등급" grades={gradeKey === 'Master' ? [{ id: 'Master', name: '기업 마스터', isActive: true, isBuiltIn: true, memberCount: 1, version: '' }] : grades.filter(x => x.isActive || x.id === gradeKey)} value={gradeKey} onChange={setGradeKey} disabled={!isMaster || (editing !== 'create' && editing.userId === currentUserId)} />}
+              {accountType === 'Internal' && <p className="organization-help">직급은 조직 내 직함이며 시스템 접근 권한과 별개입니다.</p>}
+              {<label className="organization-checkbox">
                   <input
                     type="checkbox"
                     name="isActive"
-                    defaultChecked={editing.membershipIsActive}
-                    disabled={editing.userId === currentUserId}
+                    defaultChecked={editing === 'create' || editing.membershipIsActive}
+                    disabled={editing !== 'create' && editing.userId === currentUserId}
                   />
-                  기업 소속 활성 상태
-                </label>
-              )}
+                  계정 활성화
+                </label>}
               <p className="organization-help">
-                {editing === 'create'
-                  ? '초기 비밀번호는 등록한 로그인 아이디와 동일하게 자동 설정됩니다(대소문자 구분). 직원은 첫 로그인 때 개인 비밀번호로 변경해야 합니다.'
-                  : '비활성화하면 해당 기업 접근이 차단됩니다. 과거 이력과 다른 기업 소속은 유지합니다.'}
+                비활성화하면 해당 기업 접근이 차단됩니다. 과거 이력과 다른 기업 소속은 유지합니다.
               </p>
-              <button className="primary full" type="submit">
-                {busy
-                  ? '저장 중…'
-                  : editing === 'create'
-                    ? '계정 생성'
-                    : '사용자 정보 저장'}
-              </button>
-            </fieldset>
-          </form>
+</DialogSection></fieldset></div>          </GuardedForm>
         </OrganizationDialog>
       )}
       {registrationResult && (
         <OrganizationDialog
           title="초기 비밀번호 설정 완료"
-          onClose={() => {
-            setRegistrationResult(null)
-            setNotice(
-              '초기 비밀번호는 로그인 아이디와 같습니다. 직원은 첫 로그인 때 개인 비밀번호로 변경해야 합니다.',
-            )
-          }}
-        >
-          <p>
-            {registrationResult.user.name} · 로그인 아이디{' '}
-            <strong>{registrationResult.user.loginId}</strong>
-          </p>
-          <p>
-            초기 비밀번호는 위 로그인 아이디와 동일합니다(대소문자 구분). 직원은
-            첫 로그인 때 개인 비밀번호로 반드시 변경해야 하며, 변경 전에는
-            업무를 이용할 수 없습니다.
-          </p>
-          <button
-            className="primary full"
+          className="user-credential-dialog"
+          actions={<button
+            className="primary"
             onClick={() => {
               setRegistrationResult(null)
               setNotice(
@@ -616,7 +585,24 @@ export default function UserManagement({
             }}
           >
             확인하고 닫기
-          </button>
+          </button>}
+          onClose={() => {
+            setRegistrationResult(null)
+            setNotice(
+              '초기 비밀번호는 로그인 아이디와 같습니다. 직원은 첫 로그인 때 개인 비밀번호로 변경해야 합니다.',
+            )
+          }}
+        >
+          <dl className="user-credential-details" aria-label="계정 정보">
+            <div><dt>사용자 이름</dt><dd>{registrationResult.user.name}</dd></div>
+            <div><dt>로그인 아이디</dt><dd>{registrationResult.user.loginId}</dd></div>
+          </dl>
+          <p>
+            초기 비밀번호는 위 로그인 아이디와 동일합니다(대소문자 구분). 직원은
+            첫 로그인 때 개인 비밀번호로 반드시 변경해야 하며, 변경 전에는
+            업무를 이용할 수 없습니다.
+          </p>
+
         </OrganizationDialog>
       )}
     </>

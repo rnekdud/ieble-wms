@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { paginationState } from '../pagination'
 import './pagination.css'
 
 type PaginationProps = {
+  pageSizeControl?: ReactNode
   page: number
   total: number
   pageSize: number
@@ -15,7 +17,7 @@ type PaginationProps = {
 }
 
 /** Use the API's total/pageSize. Changing filters should reset the parent's page to 1. */
-export default function Pagination({ page, total, pageSize, onChange, loading = false, disabled = false, label = '목록 페이지' }: PaginationProps) {
+export default function Pagination({ page, total, pageSize, onChange, loading = false, disabled = false, label = '목록 페이지', pageSizeControl }: PaginationProps) {
   const state = paginationState(page, total, pageSize)
   const correcting = page !== state.page
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function Pagination({ page, total, pageSize, onChange, loading = 
   const unavailable = loading || disabled || correcting
   const first = unavailable || state.page === 1
   const last = unavailable || state.page === state.pageCount
-  return <div className="wms-pagination">
+  return <div className="wms-pagination"><div className="wms-pagination-layout">
     <span className="wms-pagination-summary" aria-live="polite">
       {loading || correcting ? '목록을 불러오는 중…' : `총 ${state.total.toLocaleString('ko-KR')}건 · ${state.start.toLocaleString('ko-KR')}–${state.end.toLocaleString('ko-KR')}건 표시`}
     </span>
@@ -36,5 +38,6 @@ export default function Pagination({ page, total, pageSize, onChange, loading = 
       <button type="button" aria-label="다음 페이지" title="다음 페이지" disabled={last} onClick={() => onChange(state.page + 1)}><ChevronRight aria-hidden="true" size={16} /></button>
       <button type="button" aria-label="마지막 페이지" title="마지막 페이지" disabled={last} onClick={() => onChange(state.pageCount)}><ChevronsRight aria-hidden="true" size={16} /></button>
     </nav>
-  </div>
+    {pageSizeControl}
+  </div></div>
 }

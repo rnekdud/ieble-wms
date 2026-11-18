@@ -23,6 +23,10 @@ public sealed class AuthController(WmsDbContext db, UserManager<ApplicationUser>
     public IActionResult Csrf([FromServices] IAntiforgery antiforgery) =>
         Ok(new { token = antiforgery.GetAndStoreTokens(HttpContext).RequestToken });
 
+    [HttpPost("login-id-check"), AllowAnonymous, EnableRateLimiting("registration-login-id-check")]
+    public Task<object> CheckRegistrationLoginId(CheckLoginIdRequest request, [FromServices] LoginIdPolicy loginIds, CancellationToken token) =>
+        loginIds.CheckAsync(request.LoginId, token);
+
     [HttpPost("register"), AllowAnonymous, EnableRateLimiting("register")]
     public async Task<IActionResult> Register(RegisterCompanyRequest request, CancellationToken token)
     {
@@ -56,16 +60,16 @@ public sealed class AuthController(WmsDbContext db, UserManager<ApplicationUser>
     public async Task<IActionResult> Me(CancellationToken token)
     {
         var user = (await users.GetUserAsync(User))!;
-        var memberships = await db.TenantMemberships.AsNoTracking()
-            .Where(x => x.UserId == user.Id && x.IsActive && x.Tenant.IsActive)
+        var memberships = await IebleWms.Api.Permissions.CollaboratorAccess.Memberships(db).AsNoTracking()
+            .Where(x => x.UserId == user.Id)
             .Select(x => new { tenantId = x.TenantId, name = x.Tenant.Name, role = x.Role.ToString(), x.IsDefault, serviceStatus = x.Tenant.ServiceStatus.ToString() })
             .ToListAsync(token);
-        var selected = await tenants.ResolveAsync(user.Id, token);
+        var claimed = Guid.TryParse(User.FindFirstValue(AuthConfiguration.TenantClaim), out var claimId) ? (Guid?)claimId : null;
+        var selected = memberships.Any(x => x.tenantId == claimed) ? claimed : memberships.Count == 1 ? memberships[0].tenantId : (Guid?)null;
         var displayName = selected is Guid selectedId
             ? await db.TenantMemberships.AsNoTracking().Where(x => x.UserId == user.Id && x.TenantId == selectedId)
                 .Select(x => x.DisplayName ?? user.DisplayName).SingleAsync(token)
             : user.DisplayName;
-        var claimed = Guid.TryParse(User.FindFirstValue(AuthConfiguration.TenantClaim), out var claimId) ? (Guid?)claimId : null;
         if (selected != claimed)
         {
             var ticket = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
@@ -124,7 +128,8 @@ public sealed class AuthController(WmsDbContext db, UserManager<ApplicationUser>
         user.MustChangePassword = false;
         var changed = await users.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!changed.Succeeded) return BadRequest(new { message = "비밀번호를 변경하지 못했습니다. 새 비밀번호는 8~128자이며 영문 소문자, 숫자, 특수문자를 포함해야 합니다. 동시 변경 시 다시 로그인해 주세요." });
-        var selected = await tenants.ResolveAsync(user.Id, token);
+        var claimed = Guid.TryParse(User.FindFirstValue(AuthConfiguration.TenantClaim), out var claimId) ? (Guid?)claimId : null;
+        var selected = claimed.HasValue && await access.GetTenantRoleAsync(user.Id, claimed.Value, token) != null ? claimed : await tenants.ResolveAsync(user.Id, token);
         audit.Add(selected, user.Id, "PasswordChanged", new { MustChangePassword = wasRequired }, new { MustChangePassword = false }, user.Id);
         await db.SaveChangesAsync(token);
         await transaction.CommitAsync(token);

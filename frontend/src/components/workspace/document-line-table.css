@@ -1,0 +1,34 @@
+.document-line-scroll { width:100%; max-width:100%; overflow-x:auto; background:#fff; border:1px solid #dce5e9; border-radius:8px; }
+.document-line-table { width:100%; min-width:900px; border-collapse:collapse; table-layout:auto; background:#fff; }
+.document-line-table.is-shipping { min-width:1040px; }
+.document-line-table :is(th,td) { vertical-align:top; text-align:left; }
+.registration-form .document-line-table :is(th,td),.dialog-layout .document-line-table :is(th,td) { padding:10px 12px; }
+.document-line-table th { background:#f5f8fa; color:#526b76; font-size:12px; white-space:nowrap; }
+.document-line-table td { font-size:13px; border-bottom:1px solid #e5ecef; }
+.document-line-table tr:last-child td { border-bottom:0; }
+.document-line-table .document-product { min-width:180px; max-width:320px; overflow-wrap:anywhere; }
+.document-line-table small { display:block; font-size:11px; color:#687f89; margin-top:4px; }
+.document-line-table .document-unit { width:50px; white-space:nowrap; }
+.document-line-table .document-quantity { width:120px; min-width:115px; }
+.registration-form .document-line-table input:not([type=checkbox]),.dialog-layout .document-line-table input:not([type=checkbox]) { height:36px; min-height:36px; padding:7px 9px; font-size:13px; }
+.document-line-table input[type=number] { width:110px; }
+.document-line-table input[type=date] { width:145px; }
+.document-line-table .document-lot input { width:140px; }
+.document-line-table .document-actions { width:65px; }
+.document-line-table button { white-space:nowrap; min-height:34px; padding:6px 10px; font-size:12px; }
+.document-line-table .document-tracking { min-width:155px; max-width:230px; overflow-wrap:anywhere; }
+.document-line-table .document-error { display:block; color:#ad3730; font-size:11px; margin-top:5px; max-width:230px; }
+.document-line-table input[aria-invalid=true] { border-color:#b8423a; }
+.document-line-table .document-stock-number { min-width:75px; font-variant-numeric:tabular-nums; }
+.document-line-help { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; color:#607782; font-size:12px; margin:8px 0; }
+.document-serial-label { display:grid; gap:8px; margin:0; }
+.document-serial-label textarea { width:100%; resize:vertical; }
+.document-stock-scroll { max-height:42dvh; overflow:auto; }
+.document-stock-table { min-width:800px; }
+.document-line-table .receipt-placement { min-width:600px; }
+.document-line-table details summary { cursor:pointer; white-space:nowrap; }
+@media(max-width:600px) {
+ .registration-form .document-line-table :is(th,td) { padding:8px; }
+ .document-line-table .document-product { min-width:150px; }
+ .document-line-help { font-size:11px; }
+}

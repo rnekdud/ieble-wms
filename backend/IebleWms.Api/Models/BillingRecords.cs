@@ -7,6 +7,17 @@ public sealed class BillingFeedback
     public Guid UserId { get; set; }
     public Guid RequestId { get; set; }
     public string Message { get; set; } = "";
+    public string Number { get; set; } = "";
+    public string Category { get; set; } = "Billing";
+    public string Title { get; set; } = "요금제 이용 소감";
+    public string Status { get; set; } = "Received";
+    public Guid? AssignedToId { get; set; }
+    public string? Answer { get; set; }
+    public Guid? AnsweredById { get; set; }
+    public DateTimeOffset? AnsweredAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+    public Guid Version { get; set; } = Guid.NewGuid();
+    public string? RequestHash { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 public sealed class BillingReminderDismissal

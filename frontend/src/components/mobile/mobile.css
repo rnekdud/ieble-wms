@@ -1,0 +1,563 @@
+/* Mobile presentation only. Desktop geometry and business controls are unchanged. */
+@media (max-width:1024px) {
+  .wms-layout .wms-header { height:64px; min-height:64px; padding:0 16px; gap:12px; }
+  .wms-company { min-width:0; gap:8px; }
+  .wms-company > span { display:flex; flex-direction:column; min-width:0; max-width:58vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+  .wms-content { padding:20px 16px calc(16px + env(safe-area-inset-bottom)); min-width:0; }
+  .wms-layout .wms-footer { display:none; }
+  :root body .wms-layout .wms-breadcrumb { display:none; }
+  :root body .wms-layout .wms-page-heading.wms-page-header { margin-bottom:8px; }
+  .mobile-offline { position:fixed; z-index:2000; inset:0 0 auto; padding:10px 16px; background:#fff1ce; color:#493d20; font-size:13px; }
+  .mobile-menu-section { margin:0 0 20px; }
+  .mobile-menu-section h3 { font-size:13px; color:#64748b; margin:0 0 8px; }
+  .mobile-install { border-top:1px solid #e5eaf0; padding-top:16px; }
+  .mobile-install p { font-size:13px; line-height:1.6; }
+  :root body :is(.wms-content,dialog.dialog-layout) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),select,.searchable-choice-trigger) { height:44px; min-height:44px; font-size:14px; }
+  :root body :is(.wms-content,dialog.dialog-layout) textarea { font-size:14px; }
+  :root body :is(.wms-content,dialog.dialog-layout) button:not([role=option]) { min-height:var(--ui-icon-min-height,44px); }
+  :root body .table-page-size select { height:40px!important; min-height:40px!important; }
+  :root body .table-page-size { margin-top:12px; }
+  :root body :is(.organization-toolbar,.products-toolbar,.receipt-actions,.inventory-actions,.receipt-section-buttons,.barcode-input-row,.page-header-actions) { flex-wrap:wrap; gap:8px; }
+  :root body :is(.organization-filters,.products-filters,.inventory-filters,.stocktake-filters,.filter-toolbar,.period-filter-row) { flex-wrap:wrap; max-width:100%; gap:8px; }
+  .table-scroll,.document-line-scroll { max-width:100%; overscroll-behavior-x:contain; }
+  :root body dialog.organization-dialog.dialog-layout { max-height:min(90dvh,calc(var(--mobile-viewport-height,100dvh) - 16px)); max-width:calc(100vw - 16px); margin:auto; }
+  :root body dialog.mobile-menu-sheet { margin:auto auto 0; width:100%; max-width:600px; border-radius:16px 16px 0 0; }
+  :root body .dialog-layout .dialog-actions { padding:12px 16px calc(12px + env(safe-area-inset-bottom)); gap:8px; flex-wrap:wrap; }
+  :root body .dialog-layout .dialog-actions > button { flex:0 1 auto; }
+  .dialog-layout .dialog-body { overscroll-behavior:contain; }
+  .mobile-camera-button { margin:8px 0; }
+  .mobile-section-title,.mobile-quick-work h2 { font-size:16px; margin:24px 0 12px; }
+  .mobile-quick-work > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .mobile-quick-work button { display:flex; align-items:center; justify-content:flex-start; gap:10px; padding:14px; background:#f4f7fb; color:#16345f; border:0; }
+  .wms-content .dashboard-today-work { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .wms-content .dashboard-today-work button { min-width:0; padding:16px 12px; flex-direction:column; align-items:flex-start; gap:8px; }
+  .wms-content .dashboard-today-work strong { font-size:23px; }
+  .wms-content .warehouse-live-workspace { grid-template-columns:1fr; }
+  :root body .warehouse-plan-canvas { min-height:300px; }
+  .warehouse-map-toolbar,.warehouse-map-actions { flex-wrap:wrap; }
+  .warehouse-map-actions button { width:44px; height:44px; padding:0; }
+  .mobile-editor-notice { line-height:1.7; }
+  .mobile-editor-notice p { margin:16px 0; }
+}
+@media (max-width:600px) {
+  .wms-content .page-header,.wms-content .panel-title { flex-wrap:wrap; gap:12px; }
+  :root body :is(.organization-form-grid,.receipt-basic,.receipt-line-fields,.inventory-filter-grid,.inventory-location-grid,.dialog-inventory-grid,.dialog-section-fields,.stocktake-basic,.address-search-fields) { grid-template-columns:minmax(0,1fr); }
+  :root body .barcode-input-row > label { flex:1 0 100%; min-width:0; }
+  :root body .barcode-input-row > button { flex:1 1 auto; }
+  :root body .barcode-input-row { align-items:end; }
+  :root body :is(.organization-filters,.products-filters,.inventory-filters,.stocktake-filters) > label { flex:1 1 140px; min-width:0; }
+  :root body .date-range-fields { min-width:0; gap:8px; }
+  .date-range-fields input { min-width:0; width:100%; }
+  :root body .wms-content .dashboard-title-row { flex-wrap:wrap; align-items:flex-start; }
+  .dashboard-title-row .dashboard-warehouse-separator { display:none; }
+  .dashboard-title-row .searchable-choice { flex-basis:100%; max-width:100%; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) { display:block; min-width:0; width:100%; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) thead { display:none; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) tbody { display:block; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) tbody > tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; padding:16px 0; border-bottom:1px solid #dce5ea; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) tbody > tr > td { display:block; min-width:0; width:auto; padding:0; border:0; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) td[data-label]::before { content:attr(data-label); display:block; color:#72818d; font-size:12px; font-weight:400; margin-bottom:5px; }
+  :root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) td:first-child,:root body :is(.mobile-record-table,.receipt-product-table,.simple-stocktake-table) td[colspan] { grid-column:1/-1; }
+  :root body .receipt-product-table td.receipt-inspection-quantity { grid-column:1/-1; }
+  :root body :is(.receipt-product-table,.simple-stocktake-table) input { max-width:100%; width:100%; }
+  :root body .simple-stocktake-table td[data-label='창고·보관 위치'] { grid-column:1/-1; }
+  :root body .receipt-product-table td button { margin-top:6px; width:auto; }
+  .pagination { flex-wrap:wrap; gap:8px; }
+
+}
+
+@media (max-width:1024px) {
+  .mobile-stock-card { border-bottom:1px solid #dce5ea; padding:16px 0; }
+  .mobile-stock-card h3 { margin:0 0 6px; font-size:16px; }
+  .mobile-stock-card p { margin:4px 0; color:#687888; font-size:13px; overflow-wrap:anywhere; }
+  .mobile-stock-card dl { display:grid; grid-template-columns:1fr auto; gap:8px; margin:14px 0; }
+  .mobile-stock-card dt { color:#687888; }
+  .mobile-stock-card dd { margin:0; text-align:right; font-weight:600; }
+}
+@media(max-width:600px) {
+  :root body .mobile-record-table .receipt-placement-cell { grid-column:1/-1; }
+  :root body .receipt-placement { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; min-width:0; }
+  :root body .document-line-table.mobile-record-table :is(td,tfoot,.receipt-table-totals) { min-width:0; width:auto; white-space:normal; }
+  :root body .document-line-table.mobile-record-table tfoot { display:block; }
+  :root body .document-line-table.mobile-record-table tfoot tr { display:block; }
+  :root body .document-line-table.mobile-record-table tfoot td { display:block; width:100%; }
+}
+@media(max-width:1024px) {
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse { flex:0 0 100%; flex-wrap:nowrap; align-items:center; gap:6px; min-width:0; }
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse > h1 { font-size:18px; line-height:1.3; }
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse > span { display:block; font-size:18px; line-height:1.3; }
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse > .dashboard-warehouse-title { flex:0 1 auto; min-width:0; max-width:100%; }
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse .searchable-choice-trigger { gap:6px; width:100%; max-width:100%; height:28px!important; min-height:28px!important; padding:0; box-sizing:border-box; }
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse .searchable-choice-trigger > span { min-width:0; overflow:hidden; }
+  :root body .warehouse-dashboard .dashboard-title-with-warehouse .searchable-choice-trigger strong { display:block; font-size:18px; }
+  :root body .barcode-location-dialog .barcode-location-map-controls button { width:44px; height:44px; min-width:44px; }
+}
+/* Left navigation drawer only; inventory shortcuts and bottom navigation are unchanged. */
+@media(max-width:1024px) {
+  :root body dialog.organization-dialog.mobile-all-menu {
+    position:fixed; inset:0 auto auto 0; margin:0; box-sizing:border-box;
+    width:min(320px,calc(100vw - 48px)); max-width:none;
+    height:min(100dvh, var(--mobile-viewport-height,100dvh));
+    max-height:min(100dvh, var(--mobile-viewport-height,100dvh));
+    border:0; border-radius:0; overflow:hidden; box-shadow:4px 0 18px #16345f1a;
+  }
+  :root body .mobile-all-menu > .organization-dialog-heading {
+    flex:0 0 auto; min-height:64px; box-sizing:border-box;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border-bottom:1px solid var(--ui-line,#dfe5ec); background:#fff;
+  }
+  :root body .mobile-all-menu .organization-dialog-heading h2 { margin:0; font-size:20px; line-height:1.4; }
+  :root body .mobile-all-menu .organization-dialog-heading .dialog-close-icon {
+    position:relative; display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px;
+    box-sizing:border-box; width:44px; min-width:44px; max-width:44px;
+    height:44px; min-height:44px; max-height:44px; padding:0;
+    border:0; border-radius:8px; background:transparent; color:#16345f; font-size:0; line-height:1;
+  }
+  :root body .mobile-all-menu .dialog-close-icon::before,
+  :root body .mobile-all-menu .dialog-close-icon::after {
+    content:''; position:absolute; left:50%; top:50%; width:18px; height:2px;
+    border-radius:1px; background:currentColor; transform:translate(-50%,-50%) rotate(45deg);
+    pointer-events:none;
+  }
+  :root body .mobile-all-menu .dialog-close-icon::after { transform:translate(-50%,-50%) rotate(-45deg); }
+  :root body .mobile-all-menu > .dialog-body {
+    flex:1 1 auto; min-height:0; width:100%; box-sizing:border-box;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+    overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:auto;
+  }
+  :root body .mobile-all-menu nav { display:block; width:100%; min-width:0; margin:0; padding:0; }
+  :root body .mobile-all-menu .mobile-menu-section { width:100%; margin:24px 0 0; }
+  :root body .mobile-all-menu .mobile-menu-section:first-child { margin-top:0; }
+  :root body .mobile-all-menu .mobile-menu-section h3 { margin:0 0 8px; padding-inline:14px; font-size:13px; font-weight:600; line-height:1.4; color:#68788c; }
+  :root body .mobile-all-menu .mobile-menu-list { display:flex; flex-direction:column; gap:4px; width:100%; }
+  :root body .mobile-all-menu .mobile-menu-item {
+    display:flex; align-items:center; justify-content:flex-start; flex:0 0 auto;
+    width:100%; min-width:0; min-height:48px; height:auto; box-sizing:border-box;
+    padding:12px 14px; gap:12px; margin:0;
+    border:0; border-radius:8px; box-shadow:none; background:#fff; color:#16345f;
+    font-size:14px; font-weight:400; line-height:24px; text-align:left; white-space:normal;
+  }
+  :root body .mobile-all-menu .mobile-menu-item > svg { flex:none; }
+  :root body .mobile-all-menu .mobile-menu-item > span { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+  :root body .mobile-all-menu .mobile-menu-chevron { margin-left:auto; color:#8290a1; }
+  :root body .mobile-all-menu :is(.mobile-menu-item,.dialog-close-icon):active { background:#edf2f7; }
+  :root body .mobile-all-menu .mobile-menu-item[aria-current=page] { background:#fff7d9; font-weight:600; }
+  :root body .mobile-all-menu .mobile-menu-group { margin-top:4px; }
+  :root body .mobile-all-menu .mobile-menu-list[hidden] { display:none; }
+  :root body .mobile-all-menu .mobile-menu-sublist { margin-top:4px; }
+  :root body .mobile-all-menu .mobile-menu-sublist .mobile-menu-item { padding-left:46px; }
+  :root body .mobile-all-menu .mobile-menu-toggle { font-weight:500; }
+  :root body .mobile-all-menu .mobile-menu-toggle.is-parent-current { font-weight:600; }
+  :root body .mobile-all-menu .mobile-menu-toggle .mobile-menu-chevron.is-open { transform:rotate(180deg); }
+  :root body .mobile-all-menu .mobile-install { margin-top:20px; padding-top:12px; border:0; }
+}
+@media(max-width:1024px) and (hover:hover) {
+  :root body .mobile-all-menu :is(.mobile-menu-item,.dialog-close-icon):hover { background:#f1f5f9; }
+  :root body .mobile-all-menu .mobile-menu-item[aria-current=page]:hover { background:#fff2bd; }
+}
+
+/* Dashboard summaries remain in place; the map is the primary mobile content. */
+@media(max-width:1024px) {
+  :root body .warehouse-dashboard > .dashboard-summary-heading { flex-wrap:wrap; row-gap:0; margin-bottom:0; padding-bottom:0; }
+  :root body .warehouse-dashboard .mobile-dashboard-refresh {
+    display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-start;
+    flex:0 1 auto; width:fit-content; height:auto; min-height:0; margin:0; gap:6px; line-height:1.25;
+  }
+  :root body .warehouse-dashboard .mobile-dashboard-refresh .warehouse-dashboard-updated {
+    display:flex; flex:0 1 auto; align-items:center; flex-wrap:nowrap;
+    gap:4px; font-size:11px; line-height:1.25; height:auto; min-height:0; margin:0; white-space:nowrap;
+  }
+  :root body .warehouse-dashboard .mobile-dashboard-refresh .warehouse-dashboard-updated > span + span { border:0; padding:0; }
+  :root body .warehouse-dashboard .mobile-dashboard-refresh .warehouse-dashboard-updated > span + span::before { content:'·'; margin-right:4px; }
+  :root body .wms-content .warehouse-dashboard .mobile-dashboard-refresh > button {
+    position:relative;
+    display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px;
+    width:44px; min-width:44px; max-width:44px; height:44px; min-height:44px; max-height:44px;
+    margin:10px -20px -30px 0; padding:0; line-height:1;
+    border:0; border-radius:0; background:transparent; box-shadow:none; color:#687888;
+  }
+  /* Keep a 10px touch gap below the picker. Offset the 24px visual back into
+     its original position; margins keep the refresh row's footprint at 24px. */
+  :root body .warehouse-dashboard .mobile-dashboard-refresh > button::before {
+    content:''; position:absolute; top:-10px; left:0; width:24px; height:24px; border-radius:var(--ui-radius-button); pointer-events:none;
+  }
+  :root body .warehouse-dashboard .mobile-dashboard-refresh > button > svg { position:absolute; top:-5.5px; left:4.5px; }
+  :root body .warehouse-dashboard .mobile-dashboard-refresh > button:hover:not(:disabled)::before { background:#f5f7fa; }
+  :root body .warehouse-dashboard :is(.mobile-section-title,.mobile-quick-work h2) { margin:16px 0 8px; font-size:14px; font-weight:600; }
+  :root body .warehouse-dashboard > .dashboard-summary-heading + .mobile-section-title { margin-top:4px; }
+  :root body .warehouse-dashboard .dashboard-today-work { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:0; }
+  :root body .warehouse-dashboard .dashboard-today-work button {
+    min-height:0; padding:10px 12px; gap:4px; background:#fff; border:1px solid #e5eaf0; box-shadow:none;
+  }
+  :root body .warehouse-dashboard .dashboard-today-work button > span { font-size:12px; line-height:1.4; }
+  :root body .warehouse-dashboard .dashboard-today-work button > strong { font-size:18px; line-height:1.3; font-weight:600; }
+  :root body .warehouse-dashboard .mobile-quick-work { margin-bottom:16px; }
+  :root body .warehouse-dashboard .mobile-quick-work button {
+    height:44px; min-height:44px; padding:8px 12px; gap:8px;
+    background:#fff; border:1px solid #e5eaf0; border-radius:8px; box-shadow:none;
+    font-size:13px; font-weight:500; color:#16345f;
+  }
+  :root body .warehouse-dashboard .mobile-quick-work button > svg { width:18px; height:18px; flex:none; }
+}
+
+@media(max-width:1024px) {
+  :root body .warehouse-dashboard .warehouse-map-toolbar { padding-bottom:4px; }
+  :root body .warehouse-dashboard .dashboard-map-actions { gap:8px; }
+  :root body .wms-content .warehouse-dashboard .dashboard-map-actions > button {
+    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center;
+    flex:0 0 33px; width:33px; min-width:33px; max-width:33px;
+    height:33px; min-height:33px; max-height:33px; padding:0; border-radius:8px;
+  }
+  :root body .wms-content .warehouse-dashboard .dashboard-map-actions > button > svg { margin:0; flex:none; }
+}
+
+/* Compact workspace chrome, scoped away from desktop and authentication screens. */
+@media(max-width:1024px) {
+  :root body .wms-layout .wms-header {
+    height:54px; min-height:54px; flex:0 0 54px; padding:0 12px; gap:8px;
+    align-items:center; flex-wrap:nowrap;
+  }
+  :root body .wms-header .wms-company { display:flex; align-items:center; flex:1 1 auto; gap:6px; min-width:0; }
+  :root body .wms-header .wms-company > span { display:block; min-width:0; max-width:none; font-size:13px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  :root body .wms-header .wms-company > :is(svg,.wms-company-logo) { display:block; width:26px; height:26px; flex:0 0 26px; object-fit:contain; }
+  :root body .wms-header > .user-profile { min-width:0; max-width:65%; flex:0 1 auto; }
+  :root body .wms-header .user-profile-trigger { width:100%; min-width:0; height:44px; padding:4px; gap:6px; }
+  :root body .wms-header .user-profile-trigger > svg { flex:none; }
+  :root body .wms-header .user-profile-trigger > span { flex:1 1 auto; flex-direction:row; align-items:center; min-width:0; max-width:none; gap:4px; white-space:nowrap; line-height:1.25; }
+  :root body .wms-header .user-profile-trigger strong { flex:0 1 auto; min-width:0; font-weight:500; line-height:1.25; }
+  :root body .wms-header .user-profile-trigger small { display:inline-flex; align-items:center; flex:none; gap:4px; line-height:1.25; }
+  :root body .wms-header .user-profile-trigger small::before { content:'/'; color:var(--ui-muted,#758a7e); }
+  /* Keep a small safe-area gap now that navigation lives in the header. */
+  :root body .wms-layout .wms-content { padding-bottom:calc(16px + env(safe-area-inset-bottom)); }
+}
+
+@media(max-width:1024px) and (prefers-reduced-motion:no-preference) {
+  :root body dialog.mobile-all-menu[open] { animation:mobile-menu-enter 180ms ease-out; }
+}
+@keyframes mobile-menu-enter { from { transform:translateX(-100%); } to { transform:translateX(0); } }
+
+@media(max-width:1024px) {
+  :root body .wms-layout .wms-header > .mobile-header-menu {
+    display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px;
+    box-sizing:border-box; width:44px; min-width:44px; max-width:44px;
+    height:44px; min-height:44px; max-height:44px; padding:0; margin:0;
+    border:0; border-radius:8px; background:transparent; color:#16345f;
+  }
+  :root body .wms-layout .wms-header > .mobile-header-menu:hover { background:#f1f5f9; }
+}
+
+/* Compact mobile field text and tabs, without reducing normal action targets. */
+@media(max-width:1024px) {
+  :root body .searchable-choice-popup .searchable-choice-search input { font-size:14px; }
+  :root body :is(.wms-content,dialog.dialog-layout) :is(button[role=tab],.wms-segmented > button) {
+    box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center;
+    height:36px; min-height:36px; padding-block:6px; line-height:1.25;
+  }
+  :root body :is(.wms-content,dialog.dialog-layout) .wms-segmented.report-period-tabs > button {
+    height:32px; min-height:32px; padding-block:4px;
+  }
+}
+
+/* Receiving and inventory list cards share the product card inset and spacing. */
+@media(max-width:600px) {
+  :root body .products-card:has(.receipt-filters,.inventory-search-filters,.stocktake-search-filters) > .table-scroll { border:0; }
+  :root body .products-card:has(.receipt-filters,.inventory-search-filters,.stocktake-search-filters) > .table-scroll > .mobile-record-table > tbody {
+    display:grid; gap:12px;
+  }
+  :root body .products-card:has(.receipt-filters,.inventory-search-filters,.stocktake-search-filters) > .table-scroll > .mobile-record-table > tbody > tr {
+    padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:#fff;
+  }
+}
+
+/* Inventory filters have their own grid, independent of product-list column rules. */
+@media(max-width:1024px) {
+  :root body .products-card .inventory-search-filters > .products-toolbar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 8px; width:100%; min-width:0; flex:1 0 100%; }
+  :root body .products-card .inventory-search-filters > .products-toolbar > .searchable-choice { grid-column:1/-1; grid-row:1; width:100%; min-width:0; }
+  :root body .products-card .inventory-search-filters > .products-toolbar > label:has(> select[aria-label="재고 상태"]) { grid-column:1; grid-row:2; }
+  :root body .products-card .inventory-search-filters > .products-toolbar > label:has(> select[aria-label="재고 사용 여부"]) { grid-column:2; grid-row:2; }
+  :root body .products-card .inventory-search-filters > .products-toolbar > label { min-width:0; max-width:100%; width:100%; margin:0; }
+  :root body .inventory-search-filters select { display:block; width:100%; min-width:0; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+}
+@media(max-width:600px) {
+  :root body .inventory-table.mobile-record-table tbody > tr > td { text-align:left; }
+}
+
+@media(max-width:600px) {
+  :root body .stocktake-list.mobile-record-table tbody > tr > td[data-label="실사 상품 수"] { text-align:left; }
+}
+
+/* Opt-in management lists only: forms, detail dialogs and desktop tables retain their layout. */
+@media(max-width:600px) {
+  :root body .wms-content .mobile-management-list { padding:12px; min-width:0; }
+  :root body .wms-content :is(.table-scroll,.wms-table-scroll):has(> .mobile-management-table) {
+    width:100%; max-width:100%; border:0; background:transparent;
+  }
+  :root body .wms-content .mobile-management-table > tbody { display:grid; gap:12px; }
+  :root body .wms-content .mobile-management-table > tbody > tr {
+    padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:#fff;
+  }
+  :root body .wms-content .mobile-management-table > tbody > tr > td {
+    padding:0; border:0; min-width:0; max-width:none; text-align:left;
+    white-space:normal; overflow-wrap:anywhere;
+  }
+  :root body .wms-content .mobile-management-table > tbody > tr > :is(.mobile-card-wide,[data-label="관리"]) { grid-column:1 / -1; }
+  :root body .wms-content .mobile-management-table > tbody > tr > td[data-label="관리"] { text-align:right; }
+  :root body .wms-content .mobile-management-table > tbody > tr > td[data-label="관리"]::before { display:none; }
+  :root body .wms-content .mobile-management-table .organization-row-actions { justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+  :root body .wms-content .mobile-management-table td > small { display:block; margin-top:4px; }
+  :root body .wms-content .mobile-management-table td > .organization-department-name { padding-inline-start:min(calc(var(--department-depth,0) * 12px),48px); }
+  :root body .wms-content :is(.table-scroll,.wms-table-scroll):has(> .mobile-management-table) + .wms-pagination { margin-top:12px; }
+
+  :root body .wms-content .list-search-filters.mobile-management-filters {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; min-width:0;
+    gap:12px 8px; align-items:end; margin:0 0 12px; padding:0;
+  }
+  :root body .wms-content .list-search-filters.mobile-management-filters > :is(label,.searchable-choice) {
+    display:flex; flex-direction:column; align-items:stretch; gap:5px;
+    grid-column:auto; grid-row:auto; width:100%; min-width:0; max-width:100%; margin:0; flex:none;
+  }
+  :root body .wms-content .list-search-filters.mobile-management-filters > label:has(input:not([type=date])) { grid-column:1 / -1; width:100%; }
+  :root body .wms-content .list-search-filters.mobile-management-filters :is(input,select) { min-width:0; max-width:100%; width:100%; }
+  :root body .wms-content .list-search-filters.mobile-management-filters select { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  :root body .wms-content .list-search-filters.mobile-management-filters > .list-search-actions {
+    grid-column:1 / -1; grid-row:auto; display:flex; flex-wrap:wrap; justify-content:flex-start;
+    width:auto; gap:8px; margin:0;
+  }
+  :root body .wms-content .list-search-filters.mobile-management-filters .report-period-range {
+    grid-column:1 / -1; width:100%; min-width:0; max-width:100%;
+  }
+  :root body .wms-content .list-search-filters.mobile-management-filters .report-period-tabs { grid-column:1 / -1; }
+  :root body .wms-content .list-search-filters.mobile-management-filters::after { display:none; }
+  :root body .wms-content .mobile-management-list > .organization-toolbar { margin-bottom:12px; }
+  :root body .warehouse-directory > .organization-toolbar { padding:0; border:0; margin:0 0 12px; }
+  :root body .warehouse-directory-grid { gap:12px; }
+  :root body .warehouse-directory-item { padding:16px; }
+}
+
+/* Partner identity is a card heading on phones; desktop keeps its existing columns. */
+.partner-card-meta { display:none; }
+@media(max-width:600px) {
+  :root body .wms-content .partner-management-table > tbody > tr > :is([data-label="거래처코드"],[data-label="거래처 유형"]) { display:none; }
+  :root body .wms-content .partner-management-table > tbody > tr > td[data-label="거래처명"] { grid-column:1 / -1; padding-bottom:4px; }
+  :root body .wms-content .partner-management-table td[data-label="거래처명"]::before { display:none; }
+  .partner-management-table .partner-card-name { display:block; font-size:17px; font-weight:600; line-height:1.4; color:var(--ui-ink); }
+  .partner-management-table .partner-card-meta { display:block; margin-top:4px; font-size:12px; line-height:1.4; color:var(--ui-muted); }
+  .partner-management-table .partner-card-status { display:inline-flex; align-items:center; padding:3px 8px; border-radius:5px; font-size:12px; line-height:1.4; font-weight:500; }
+  .partner-management-table .partner-card-status.is-active { background:#e6f4eb; color:#267345; }
+  .partner-management-table .partner-card-status.is-inactive { background:#fdecec; color:#b43c3c; }
+}
+
+/* Stock overview list only; detail dialogs and desktop tables keep their layout. */
+@media (max-width: 1024px) {
+  .stock-overview > .overview-summary { margin-bottom:12px; }
+  .stock-overview > .overview-summary > div { padding:10px 12px; }
+  .stock-overview > .overview-summary > div > div { align-items:center; font-size:12px; line-height:1.35; }
+  .stock-overview > .overview-summary strong { margin-top:6px; font-size:22px; line-height:1.3; }
+  .stock-overview > .overview-summary p { display:none; }
+  .stock-overview > .products-card > .mobile-stock-list { display:grid; gap:12px; min-width:0; }
+  .stock-overview > .products-card > .mobile-stock-list > .mobile-stock-card {
+    min-width:0; padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:#fff;
+  }
+  .stock-overview > .products-card > .mobile-stock-list > .mobile-stock-card h3 { overflow-wrap:anywhere; }
+  .stock-overview > .products-card > .mobile-stock-list > .mobile-stock-card dl { grid-template-columns:minmax(0,1fr) auto; }
+  .stock-overview > .products-card > .mobile-stock-list > .mobile-stock-card > button { display:flex; margin:12px 0 0 auto; }
+}
+
+@media (max-width: 1024px) {
+  :root body .stock-overview .list-search-filters > .overview-filter-toggle {
+    display:flex; align-items:center; justify-content:flex-start; gap:6px;
+    flex:0 0 100%; grid-column:1/-1; width:100%; min-width:0; min-height:40px;
+    padding:8px 12px; border:1px solid var(--ui-line); border-radius:8px; background:#f3f6fa; box-shadow:none;
+    color:var(--ui-ink); font-size:13px; font-weight:600;
+  }
+  .stock-overview .overview-filter-toggle[aria-expanded="true"] svg { transform:rotate(180deg); }
+  :root body .stock-overview .list-search-filters > .overview-advanced {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 8px;
+    flex:0 0 100%; grid-column:1/-1; width:100%; min-width:0; margin:0; padding:0;
+    background:transparent;
+  }
+  :root body .stock-overview .list-search-filters > .overview-advanced[hidden] { display:none; }
+  :root body .stock-overview .overview-advanced > .searchable-choice { width:100%; min-width:0; margin:0; }
+}
+
+/* Usage badges stay at the card's upper-right; workflow statuses keep their places. */
+@media (max-width:600px) {
+  :root body .wms-content .mobile-management-table > tbody > tr:has(> .mobile-card-usage) > td:first-child,
+  :root body .wms-content .partner-management-table > tbody > tr > td[data-label="거래처명"] {
+    grid-column:1/-1; grid-row:1; padding-right:80px;
+  }
+  :root body .wms-content .mobile-management-table > tbody > tr > td.mobile-card-usage {
+    grid-column:2; grid-row:1; justify-self:end; align-self:start; width:auto; white-space:nowrap;
+  }
+  :root body .wms-content .mobile-management-table td.mobile-card-usage::before { display:none; }
+  .mobile-card-usage .mobile-usage-badge { display:inline-flex; padding:3px 8px; border-radius:5px; font-size:12px; line-height:1.4; font-weight:500; }
+  .mobile-card-usage .mobile-usage-badge.is-active { background:#e6f4eb; color:#267345; }
+  .mobile-card-usage .mobile-usage-badge.is-inactive { background:#fdecec; color:#b43c3c; }
+}
+@media (max-width:767px) {
+  .products-mobile-corner { display:flex; flex-direction:column; align-items:flex-end; align-self:flex-start; flex:none; gap:10px; }
+  .products-mobile-corner input[type=checkbox] { width:18px; height:18px; margin:0; }
+  .products-mobile-corner .products-mobile-status { white-space:nowrap; }
+}
+@media (max-width:1024px) {
+  .mobile-stock-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .mobile-stock-heading h3 { min-width:0; }
+  .mobile-stock-heading .mobile-usage-badge { flex:none; padding:3px 8px; border-radius:5px; font-size:12px; line-height:1.4; font-weight:500; white-space:nowrap; }
+  .mobile-stock-heading .mobile-usage-badge.is-active { background:#e6f4eb; color:#267345; }
+  .mobile-stock-heading .mobile-usage-badge.is-inactive { background:#fdecec; color:#b43c3c; }
+}
+
+@media (max-width:1024px) {
+  .mobile-stock-heading h3 { flex:1 1 0; }
+  .mobile-stock-badges { display:flex; flex:0 1 auto; align-items:center; justify-content:flex-end; gap:6px; margin-left:auto; min-width:0; max-width:65%; }
+  .mobile-stock-badges .overview-statuses { align-items:center; justify-content:flex-end; gap:6px; min-width:0; max-width:none; }
+}
+
+@media (max-width:1024px) {
+  .mobile-stock-badges :is(.status-badge,.mobile-usage-badge) {
+    display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
+    min-height:24px; margin:0; padding:3px 8px; font-size:12px; line-height:18px;
+  }
+}
+
+/* Inbound/outbound lists share phone rows without product-filter grid positions. */
+@media (max-width:767px) {
+  :root body .wms-content .list-search-filters.select-first-filters:is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-areas:"dates dates" "period period" "status warehouse" "search search" "actions actions";
+    gap:12px 8px; align-items:end;
+  }
+  :root body .wms-content .list-search-filters.select-first-filters:is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) .report-period-range { grid-area:dates; width:100%; min-width:0; max-width:100%; }
+  :root body .wms-content :is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) .report-period-tabs { grid-area:period; width:fit-content; max-width:100%; margin:0; }
+  :root body .wms-content .list-search-filters.select-first-filters:is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) > label:has(> select) { grid-area:status; width:100%; min-width:0; }
+  :root body .wms-content .list-search-filters.select-first-filters:is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) > .searchable-choice { grid-area:warehouse; width:100%; min-width:0; }
+  :root body .wms-content .list-search-filters.select-first-filters:is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) > label:has(> input) { grid-area:search; width:100%; min-width:0; max-width:100%; }
+  :root body .wms-content .list-search-filters.select-first-filters:is(.receipt-list-filters,.shipment-list-filters,.stocktake-search-filters) > .list-search-actions { grid-area:actions; }
+}
+@media (max-width:600px) {
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table) > tbody > tr > td:is([data-label="입고번호"],[data-label="출고번호"]) {
+    grid-column:1/-1; grid-row:1; padding-right:100px;
+    font-size:17px; font-weight:600; line-height:1.4; color:var(--ui-ink); overflow-wrap:anywhere;
+  }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table) > tbody > tr > td[data-label="상태"] {
+    grid-column:2; grid-row:1; justify-self:end; align-self:start; width:auto;
+  }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table) td:is([data-label="입고번호"],[data-label="출고번호"],[data-label="상태"])::before { display:none; }
+}
+
+@media (max-width:600px) {
+  :root body .wms-content :is(.products-card > .table-scroll > .mobile-record-table,.mobile-management-table) > tbody > tr > td:is([data-label="관리"],[data-label="상세 보기"],[data-label="상세보기"]) {
+    grid-column:1/-1; display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap;
+    gap:8px; width:100%; text-align:right;
+  }
+  :root body .wms-content :is(.products-card > .table-scroll > .mobile-record-table,.mobile-management-table) > tbody > tr > td:is([data-label="관리"],[data-label="상세 보기"],[data-label="상세보기"])::before { display:none; }
+}
+
+/* Inventory list identity headings on phones; detail tables remain unchanged. */
+@media (max-width:600px) {
+  :root body .wms-content .products-card > .table-scroll > .inventory-table > tbody > tr > td[data-label="상품명"],
+  :root body .wms-content .inventory-history-list-table > tbody > tr > td[data-label="처리번호 / 일시"] {
+    grid-column:1/-1; grid-row:1; font-size:17px; font-weight:600; line-height:1.4;
+    color:var(--ui-ink); overflow-wrap:anywhere;
+  }
+  :root body .wms-content .products-card > .table-scroll > .inventory-table > tbody > tr > td[data-label="상품명"]::before,
+  :root body .wms-content .inventory-history-list-table td:is([data-label="처리번호 / 일시"],[data-label="구분"])::before { display:none; }
+  :root body .wms-content .inventory-history-list-table > tbody > tr > td[data-label="처리번호 / 일시"] { padding-right:100px; }
+  :root body .wms-content .inventory-history-list-table > tbody > tr > td[data-label="구분"] {
+    grid-column:2; grid-row:1; justify-self:end; align-self:start; width:auto;
+  }
+  :root body .wms-content :is(.inventory-table,.inventory-history-list-table) > tbody > tr > td > small {
+    font-size:12px; font-weight:400; line-height:1.4;
+  }
+}
+
+@media (max-width:600px) {
+  :root body .wms-content .stocktake-list-card .stocktake-list > tbody > tr > td[data-label="실사번호"] {
+    grid-column:1/-1; grid-row:1; padding-right:90px;
+  }
+  :root body .wms-content .stocktake-list-card .stocktake-number-cell { width:100%; min-width:0; }
+  :root body .wms-content .stocktake-list-card .stocktake-number-cell > strong {
+    font-size:17px; font-weight:600; line-height:1.4; color:var(--ui-ink); white-space:normal; overflow-wrap:anywhere;
+  }
+  :root body .wms-content .stocktake-list-card .stocktake-list > tbody > tr > td[data-label="진행 상태"] {
+    grid-column:2; grid-row:1; justify-self:end; align-self:start; width:auto;
+  }
+  :root body .wms-content .stocktake-list-card .stocktake-list td:is([data-label="실사번호"],[data-label="진행 상태"])::before { display:none; }
+}
+
+.user-card-mobile-badges,.user-card-mobile-meta { display:none; }
+@media(max-width:600px) {
+  :root body .wms-content .organization-user-table > tbody > tr > td[data-label="이름"] { grid-column:1/-1; grid-row:1; }
+  :root body .wms-content .organization-user-table td[data-label="이름"]::before { display:none; }
+  :root body .wms-content .organization-user-table > tbody > tr > td:is([data-label="계정 유형 / 소속 업체"],[data-label="계정 활성화"]) { display:none; }
+  .organization-user-table .user-card-heading { display:flex; align-items:flex-start; gap:8px; justify-content:space-between; }
+  .organization-user-table .user-card-name { flex:1; min-width:0; font-size:17px; font-weight:600; line-height:1.4; color:var(--ui-ink); overflow-wrap:anywhere; }
+  .organization-user-table .user-card-mobile-badges { display:flex; flex:none; align-items:center; justify-content:flex-end; gap:6px; }
+  .organization-user-table .user-card-mobile-badges .badge { display:inline-flex; align-items:center; justify-content:center; margin:0; min-height:24px; padding:3px 8px; font-size:12px; line-height:18px; box-sizing:border-box; }
+  .organization-user-table .user-card-mobile-meta { display:block; }
+  .organization-user-table .user-card-mobile-meta small { margin-top:4px; font-size:12px; font-weight:400; }
+}
+
+/* Item list headings and department hierarchy are phone-only. */
+@media(max-width:600px) {
+  :root body .wms-content :is(.organization-items-list,.permission-grades-list) > tbody > tr > td:is([data-label="이름"],[data-label="권한명"]) {
+    font-size:17px; font-weight:600; line-height:1.4; color:var(--ui-ink); overflow-wrap:anywhere;
+  }
+  :root body .wms-content :is(.organization-items-list,.permission-grades-list) td:is([data-label="이름"],[data-label="권한명"])::before { display:none; }
+  :root body .wms-content .organization-items-list td > .organization-department-name { padding-inline-start:0; }
+  :root body .wms-content .organization-items-list > tbody > tr.mobile-department-child {
+    --mobile-department-indent:min(calc(var(--department-depth,0) * 12px),36px);
+    position:relative; margin-left:var(--mobile-department-indent); width:calc(100% - var(--mobile-department-indent));
+    border-left:2px solid #ccd9e6;
+  }
+  .organization-items-list > tbody > tr.mobile-department-child::before {
+    content:''; position:absolute; top:-13px; left:-12px; width:10px; height:38px;
+    border-left:1px solid #b9c9da; border-bottom:1px solid #b9c9da; border-radius:0 0 0 4px; pointer-events:none;
+  }
+}
+
+/* Phone landscape: opt in only these five workflow lists. Portrait cards,
+   full-height tablets and desktop tables keep their existing rules. */
+@media (min-width:601px) and (max-width:1024px) and (max-height:500px) and (orientation:landscape) {
+  :root body .wms-content .table-scroll:has(> :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table)) { width:100%; min-width:0; max-width:100%; overflow:visible; border:0; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) { display:block; min-width:0; width:100%; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) > thead { display:none; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) > tbody { display:grid; gap:12px; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) > tbody > tr {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px;
+    padding:14px; border:1px solid var(--ui-line); border-radius:12px; background:#fff;
+  }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) > tbody > tr > td {
+    display:block; width:auto; min-width:0; max-width:none; padding:0; border:0; text-align:left; white-space:normal; overflow-wrap:anywhere;
+  }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) td[data-label]::before { content:attr(data-label); display:block; color:#72818d; font-size:12px; font-weight:400; margin-bottom:5px; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) td:is(:first-child,[colspan],.mobile-card-wide) { grid-column:1/-1; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) td:is([data-label="관리"],[data-label="상세 보기"]) {
+    grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px;
+  }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table,.support-table) td:is([data-label="관리"],[data-label="상세 보기"])::before { display:none; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list) td:is([data-label="입고번호"],[data-label="출고번호"],[data-label="실사번호"]),
+  :root body .wms-content .partner-management-table td[data-label="거래처명"] { grid-column:1/-1; grid-row:1; padding-right:110px; font-size:17px; font-weight:600; line-height:1.4; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list) td:is([data-label="상태"],[data-label="진행 상태"]),
+  :root body .wms-content .partner-management-table td.mobile-card-usage { grid-column:2; grid-row:1; justify-self:end; align-self:start; width:auto; }
+  :root body .wms-content :is(.receipt-list-table,.shipment-list-table,.stocktake-list) td:is([data-label="입고번호"],[data-label="출고번호"],[data-label="실사번호"],[data-label="상태"],[data-label="진행 상태"])::before,
+  :root body .wms-content .partner-management-table td:is([data-label="거래처명"],.mobile-card-usage)::before { display:none; }
+  :root body .wms-content .stocktake-list .stocktake-number-cell { width:100%; min-width:0; }
+  :root body .wms-content .stocktake-list .stocktake-number-cell > strong { white-space:normal; overflow-wrap:anywhere; }
+  :root body .wms-content .partner-management-table td:is([data-label="거래처코드"],[data-label="거래처 유형"]) { display:none; }
+  .partner-management-table .partner-card-name { display:block; }
+  .partner-management-table .partner-card-meta { display:block; margin-top:4px; font-size:12px; font-weight:400; color:var(--ui-muted); }
+  .partner-management-table .partner-card-status { display:inline-flex; padding:3px 8px; border-radius:5px; font-size:12px; line-height:1.4; font-weight:500; }
+  .partner-management-table .partner-card-status.is-active { background:#e6f4eb; color:#267345; }
+  .partner-management-table .partner-card-status.is-inactive { background:#fdecec; color:#b43c3c; }
+
+  /* Reuse every existing filter, wrapping by available space rather than
+     reserving portrait-only full-width rows in short viewports. */
+  :root body .wms-content :is(.products-card:has(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table),.support-page) .list-search-filters.select-first-filters { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; width:100%; min-width:0; }
+  :root body .wms-content :is(.products-card:has(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table),.support-page) .list-search-filters > :is(label,.searchable-choice) { flex:1 1 100px; min-width:0; width:auto; max-width:180px; margin:0; }
+  :root body .wms-content :is(.products-card:has(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table),.support-page) .list-search-filters > label:has(> input:not([type=date])) { flex:1 1 180px; max-width:none; order:-2; }
+  :root body .wms-content :is(.products-card:has(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table),.support-page) .list-search-filters > .list-search-actions { flex:0 0 auto; width:auto; margin:0; gap:8px; }
+  :root body .wms-content :is(.products-card:has(.receipt-list-table,.shipment-list-table,.stocktake-list,.partner-management-table),.support-page) .list-search-filters :is(input,select) { width:100%; min-width:0; max-width:100%; }
+  :root body .wms-content :is(.products-card:has(.receipt-list-table,.shipment-list-table,.stocktake-list),.support-page) .list-search-filters .report-period-range { flex:0 1 280px; width:280px; min-width:0; max-width:100%; }
+}

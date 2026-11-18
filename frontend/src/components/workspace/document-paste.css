@@ -1,0 +1,45 @@
+.document-paste { min-width:0; }
+.document-paste-guide,.document-paste-summary { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 12px; }
+.document-paste-guide { margin-bottom:12px; }
+.document-paste-guide p { flex:1 1 220px; min-width:0; margin:0; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.document-paste-guide > button { flex:none; }
+:root .document-paste-dialog .document-paste > label { display:flex; flex-direction:column; width:100%; min-width:0; gap:5px; margin:0; font-weight:600; font-size:13px; }
+:root .document-paste-dialog .document-paste textarea { width:100%; min-width:0; max-width:100%; box-sizing:border-box; height:144px; min-height:96px; max-height:240px; resize:vertical; overflow:auto; font-family:inherit; line-height:1.6; tab-size:4; }
+.document-paste-help { margin:8px 0; }
+.document-paste-help summary { cursor:pointer; }
+.document-paste-help .organization-help { margin:8px 0; }
+.document-paste-summary { justify-content:flex-start; padding:12px 0; font-size:13px; }
+.document-paste-summary button { margin-left:auto; }
+:root .document-paste-dialog .document-paste-preview { min-width:0; max-height:none; overflow-x:auto; }
+.document-paste-table { width:100%; min-width:650px; }
+.document-paste-table td { overflow-wrap:anywhere; max-width:330px; }
+.document-paste-table td:last-child { min-width:190px; }
+.document-paste-table small { display:block; color:#657b85; margin:4px 0; }
+.document-paste-table td:nth-child(3) button { display:block; margin-top:8px; }
+.document-paste-table tr[data-state=error] { background:#fff7f6; }
+.document-paste-error { color:#aa3935; }
+.document-paste-success { color:#176b56; }
+.document-paste-candidates { min-width:0; padding:12px; background:#f3f8f7; border:1px solid #d3e4e1; border-radius:8px; margin:16px 0; overflow-wrap:anywhere; }
+.document-paste-candidates h3 { margin:0; font-size:15px; }
+.document-paste-candidates > button { display:block; text-align:left; white-space:normal; margin:8px 0; width:100%; height:auto; overflow-wrap:anywhere; }
+.receipt-section-buttons { display:flex; gap:10px; flex-wrap:wrap; }
+@media(max-width:600px), (max-width:1024px) and (max-height:500px) and (orientation:landscape) {
+ dialog.organization-dialog.document-paste-dialog { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
+ .document-paste-dialog > .organization-dialog-heading { padding:12px 12px 6px; }
+ .document-paste-dialog > .dialog-body { padding:8px 12px 12px; }
+ .document-paste-dialog > .dialog-actions { padding:8px max(12px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
+ .document-paste-guide { align-items:start; gap:8px; }
+ .document-paste-guide p { flex-basis:170px; font-size:12px; }
+ :root .document-paste-dialog .document-paste textarea { height:112px; max-height:160px; }
+ :root .document-paste-dialog .document-paste-preview { border:0; overflow:visible; }
+ :root .document-paste-dialog .document-paste-table { display:block; min-width:0; width:100%; }
+ .document-paste-table thead { display:none; }
+ .document-paste-table tbody { display:grid; gap:10px; }
+ .document-paste-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding:12px; border:1px solid var(--ui-line); border-radius:12px; background:#fff; }
+ :root .document-paste-dialog .document-paste-table tbody td { display:block; min-width:0; max-width:none; width:auto; padding:0; border:0; white-space:normal; }
+ .document-paste-table td:nth-child(2),.document-paste-table td:nth-child(3),.document-paste-table td:last-child { grid-column:1/-1; }
+ .document-paste-table td:first-child { grid-column:1; grid-row:1; }
+ .document-paste-table td:nth-child(4) { grid-column:2; grid-row:1; }
+ .document-paste-table td::before { content:attr(data-label); display:block; font-size:12px; color:#657b85; margin-bottom:4px; }
+ .document-paste-table tr[data-state=error] { border-color:#dca49f; }
+}

@@ -22,6 +22,9 @@ namespace IebleWms.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("InternalBarcodeNumbers")
+                .HasMax(99999999999999999L);
+
             modelBuilder.Entity("IebleWms.Api.Models.AdministratorBootstrap", b =>
                 {
                     b.Property<int>("Id")
@@ -193,24 +196,78 @@ namespace IebleWms.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Answer")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<DateTimeOffset?>("AnsweredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AnsweredById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssignedToId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("RequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid>("RequestId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AnsweredById");
+
+                    b.HasIndex("AssignedToId");
+
+                    b.HasIndex("TenantId", "CreatedAt");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique()
+                        .HasFilter("\"Number\" <> ''");
 
                     b.HasIndex("TenantId", "UserId", "RequestId")
                         .IsUnique();
@@ -218,6 +275,8 @@ namespace IebleWms.Api.Data.Migrations
                     b.ToTable("BillingFeedbacks", null, t =>
                         {
                             t.HasCheckConstraint("CK_BillingFeedback_Message", "length(trim(\"Message\")) > 0");
+
+                            t.HasCheckConstraint("CK_Support_Status", "\"Status\" IN ('Received','InProgress','Answered','Closed')");
                         });
                 });
 
@@ -289,6 +348,85 @@ namespace IebleWms.Api.Data.Migrations
                     b.ToTable("BillingReminderDismissals");
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.BusinessCodeCounter", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Prefix")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<long>("LastValue")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("TenantId", "Prefix");
+
+                    b.ToTable("BusinessCodeCounters");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.CollaboratorPermissionChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CollaboratorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("TenantId", "CollaboratorId", "Id");
+
+                    b.ToTable("CollaboratorPermissionChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.CompanyLogo", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("CompanyLogos");
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.Department", b =>
                 {
                     b.Property<Guid>("TenantId")
@@ -346,6 +484,643 @@ namespace IebleWms.Api.Data.Migrations
                             t.HasCheckConstraint("CK_Department_Order", "\"SortOrder\" >= 0");
 
                             t.HasCheckConstraint("CK_Department_Parent", "\"ParentId\" IS NULL OR \"ParentId\" <> \"Id\"");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.DevelopmentAccessChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Operator")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Id");
+
+                    b.ToTable("DevelopmentAccessChanges", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DevelopmentAccessChanges_Action", "\"Action\" IN ('Granted','Revoked')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.DevelopmentAccessGrant", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("GrantedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GrantedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("DevelopmentAccessGrants", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DevelopmentAccessGrants_Period", "\"EndsAt\" > \"StartsAt\"");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ExternalAccountLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CollaboratorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("OwnerApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OwnerSecurityStamp")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "CollaboratorId");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN ('PendingOwner','OwnerApproved')");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("ExternalAccountLinks", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExternalAccountLink_Status", "\"Status\" IN ('PendingOwner','OwnerApproved','Approved','Rejected','Cancelled','Expired')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ExternalCollaborator", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BusinessRegistrationNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("PartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PermissionsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("{}");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "Name");
+
+                    b.HasIndex("TenantId", "PartnerId")
+                        .IsUnique()
+                        .HasFilter("\"PartnerId\" IS NOT NULL");
+
+                    b.ToTable("ExternalCollaborators", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Collaborator_Name", "length(trim(\"Name\")) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InboundReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConfirmedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContactName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ContactUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("ExpectedDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("InspectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InspectedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("PartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PartnerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WarehouseName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmedByUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("InspectedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "ContactUserId");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "PartnerId");
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId");
+
+                    b.HasIndex("TenantId", "ExpectedDate", "Status");
+
+                    b.ToTable("InboundReceipts", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Receipt_Status", "\"Status\" IN ('Planned','Inspecting','Confirmed','Cancelled')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InboundReceiptLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BarcodeSnapshotJson")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("ExpectedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("ExpiryManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("InspectedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<bool>("LotManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PlacementsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PlannedRackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PlannedRackWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProductCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("SerialManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SerialsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TrackingJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProductId");
+
+                    b.HasIndex("TenantId", "ReceiptId");
+
+                    b.HasIndex("TenantId", "PlannedRackWarehouseId", "PlannedRackId");
+
+                    b.ToTable("InboundReceiptLines", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ReceiptLine_Quantity", "\"ExpectedQuantity\" > 0 AND (\"InspectedQuantity\" IS NULL OR \"InspectedQuantity\" >= 0)");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InventoryChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "OperationId")
+                        .IsUnique();
+
+                    b.ToTable("InventoryChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InventoryOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("AfterDestination")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("AfterSource")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("BeforeDestination")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("BeforeSource")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ContactUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DestinationLabel")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<Guid?>("DestinationLocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DestinationStockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DestinationWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProductCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SourceLabel")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<Guid?>("SourceLocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceStockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "ContactUserId");
+
+                    b.HasIndex("TenantId", "DestinationStockId");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "SourceStockId");
+
+                    b.HasIndex("TenantId", "DestinationWarehouseId", "DestinationLocationId");
+
+                    b.HasIndex("TenantId", "ProductId", "Type");
+
+                    b.HasIndex("TenantId", "SourceWarehouseId", "SourceLocationId");
+
+                    b.ToTable("InventoryOperations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_InventoryOperation_Quantity", "\"Quantity\" > 0 AND \"BeforeSource\" >= 0 AND \"AfterSource\" >= 0 AND \"BeforeDestination\" >= 0 AND \"AfterDestination\" >= 0");
+
+                            t.HasCheckConstraint("CK_InventoryOperation_Type", "\"Type\" IN ('Move','Increase','Decrease')");
                         });
                 });
 
@@ -450,6 +1225,1642 @@ namespace IebleWms.Api.Data.Migrations
                     b.ToTable("OrganizationChanges");
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.OutboundShipment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConfirmedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContactName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ContactUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("ExpectedDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("InspectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InspectedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("PartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PartnerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("PickedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PickedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("RequestDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WarehouseName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmedByUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("InspectedByUserId");
+
+                    b.HasIndex("PickedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "ContactUserId");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "PartnerId");
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId");
+
+                    b.HasIndex("TenantId", "ExpectedDate", "Status");
+
+                    b.ToTable("OutboundShipments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Shipment_Status", "\"Status\" IN ('Requested','Picking','Picked','Inspected','Confirmed','Cancelled')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.OutboundShipmentLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BarcodeSnapshotJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("ExpiryManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LotManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("PlannedRackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PlannedRackWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProductCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("RequestedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<bool>("SerialManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SerialsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ShipmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProductId");
+
+                    b.HasIndex("TenantId", "ShipmentId");
+
+                    b.HasIndex("TenantId", "PlannedRackWarehouseId", "PlannedRackId");
+
+                    b.ToTable("OutboundShipmentLines", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ShipmentLine_Quantity", "\"RequestedQuantity\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.Partner", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("AddressDetail")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("BusinessRegistrationNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreationHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("CreationRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NormalizedBusinessNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("NormalizedCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("PaymentTerms")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RegistrationCountry")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("RepresentativeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "CreationRequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "NormalizedCode")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "IsActive", "Type");
+
+                    b.HasIndex("TenantId", "RegistrationCountry", "NormalizedBusinessNumber");
+
+                    b.ToTable("Partners", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Partners_BusinessNumber", "\"NormalizedBusinessNumber\" IS NULL OR \"RegistrationCountry\" <> 'KR' OR (length(\"NormalizedBusinessNumber\") = 10 AND replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"NormalizedBusinessNumber\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', '') = '')");
+
+                            t.HasCheckConstraint("CK_Partners_Code", "length(trim(\"Code\")) > 0 AND length(trim(\"NormalizedCode\")) > 0");
+
+                            t.HasCheckConstraint("CK_Partners_Country", "\"RegistrationCountry\" IN ('KR','OTHER')");
+
+                            t.HasCheckConstraint("CK_Partners_Name", "length(trim(\"Name\")) > 0");
+
+                            t.HasCheckConstraint("CK_Partners_Type", "\"Type\" IN ('SUPPLIER','CUSTOMER','BOTH')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.PartnerChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("TenantId", "TargetId", "Id");
+
+                    b.ToTable("PartnerChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.PermissionGrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SystemRole")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "SystemRole")
+                        .IsUnique();
+
+                    b.ToTable("PermissionGrades", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PermissionGrade_SystemRole", "\"SystemRole\" IS NULL OR \"SystemRole\" IN ('Administrator','Employee')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("BarcodeIsGenerated")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BarcodeType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<decimal?>("BoxDepthCm")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<decimal?>("BoxHeightCm")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<decimal?>("BoxWeightGrams")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<decimal?>("BoxWidthCm")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<decimal?>("CostPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreationHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("CreationRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal?>("DepthCm")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<bool>("ExpiryManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasImage")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("HeightCm")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<int?>("InnerPackQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LotManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ModelNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NormalizedCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Origin")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("OuterPackQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OuterPackUnit")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasDefaultValue("INNER");
+
+                    b.Property<int?>("PalletPackQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ProductTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("RetailPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("SafetyStock")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<bool>("SerialManaged")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("TrackingLockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("WeightGrams")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<decimal?>("WidthCm")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Barcode")
+                        .IsUnique()
+                        .HasFilter("\"BarcodeIsGenerated\" = TRUE");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "Barcode")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "CategoryId");
+
+                    b.HasIndex("TenantId", "CreationRequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "NormalizedCode")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "ProductTypeId");
+
+                    b.HasIndex("TenantId", "IsActive", "Code");
+
+                    b.ToTable("Products", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Products_Barcode", "(\"Barcode\" IS NULL OR length(\"Barcode\") BETWEEN 1 AND 64) AND \"BarcodeType\" IN ('Internal','External') AND (NOT \"BarcodeIsGenerated\" OR (\"Barcode\" IS NOT NULL AND \"BarcodeType\" = 'Internal'))");
+
+                            t.HasCheckConstraint("CK_Products_Code", "length(trim(\"Code\")) > 0 AND length(trim(\"NormalizedCode\")) > 0");
+
+                            t.HasCheckConstraint("CK_Products_Name", "length(trim(\"Name\")) > 0");
+
+                            t.HasCheckConstraint("CK_Products_SafetyStock", "\"SafetyStock\" IS NULL OR \"SafetyStock\" BETWEEN 0 AND 999999999.999");
+
+                            t.HasCheckConstraint("CK_Products_Unit", "\"Unit\" IN ('EA','PCS','SET','PAIR','DOZEN','BOX','PACK','CTN','PALLET','ROLL','BAG','BUNDLE','mg','g','kg','ton','oz','lb','ml','L','m³','mm','cm','m','㎡')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "ParentId");
+
+                    b.ToTable("ProductCategories", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ProductCategories_Name", "length(trim(\"Name\")) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("TenantId", "TargetId", "Id");
+
+                    b.ToTable("ProductChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProductId", "IsPrimary")
+                        .IsUnique()
+                        .HasFilter("\"IsPrimary\" = TRUE");
+
+                    b.HasIndex("TenantId", "ProductId", "Position");
+
+                    b.ToTable("ProductImages");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("ProductTypes");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ReceiptChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("PreviousQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ScanRequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ScanRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "ScanRequestId")
+                        .IsUnique()
+                        .HasFilter("\"ScanRequestId\" IS NOT NULL");
+
+                    b.HasIndex("TenantId", "ReceiptId", "Id");
+
+                    b.ToTable("ReceiptChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ShipmentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("InspectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InspectedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("InspectedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid>("LineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LocationCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("PickedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PickedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PickedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("RackCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("SourceLocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceRackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("StockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InspectedByUserId");
+
+                    b.HasIndex("PickedByUserId");
+
+                    b.HasIndex("TenantId", "StockId");
+
+                    b.HasIndex("TenantId", "LineId", "StockId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "SourceWarehouseId", "SourceLocationId");
+
+                    b.HasIndex("TenantId", "SourceWarehouseId", "SourceRackId");
+
+                    b.ToTable("ShipmentAllocations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Allocation_Quantity", "\"Quantity\" > 0 AND \"PickedQuantity\" >= 0 AND \"PickedQuantity\" <= \"Quantity\" AND \"InspectedQuantity\" >= 0 AND \"InspectedQuantity\" <= \"PickedQuantity\"");
+
+                            t.HasCheckConstraint("CK_Allocation_State", "\"State\" IN ('Active','Released','Consumed')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ShipmentChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("AllocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("PreviousQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("ScanRequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ScanRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ShipmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "ScanRequestId")
+                        .IsUnique()
+                        .HasFilter("\"ScanRequestId\" IS NOT NULL");
+
+                    b.HasIndex("TenantId", "ShipmentId", "Id");
+
+                    b.ToTable("ShipmentChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StockBalance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid?>("ReceiptLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ReservedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SourceKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "ReceiptLineId");
+
+                    b.HasIndex("TenantId", "SourceKey")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "ProductId", "SerialNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId", "LocationId");
+
+                    b.HasIndex("TenantId", "WarehouseId", "ProductId");
+
+                    b.ToTable("StockBalances", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Stock_Quantity", "\"Quantity\" >= 0 AND \"ReservedQuantity\" >= 0 AND \"ReservedQuantity\" <= \"Quantity\"");
+
+                            t.HasCheckConstraint("CK_Stock_SerialQuantity", "\"SerialNumber\" IS NULL OR (CAST(\"Quantity\" AS NUMERIC) IN (0,1) AND CAST(\"ReservedQuantity\" AS NUMERIC) IN (0,1))");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StockMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid?>("ReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ShipmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StocktakeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "OperationId");
+
+                    b.HasIndex("TenantId", "ReceiptId");
+
+                    b.HasIndex("TenantId", "ShipmentId");
+
+                    b.HasIndex("TenantId", "StocktakeId");
+
+                    b.HasIndex("TenantId", "StockId", "ReceiptId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "StockId", "ShipmentId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "StockId", "StocktakeId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "StockId", "OperationId", "Type")
+                        .IsUnique();
+
+                    b.ToTable("StockMovements", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StockMovement_Source", "(\"StocktakeId\" IS NULL AND ((\"OperationId\" IS NULL AND ((\"Type\" = 'ReceiptConfirmed' AND \"ReceiptId\" IS NOT NULL AND \"ShipmentId\" IS NULL AND \"Quantity\" > 0) OR (\"Type\" = 'ShipmentConfirmed' AND \"ShipmentId\" IS NOT NULL AND \"ReceiptId\" IS NULL AND \"Quantity\" < 0))) OR (\"OperationId\" IS NOT NULL AND \"ReceiptId\" IS NULL AND \"ShipmentId\" IS NULL AND ((\"Type\" IN ('MoveIn','AdjustmentIncrease') AND \"Quantity\" > 0) OR (\"Type\" IN ('MoveOut','AdjustmentDecrease') AND \"Quantity\" < 0))))) OR (\"StocktakeId\" IS NOT NULL AND \"OperationId\" IS NULL AND \"ReceiptId\" IS NULL AND \"ShipmentId\" IS NULL AND ((\"Type\" = 'StocktakeIncrease' AND \"Quantity\" > 0) OR (\"Type\" = 'StocktakeDecrease' AND \"Quantity\" < 0)))");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.Stocktake", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("BasisAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("BasisDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConfirmedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContactName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ContactUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ScopeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ScopeLabel")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("SnapshotAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WarehouseName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmedBy");
+
+                    b.HasIndex("TenantId", "ContactUserId");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId");
+
+                    b.HasIndex("TenantId", "BasisDate", "Status");
+
+                    b.ToTable("Stocktakes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Stocktake_Scope", "(\"Scope\" IN ('Warehouse','Selected') AND \"ScopeId\" IS NULL) OR (\"Scope\" IN ('Zone','Rack','Location') AND \"ScopeId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Stocktake_Status", "\"Status\" IN ('Prepared','Counting','Counted','Reviewing','Confirmed','Cancelled')");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StocktakeChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StocktakeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "StocktakeId", "Id");
+
+                    b.HasIndex("TenantId", "StocktakeId", "TargetId");
+
+                    b.ToTable("StocktakeChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StocktakeTarget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("BaselineAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("BaselineQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("BaselineReserved")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid>("BaselineVersion")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CountedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CountedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("CountedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<bool>("Excluded")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsUnregistered")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LocationCode")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ObservedSerial")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("OriginalQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("OriginalReserved")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<DateTimeOffset>("OriginalSnapshotAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProductCode")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RackCode")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("StockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StocktakeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountedBy");
+
+                    b.HasIndex("TenantId", "ProductId");
+
+                    b.HasIndex("TenantId", "StockId");
+
+                    b.HasIndex("TenantId", "StocktakeId", "StockId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId", "LocationId");
+
+                    b.ToTable("StocktakeTargets", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StocktakeTarget_Quantity", "\"OriginalQuantity\" >= 0 AND \"BaselineQuantity\" >= 0 AND (\"CountedQuantity\" IS NULL OR \"CountedQuantity\" >= 0)");
+                        });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StorageBarcode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BarcodeType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsGenerated")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PackageCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasDefaultValue("EA");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Value")
+                        .IsUnique()
+                        .HasFilter("\"IsGenerated\" = TRUE");
+
+                    b.HasIndex("TenantId", "ProductId");
+
+                    b.HasIndex("TenantId", "Value")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "ProductId", "IsPrimary")
+                        .IsUnique()
+                        .HasFilter("\"ProductId\" IS NOT NULL AND \"IsPrimary\" = TRUE");
+
+                    b.HasIndex("TenantId", "WarehouseId", "LocationId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId", "RackId")
+                        .IsUnique();
+
+                    b.ToTable("StorageBarcodes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StorageBarcodes_Length", "length(\"Value\") BETWEEN 1 AND 64");
+
+                            t.HasCheckConstraint("CK_StorageBarcodes_Owner", "(\"ProductId\" IS NOT NULL AND \"WarehouseId\" IS NULL AND \"RackId\" IS NULL AND \"LocationId\" IS NULL) OR (\"ProductId\" IS NULL AND \"WarehouseId\" IS NOT NULL AND ((\"RackId\" IS NOT NULL AND \"LocationId\" IS NULL) OR (\"RackId\" IS NULL AND \"LocationId\" IS NOT NULL)))");
+                        });
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.StorageLocation", b =>
                 {
                     b.Property<Guid>("TenantId")
@@ -474,6 +2885,9 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.Property<Guid?>("CreatedByUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -524,6 +2938,76 @@ namespace IebleWms.Api.Data.Migrations
 
                             t.HasCheckConstraint("CK_StorageLocations_Name", "length(trim(\"Name\")) > 0");
                         });
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.SupportAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid>("FeedbackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "FeedbackId");
+
+                    b.ToTable("SupportAttachments");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.SupportChange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FeedbackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("TenantId", "FeedbackId", "Id");
+
+                    b.ToTable("SupportChanges");
                 });
 
             modelBuilder.Entity("IebleWms.Api.Models.Tenant", b =>
@@ -587,6 +3071,9 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LogoVersion")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -662,11 +3149,41 @@ namespace IebleWms.Api.Data.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccountType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Internal");
+
                     b.Property<DateTimeOffset?>("BillingEndsAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("BillingStartsAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BusinessRegistrationNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("CollaboratorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CompanyPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -684,11 +3201,23 @@ namespace IebleWms.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("ExternalPermissionsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("{}");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid?>("PartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PermissionGradeId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("PositionId")
                         .HasColumnType("uuid");
@@ -703,6 +3232,9 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.Property<Guid?>("UpdatedByUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("UseIndividualPermissions")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("Version")
                         .IsConcurrencyToken()
@@ -724,16 +3256,32 @@ namespace IebleWms.Api.Data.Migrations
                         .HasDatabaseName("IX_TenantMemberships_DefaultUser")
                         .HasFilter("\"IsDefault\" = TRUE");
 
+                    b.HasIndex("TenantId", "CollaboratorId");
+
                     b.HasIndex("TenantId", "DepartmentId");
+
+                    b.HasIndex("TenantId", "PartnerId");
+
+                    b.HasIndex("TenantId", "PermissionGradeId");
 
                     b.HasIndex("TenantId", "PositionId");
 
                     b.HasIndex("UserId", "IsActive");
 
+                    b.HasIndex("TenantId", "AccountType", "IsActive");
+
                     b.HasIndex("TenantId", "Role", "IsActive");
 
                     b.ToTable("TenantMemberships", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Memberships_AccountType", "\"AccountType\" IN ('Internal','External')");
+
+                            t.HasCheckConstraint("CK_Memberships_Collaborator", "(\"AccountType\" = 'External' AND \"CollaboratorId\" IS NOT NULL) OR (\"AccountType\" = 'Internal' AND \"CollaboratorId\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Memberships_External", "\"AccountType\" <> 'External' OR (\"Role\" = 'Employee' AND \"DepartmentId\" IS NULL AND \"PositionId\" IS NULL AND \"CompanyName\" IS NOT NULL AND length(trim(\"CompanyName\")) > 0)");
+
+                            t.HasCheckConstraint("CK_Memberships_PermissionGrade", "\"PermissionGradeId\" IS NULL OR (\"AccountType\" = 'Internal' AND \"Role\" = 'Employee')");
+
                             t.HasCheckConstraint("CK_Memberships_Role", "\"Role\" IN ('Employee', 'Administrator', 'Master')");
                         });
                 });
@@ -870,6 +3418,9 @@ namespace IebleWms.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid?>("ContactUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -925,6 +3476,8 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.HasIndex("TenantId", "Code")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "ContactUserId");
 
                     b.HasIndex("TenantId", "CreationRequestId")
                         .IsUnique();
@@ -1135,6 +3688,9 @@ namespace IebleWms.Api.Data.Migrations
                     b.Property<Guid?>("CreationRequestId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1216,6 +3772,71 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasIndex("TenantId", "WarehouseId");
 
                     b.ToTable("WarehouseSaveReceipts");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.WarehouseTemplate", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("DocumentJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("RackCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TenantId", "Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "IsActive", "UpdatedAt");
+
+                    b.ToTable("WarehouseTemplates");
                 });
 
             modelBuilder.Entity("IebleWms.Api.Models.WarehouseZone", b =>
@@ -1389,6 +4010,16 @@ namespace IebleWms.Api.Data.Migrations
 
             modelBuilder.Entity("IebleWms.Api.Models.BillingFeedback", b =>
                 {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AnsweredById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AssignedToId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("IebleWms.Api.Models.TenantMembership", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "UserId")
@@ -1414,6 +4045,40 @@ namespace IebleWms.Api.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.BusinessCodeCounter", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.CollaboratorPermissionChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ExternalCollaborator", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "CollaboratorId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.CompanyLogo", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithOne()
+                        .HasForeignKey("IebleWms.Api.Models.CompanyLogo", "TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.Department", b =>
                 {
                     b.HasOne("IebleWms.Api.Models.Tenant", null)
@@ -1425,6 +4090,216 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasOne("IebleWms.Api.Models.Department", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.DevelopmentAccessChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.DevelopmentAccessGrant", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ExternalAccountLink", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ExternalCollaborator", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "CollaboratorId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ExternalCollaborator", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Partner", "Partner")
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PartnerId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Partner");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InboundReceipt", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ConfirmedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("InspectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.TenantMembership", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ContactUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Partner", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PartnerId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InboundReceiptLine", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.InboundReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ReceiptId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.WarehouseRack", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PlannedRackWarehouseId", "PlannedRackId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InventoryChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.InventoryOperation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "OperationId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.InventoryOperation", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.TenantMembership", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ContactUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.StockBalance", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "DestinationStockId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StockBalance", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SourceStockId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "DestinationWarehouseId", "DestinationLocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SourceWarehouseId", "SourceLocationId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
@@ -1453,6 +4328,463 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasOne("IebleWms.Api.Models.Tenant", null)
                         .WithMany()
                         .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.OutboundShipment", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ConfirmedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("InspectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("PickedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.TenantMembership", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ContactUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Partner", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PartnerId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.OutboundShipmentLine", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.OutboundShipment", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ShipmentId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.WarehouseRack", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PlannedRackWarehouseId", "PlannedRackId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.Partner", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.PartnerChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Partner", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "TargetId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.PermissionGrade", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.Product", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ProductCategory", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "CategoryId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ProductType", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductTypeId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductCategory", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ProductCategory", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ParentId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductImage", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ProductType", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ReceiptChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.InboundReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ReceiptId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ShipmentAllocation", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("InspectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("PickedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.OutboundShipmentLine", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "LineId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StockBalance", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StockId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SourceWarehouseId", "SourceLocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.WarehouseRack", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SourceWarehouseId", "SourceRackId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ShipmentChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.OutboundShipment", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ShipmentId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StockBalance", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.InboundReceiptLine", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ReceiptLineId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId", "LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StockMovement", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.InventoryOperation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "OperationId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.InboundReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ReceiptId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.OutboundShipment", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ShipmentId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.StockBalance", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StockId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Stocktake", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StocktakeId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.Stocktake", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ConfirmedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.TenantMembership", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ContactUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StocktakeChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.Stocktake", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StocktakeId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StocktakeTarget", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StocktakeId", "TargetId")
+                        .HasPrincipalKey("TenantId", "StocktakeId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StocktakeTarget", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CountedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StockBalance", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StockId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Stocktake", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "StocktakeId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "WarehouseId", "LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.StorageBarcode", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.Product", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProductId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.StorageLocation", null)
+                        .WithOne("BarcodeRegistration")
+                        .HasForeignKey("IebleWms.Api.Models.StorageBarcode", "TenantId", "WarehouseId", "LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.WarehouseRack", null)
+                        .WithOne("BarcodeRegistration")
+                        .HasForeignKey("IebleWms.Api.Models.StorageBarcode", "TenantId", "WarehouseId", "RackId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
@@ -1489,6 +4821,32 @@ namespace IebleWms.Api.Data.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId", "WarehouseId", "ZoneId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.SupportAttachment", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.BillingFeedback", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "FeedbackId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.SupportChange", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.BillingFeedback", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "FeedbackId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("IebleWms.Api.Models.Tenant", b =>
@@ -1528,15 +4886,35 @@ namespace IebleWms.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("IebleWms.Api.Models.ExternalCollaborator", "Collaborator")
+                        .WithMany()
+                        .HasForeignKey("TenantId", "CollaboratorId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("IebleWms.Api.Models.Department", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Partner", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PartnerId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.PermissionGrade", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PermissionGradeId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("IebleWms.Api.Models.JobPosition", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "PositionId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Collaborator");
 
                     b.Navigation("Tenant");
 
@@ -1608,6 +4986,11 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.TenantMembership", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ContactUserId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
@@ -1714,6 +5097,25 @@ namespace IebleWms.Api.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.WarehouseTemplate", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.WarehouseZone", b =>
                 {
                     b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
@@ -1771,9 +5173,19 @@ namespace IebleWms.Api.Data.Migrations
                     b.Navigation("Memberships");
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.StorageLocation", b =>
+                {
+                    b.Navigation("BarcodeRegistration");
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.Tenant", b =>
                 {
                     b.Navigation("Memberships");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.WarehouseRack", b =>
+                {
+                    b.Navigation("BarcodeRegistration");
                 });
 #pragma warning restore 612, 618
         }

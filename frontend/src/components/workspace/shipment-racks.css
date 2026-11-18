@@ -1,0 +1,8 @@
+.shipment-rack-sort { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin:8px 0; }
+.shipment-rack-sort label { width:180px; max-width:100%; }
+.shipment-rack-sort p { flex:1 1 240px; margin:0; color:#52657a; font-size:12px; line-height:1.5; }
+.document-line-table .shipment-rack-choice { min-width:190px; max-width:280px; }
+.document-line-table .shipment-rack-choice .searchable-choice-trigger { height:36px; min-height:36px; align-items:center; }
+.document-line-table .shipment-rack-choice .searchable-choice-trigger strong { white-space:normal; overflow-wrap:anywhere; }
+.document-line-table .shipment-rack-stock { min-width:165px; font-variant-numeric:tabular-nums; }
+.shipment-rack-warning { display:block; margin-top:4px; color:#946100; font-size:12px; }

@@ -1,0 +1,2 @@
+# PDF fixtures must retain their byte offsets and binary content.
+*.pdf binary

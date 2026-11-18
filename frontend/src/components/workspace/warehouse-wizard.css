@@ -1,0 +1,164 @@
+/* The two-step warehouse workspace owns its layout; shared WMS pages remain unchanged. */
+.wms-content .warehouse-wizard { width:100%; min-width:0; margin:0 0 24px; padding:0; border:0; background:transparent; scroll-margin-top:64px; }
+.warehouse-wizard [hidden] { display:none !important; }
+.warehouse-wizard .wizard-heading { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:10px 0 16px; }
+.wizard-heading-title { min-width:0; }
+.wizard-eyebrow { color:#52796e; letter-spacing:.13em; font-size:10px; font-weight:700; }
+.wizard-heading-title h2 { margin:6px 0 0; font-size:25px; letter-spacing:-.7px; overflow-wrap:anywhere; }
+.wizard-heading-title h2 > span { margin-left:12px; color:#7b8c88; font-size:13px; font-weight:400; letter-spacing:0; }
+.wizard-heading-actions { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:8px; flex-shrink:0; }
+.wizard-heading-actions > button, .wizard-basics-footer button { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+.warehouse-wizard .warehouse-steps { display:flex; flex-direction:row; align-items:center; gap:18px; padding:0 0 14px; margin:0 0 16px; border-bottom:1px solid #d6e2dd; }
+.warehouse-steps > button { display:flex; align-items:center; gap:10px; padding:0; background:none; border:0; text-align:left; color:#85958f; }
+.warehouse-steps > button > span { width:34px; height:34px; border:1px solid #cfdbd6; border-radius:50%; display:grid; place-items:center; font-size:12px; }
+.warehouse-steps button[aria-current=step] { color:#124e42; }
+.warehouse-steps button[aria-current=step] > span { background:#145f50; color:white; border-color:#145f50; }
+.warehouse-steps small { display:block; font-size:9px; letter-spacing:.09em; margin-bottom:3px; color:inherit; }
+.warehouse-steps strong { display:block; font-size:13px; }
+.warehouse-steps > i { width:60px; height:1px; background:#cddad4; }
+.warehouse-steps > p { margin:0 0 0 auto; font-size:11px; color:#71877e; }
+.wizard-basics { min-width:0; }
+.wizard-form-content { padding:0; min-width:0; }
+.wizard-form-title { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+.wizard-form-title p { margin:0; color:#71877e; font-size:12px; }
+.wizard-form-title strong { margin-left:8px; color:#3d5f53; font-weight:500; }
+.wizard-form-title > span { color:#788b84; font-size:11px; }
+.warehouse-wizard .warehouse-basic-fields { padding:0; margin:0; border:0; }
+.warehouse-wizard .warehouse-basic-fields legend.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.warehouse-wizard .warehouse-basic-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 22px; }
+.warehouse-wizard .warehouse-basic-grid label { font-size:12px; gap:7px; margin:0; }
+.warehouse-wizard .warehouse-optional { margin-top:18px; }
+.warehouse-wizard .warehouse-optional[open] > .warehouse-basic-grid { margin:0; }
+.warehouse-wizard .warehouse-basic-grid :is(input,select) { height:42px; background:#fcfdfc; }
+.warehouse-wizard .warehouse-basic-grid textarea { min-height:68px; background:#fcfdfc; }
+.warehouse-wizard .warehouse-basic-grid .organization-checkbox { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; }
+.warehouse-wizard .warehouse-basic-grid input[type=checkbox] { width:16px; height:16px; }
+.wizard-basics-footer { display:flex; justify-content:space-between; align-items:center; gap:16px; border-top:1px solid #e3ebe7; padding-top:20px; margin-top:22px; }
+.wizard-basics-footer p { color:#7b8c86; font-size:11px; margin:0; }
+.wizard-basics-footer .primary { min-height:44px; padding:10px 20px; }
+.warehouse-wizard.is-design .wizard-heading { padding:10px 0; }
+.warehouse-wizard.is-design .wizard-heading-title h2 { font-size:20px; }
+.warehouse-wizard.is-design .warehouse-steps { padding-bottom:12px; margin-bottom:12px; }
+.warehouse-wizard .warehouse-workspace-plan { margin:0; padding:0; border:0; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio { display:grid; grid-template-columns:68px minmax(0,1fr); gap:0; border:1px solid #d3dfda; border-radius:10px; background:#fff; overflow:visible; }
+.studio-tool-rail { background:#f5f8f6; border-right:1px solid #dde6e1; border-radius:10px 0 0 10px; padding:9px 6px; margin:0; display:flex; flex-direction:column; gap:4px; }
+.studio-tool-rail button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-sizing:border-box; height:56px; min-height:56px; flex:0 0 56px; width:100%; padding:7px 3px; border:0; border-radius:7px; background:transparent; color:#4b665c; font-size:10px; }
+.studio-tool-rail button > svg { flex:none; }
+.studio-tool-rail button > span { white-space:nowrap; }
+.studio-tool-rail .studio-tool-label-full { display:none; }
+.studio-tool-rail .studio-tool-label-compact { display:block; }
+.studio-tool-rail button:hover:not(:disabled) { background:#e4eee8; }
+.studio-tool-rail button[aria-pressed=true] { color:#fff; background:#196656; }
+.studio-tool-rail hr { width:26px; margin:4px auto; border:0; border-top:1px solid #d4e0d9; }
+.studio-main { min-width:0; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-command-bar { margin:0; padding:8px 12px; border-bottom:1px solid #e0e8e3; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-context-bar { padding:0 12px; align-items:center; min-height:35px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-context-bar .organization-help { font-size:10px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-workbench { margin:0; gap:0; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-workbench.has-properties { grid-template-columns:minmax(0,1fr) 284px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .warehouse-plan-canvas { border:0; border-radius:0 0 0 10px; height:max(480px,calc(100dvh - 280px)); background:#eaf0ed; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-properties { width:auto; padding:16px; border:0; border-left:1px solid #dce5df; background:#fff; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-properties > h3 { font-size:13px; text-transform:none; border-bottom:1px solid #e2eae5; padding-bottom:12px; margin-bottom:12px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties label { font-size:11px; margin:10px 0; gap:5px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties :is(input,select) { height:36px; font-size:12px; padding:7px 9px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties .organization-checkbox { flex-direction:row; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties input[type=checkbox] { height:16px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties .rack-barcode-input-row { grid-template-columns:minmax(0,1fr) auto; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties .rack-barcode-input-row button { padding:7px 8px; font-size:11px; }
+:is(.warehouse-wizard,.warehouse-studio) .plan-properties .organization-help { font-size:10px; line-height:1.6; }
+.structure-additional summary { cursor:pointer; font-size:11px; color:#688175; padding:10px 0; }
+.warehouse-wizard .workspace-structure-list { margin-top:12px; padding-top:8px; }
+.warehouse-wizard :is(input,select,textarea,summary,button) { scroll-margin-top:90px; }
+.warehouse-wizard :is(button,summary):focus-visible { outline:2px solid #21806b; outline-offset:3px; }
+@media(min-width:1101px) { :is(.warehouse-wizard,.warehouse-studio) .plan-properties { max-height:max(480px,calc(100dvh - 280px)); overflow:auto; overscroll-behavior:contain; } }
+@media(max-width:1100px) {
+ .warehouse-steps > p { display:none; }
+ :is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-workbench.has-properties { grid-template-columns:minmax(0,1fr); }
+ :is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-properties { border-left:0; border-top:1px solid #dce5df; }
+}
+@media(max-width:760px) {
+ .wms-content .warehouse-wizard { scroll-margin-top:60px; }
+ .warehouse-wizard .wizard-heading { flex-wrap:wrap; gap:12px; padding:12px 0; }
+ .wizard-heading-title h2 { font-size:22px; }
+ .wizard-heading-actions { width:100%; justify-content:flex-end; gap:6px; }
+ .warehouse-wizard.is-basics .wizard-heading-actions { width:auto; margin-left:auto; }
+ .wizard-heading-actions button { padding:8px 10px; font-size:12px; }
+ .warehouse-wizard .warehouse-steps { gap:12px; margin-bottom:14px; }
+ .warehouse-steps > i { flex:1; max-width:60px; }
+ .wizard-basics { display:block; }
+ .wizard-form-title { margin-bottom:18px; }
+ .warehouse-wizard .warehouse-basic-grid { grid-template-columns:minmax(0,1fr); }
+ .wizard-basics-footer { flex-direction:column; align-items:stretch; }
+ :is(.warehouse-wizard,.warehouse-studio) .plan-studio { display:flex; flex-direction:column; }
+ .studio-tool-rail { flex-direction:row; flex-wrap:wrap; gap:3px; padding:7px; border-right:0; border-bottom:1px solid #dde6e1; border-radius:10px 10px 0 0; }
+ .studio-tool-rail button { width:calc((100% - 15px)/6); min-width:43px; min-height:48px; font-size:9px; }
+ .studio-tool-rail hr { display:none; }
+ :is(.warehouse-wizard,.warehouse-studio) .plan-studio .warehouse-plan-canvas { height:440px; border-radius:0; }
+ :is(.warehouse-wizard,.warehouse-studio) .plan-studio .plan-context-bar { align-items:flex-start; }
+}
+.wizard-utilities { display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:12px; }
+.wizard-utilities .text-button { padding:6px 0; font-size:12px; color:#647b75; }
+
+:root body .workspace-structure-fields .organization-checkbox { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:6px; width:auto; }
+:root body .workspace-structure-fields .organization-checkbox input { width:16px; height:16px; min-height:0; flex:none; margin:0; }
+
+/* Mobile editing stays in the same page and uses the existing drawing tools. */
+.editor-landscape-hint { display:none; }
+@media (orientation:portrait) {
+  .is-mobile-editor .editor-landscape-hint { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:10px 12px; background:#f0f5fb; border-radius:8px; color:#52647b; font-size:12px; line-height:1.4; }
+}
+.is-mobile-editor .warehouse-plan-canvas { touch-action:none; }
+@media (orientation:landscape) and (max-height:700px) {
+  .warehouse-wizard.is-mobile-editor.is-design .warehouse-steps { display:none; }
+  .warehouse-wizard.is-mobile-editor .plan-studio .warehouse-plan-canvas { height:max(280px,calc(100dvh - 130px)); }
+  .warehouse-wizard.is-mobile-editor .wizard-heading { padding:4px 0 8px; gap:8px; }
+  .warehouse-wizard.is-mobile-editor .wizard-heading-actions { width:auto; margin-left:auto; }
+}
+
+.studio-tool-label-compact { display:none; }
+/* Mobile studio only. Image-import previews and desktop controls retain their layout. */
+:root body .mobile-plan-studio { display:flex; flex-direction:column; }
+.mobile-plan-tools { display:block; position:relative; width:100%; box-sizing:border-box; margin:0; padding:4px 8px; z-index:12; }
+.mobile-plan-primary { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
+:root body .plan-editor-surface.mobile-plan-studio .mobile-plan-primary > button,
+:root body .mobile-plan-extra-grid button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:100%; min-width:0; height:50px; min-height:50px; max-height:50px; max-width:none; flex:initial; padding:3px 1px; border:1px solid #e2e7ed; border-radius:8px; background:#fff; color:var(--color-text,#182c4d); font-size:10px; line-height:1.2; white-space:nowrap; }
+:root body .mobile-plan-primary button[aria-pressed=true],
+:root body .mobile-plan-primary button[aria-expanded=true] { background:var(--color-accent,#ffd449); border-color:var(--color-accent,#ffd449); }
+.mobile-plan-primary svg,.mobile-plan-extra-grid svg { width:18px; height:18px; flex:none; }
+.mobile-plan-extra { position:absolute; top:100%; left:8px; right:8px; z-index:20; padding:10px; max-height:min(360px,calc(100dvh - 100px)); overflow:auto; overscroll-behavior:contain; background:#fff; border:1px solid #d7dee8; border-radius:8px; box-shadow:0 6px 18px #10264d1a; }
+.mobile-plan-extra-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
+.mobile-plan-custom-tool { min-width:0; }
+.mobile-plan-custom-tool .studio-tool-label-full { display:none; }
+.mobile-plan-custom-tool .studio-tool-label-compact { display:block; }
+.mobile-plan-object-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+:root body .mobile-plan-object-actions > button { display:inline-flex; align-items:center; gap:4px; min-height:40px; padding:5px 8px; font-size:11px; }
+.mobile-plan-extra .plan-grid-options { display:flex; gap:16px; margin-top:8px; }
+.mobile-plan-extra details { margin-top:8px; font-size:12px; }
+.mobile-plan-extra summary { cursor:pointer; padding:6px 0; }
+.mobile-plan-extra p { line-height:1.5; margin:6px 0; }
+:root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .plan-command-bar { display:flex; flex-wrap:nowrap; justify-content:space-between; gap:8px; margin:0; padding:4px 12px; border:0; }
+:root body .mobile-plan-studio .plan-command-bar > .plan-tool-group { display:flex; flex-wrap:nowrap; gap:8px; padding:0; margin:0; border:0; }
+:root body .mobile-plan-studio .plan-command-bar button { position:relative; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; min-height:36px; padding:0; flex:0 0 36px; }
+.mobile-plan-studio .plan-command-bar button::after { content:''; position:absolute; inset:-4px; }
+:root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .plan-context-bar { min-height:28px; padding:0 8px; align-items:center; gap:8px; }
+.mobile-plan-studio .plan-catalog { position:relative; }
+.mobile-plan-studio .plan-catalog > summary { padding:5px 0; }
+.mobile-plan-studio .plan-catalog[open] .plan-object-list { position:absolute; top:100%; left:0; z-index:11; width:min(300px,80vw); max-height:220px; overflow:auto; background:#fff; padding:8px; border:1px solid #d7dee8; border-radius:8px; }
+:root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .plan-workbench { grid-template-columns:minmax(0,1fr); }
+:root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .warehouse-plan-canvas { min-height:320px; }
+:root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .plan-properties { position:fixed; z-index:50; left:12px; right:12px; bottom:env(safe-area-inset-bottom,0px); width:auto; max-height:46dvh; overflow:auto; overscroll-behavior:contain; padding:12px; border:1px solid #cdd6e3; border-radius:12px 12px 0 0; box-shadow:0 -5px 20px #10264d1a; }
+:root body .mobile-plan-properties-close { position:sticky; top:0; float:right; z-index:2; display:grid; place-items:center; width:36px; height:36px; min-height:36px; padding:0; background:#fff; }
+.mobile-plan-properties-close::after { content:''; position:absolute; inset:-4px; }
+@media(max-width:1024px) {
+  :root body .warehouse-wizard.is-design .wizard-heading { padding:4px 0 8px; gap:6px; }
+  :root body .warehouse-wizard.is-design .warehouse-steps { padding:0 0 6px; margin:0 0 6px; }
+  :root body .warehouse-wizard.is-design .warehouse-steps > button > span { width:26px; height:26px; }
+  :root body .warehouse-wizard.is-design .warehouse-steps small { display:none; }
+  .mobile-plan-resources { margin:0 0 6px; font-size:12px; }
+  .mobile-plan-resources > summary { padding:7px 0; cursor:pointer; }
+  .mobile-plan-resources .template-toolbar { margin:8px 0; }
+}
+@media(max-width:1024px) and (orientation:landscape) and (max-height:700px) {
+  :root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .plan-properties { left:auto; right:8px; bottom:8px; width:min(340px,44vw); max-height:calc(100dvh - 72px); border-radius:10px; }
+  :root body :is(.warehouse-wizard,.warehouse-studio) .mobile-plan-studio .warehouse-plan-canvas { min-height:280px; }
+}

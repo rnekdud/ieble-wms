@@ -109,3 +109,17 @@ test('editable snapshots ignore property insertion order but detect all basic, g
     const changed = structuredClone(original); mutate(changed); assert.notEqual(editSnapshot(changed), before); Object.assign(changed, original); assert.equal(editSnapshot(changed), before)
   }
 })
+
+test('explicit query correction replaces only the current entry and retains forward history', () => {
+ const b=browser(),router=createBrowserNavigation(()=>{},b.win)
+ router.navigate('/app/products?search=ice&page=3');router.navigate('/app/products/item')
+ b.win.history.go(-1);b.flush()
+ const before=b.win.history.state.__iebleNavigation
+ router.navigate('/app/products?search=ice',{replace:true})
+ assert.equal(b.entries.length,3)
+ assert.deepEqual(b.win.history.state.__iebleNavigation,before)
+ b.win.history.go(1);b.flush();assert.equal(b.win.location.pathname,'/app/products/item')
+ b.win.history.go(-1);b.flush();assert.equal(b.win.location.search,'?search=ice')
+ b.win.history.go(-1);b.flush();assert.equal(b.win.location.pathname,'/app')
+ router.dispose()
+})

@@ -3,12 +3,14 @@ import {
   LayoutDashboard,
   Warehouse,
   Package,
+  ScanLine,
   PackagePlus,
   Truck,
   Boxes,
   UsersRound,
   ChartNoAxesCombined,
   MessagesSquare,
+  BookOpen,
   Settings2,
   Shield,
   ChevronDown,
@@ -16,18 +18,20 @@ import {
   PanelLeftOpen,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { workspaceMenus, canViewPage } from './navigation'
+import { workspaceMenus, canViewPage, findWorkspacePage } from './navigation'
 import type { WorkspacePage } from './navigation'
 const icons: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
   warehouse: Warehouse,
   products: Package,
+  barcode: ScanLine,
   receipts: PackagePlus,
   shipments: Truck,
   inventory: Boxes,
   partners: UsersRound,
   reports: ChartNoAxesCombined,
   support: MessagesSquare,
+  guide: BookOpen,
   settings: Settings2,
   shield: Shield,
 }
@@ -38,6 +42,7 @@ export default function WorkspaceSidebar({
   collapsed,
   onToggle,
   onNavigate,
+  onOpenGuide,
 }: {
   path: string
   permissions: Record<string, string[]>
@@ -45,9 +50,14 @@ export default function WorkspaceSidebar({
   collapsed: boolean
   onToggle: () => void
   onNavigate: (path: string) => void
+  onOpenGuide: () => void
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  // Detail/registration screens belong to the same existing menu entry.
+  const activePath = findWorkspacePage(path)?.path ?? path
+  const supportPages = workspaceMenus.flatMap(menu => menu.page && ['guide', 'support'].includes(menu.page.key) && canViewPage(menu.page, role, permissions) ? [menu.page] : [])
   function link(page: WorkspacePage, nested = false) {
+    if (page.key === 'guide') return <button key={page.key} type="button" className="wms-nav-link" aria-haspopup="dialog" title={collapsed ? page.label : undefined} onClick={onOpenGuide}><BookOpen size={19} aria-hidden="true"/><span className="wms-side-label">{page.label}</span></button>
     return (
       <a
         key={page.key}
@@ -58,8 +68,8 @@ export default function WorkspaceSidebar({
             onNavigate(page.path)
           }
         }}
-        className={`wms-nav-link ${nested ? 'is-nested' : ''} ${path === page.path ? 'is-current' : ''}`}
-        aria-current={path === page.path ? 'page' : undefined}
+        className={`wms-nav-link ${nested ? 'is-nested' : ''} ${activePath === page.path ? 'is-current' : ''}`}
+        aria-current={activePath === page.path ? 'page' : undefined}
         title={collapsed ? page.label : undefined}
       >
         {!nested &&
@@ -84,25 +94,29 @@ export default function WorkspaceSidebar({
           e.preventDefault()
           onNavigate('/app')
         }}
-        aria-label="IEBLE WMS 대시보드"
+        aria-label="아이블 WMS 대시보드"
       >
-        <span className="brand-mark">i</span>
-        <span className="wms-side-label">
-          IEBLE <small>WMS</small>
-        </span>
+        <img
+          className={`wms-service-logo${collapsed ? ' is-symbol' : ''}`}
+          src="/wms_logo.svg"
+          alt={collapsed ? '아이블 WMS' : ''}
+          width={36}
+          height={36}
+        />
+        {!collapsed && <span className="wms-side-label">아이블 WMS</span>}
       </a>
       <div className="wms-sidebar-caption wms-side-label">
         기업 워크스페이스
       </div>
-      <nav aria-label="WMS 메뉴">
-        {workspaceMenus.map((menu) => {
+      <nav className="wms-business-nav" aria-label="WMS 메뉴">
+        {workspaceMenus.filter((menu) => !['support', 'guide'].includes(menu.page?.key || '')).map((menu) => {
           if (menu.page)
             return canViewPage(menu.page, role, permissions) ? link(menu.page) : null
           const children = menu.children!.filter((page) =>
             canViewPage(page, role, permissions),
           )
           if (!children.length) return null
-          const current = children.some((page) => path === page.path)
+          const current = children.some((page) => activePath === page.path)
           const open = expanded[menu.label] ?? current
           const Icon = icons[menu.icon]
           return (
@@ -137,8 +151,14 @@ export default function WorkspaceSidebar({
           )
         })}
       </nav>
+      {supportPages.length > 0 && (
+        <nav className="wms-support-nav" aria-label="고객지원">
+          <div className="wms-support-caption wms-side-label">고객지원</div>
+          {supportPages.map(page => link(page))}
+        </nav>
+      )}
       <div className="wms-sidebar-bottom">
-        <span className="wms-side-label">IEBLE WMS</span>
+        <span className="wms-side-label">아이블 WMS</span>
         <button
           className="wms-icon-button"
           onClick={onToggle}

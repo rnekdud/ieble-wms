@@ -5,17 +5,46 @@ using Microsoft.EntityFrameworkCore;
 namespace IebleWms.Api.Data;
 
 // Global identity/control-plane store. Tenant business queries must explicitly scope by TenantId.
-public sealed class WmsDbContext(
+public sealed partial class WmsDbContext(
     DbContextOptions<WmsDbContext> options,
     IAuditActor actor,
     TimeProvider clock) : IdentityUserContext<ApplicationUser, Guid>(options)
 {
+    public DbSet<BusinessCodeCounter> BusinessCodeCounters => Set<BusinessCodeCounter>();
+    public DbSet<CompanyLogo> CompanyLogos => Set<CompanyLogo>();
+    public DbSet<DevelopmentAccessGrant> DevelopmentAccessGrants => Set<DevelopmentAccessGrant>();
+    public DbSet<DevelopmentAccessChange> DevelopmentAccessChanges => Set<DevelopmentAccessChange>();
+    public DbSet<Stocktake> Stocktakes => Set<Stocktake>();
+    public DbSet<StocktakeTarget> StocktakeTargets => Set<StocktakeTarget>();
+    public DbSet<StocktakeChange> StocktakeChanges => Set<StocktakeChange>();
+    public DbSet<InventoryOperation> InventoryOperations => Set<InventoryOperation>();
+    public DbSet<InventoryChange> InventoryChanges => Set<InventoryChange>();
+    public DbSet<OutboundShipment> OutboundShipments => Set<OutboundShipment>();
+    public DbSet<OutboundShipmentLine> OutboundShipmentLines => Set<OutboundShipmentLine>();
+    public DbSet<ShipmentAllocation> ShipmentAllocations => Set<ShipmentAllocation>();
+    public DbSet<ShipmentChange> ShipmentChanges => Set<ShipmentChange>();
+    public DbSet<InboundReceipt> InboundReceipts => Set<InboundReceipt>();
+    public DbSet<InboundReceiptLine> InboundReceiptLines => Set<InboundReceiptLine>();
+    public DbSet<StockBalance> StockBalances => Set<StockBalance>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<ReceiptChange> ReceiptChanges => Set<ReceiptChange>();
+    public DbSet<Partner> Partners => Set<Partner>();
+    public DbSet<PartnerChange> PartnerChanges => Set<PartnerChange>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductType> ProductTypes => Set<ProductType>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<ProductChange> ProductChanges => Set<ProductChange>();
+    public DbSet<SupportAttachment> SupportAttachments => Set<SupportAttachment>();
+    public DbSet<SupportChange> SupportChanges => Set<SupportChange>();
     public DbSet<BillingFeedback> BillingFeedbacks => Set<BillingFeedback>();
     public DbSet<BillingReminderDismissal> BillingReminderDismissals => Set<BillingReminderDismissal>();
     public DbSet<BillingInvoice> BillingInvoices => Set<BillingInvoice>();
     public DbSet<BillingChange> BillingChanges => Set<BillingChange>();
+    public DbSet<StorageBarcode> StorageBarcodes => Set<StorageBarcode>();
     public DbSet<WarehouseSaveReceipt> WarehouseSaveReceipts => Set<WarehouseSaveReceipt>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<WarehouseTemplate> WarehouseTemplates => Set<WarehouseTemplate>();
     public DbSet<WarehousePlan> WarehousePlans => Set<WarehousePlan>();
     public DbSet<WarehousePlanObject> WarehousePlanObjects => Set<WarehousePlanObject>();
     public DbSet<WarehouseZone> WarehouseZones => Set<WarehouseZone>();
@@ -25,6 +54,9 @@ public sealed class WmsDbContext(
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<JobPosition> JobPositions => Set<JobPosition>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<ExternalCollaborator> ExternalCollaborators => Set<ExternalCollaborator>();
+    public DbSet<CollaboratorPermissionChange> CollaboratorPermissionChanges => Set<CollaboratorPermissionChange>();
+    public DbSet<PermissionGrade> PermissionGrades => Set<PermissionGrade>();
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
 
     public DbSet<TenantStatusChange> TenantStatusChanges => Set<TenantStatusChange>();
@@ -38,8 +70,33 @@ public sealed class WmsDbContext(
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        ConfigureExternalAccountLinks(builder);
+        builder.Entity<BusinessCodeCounter>(b => {
+            b.HasKey(x => new { x.TenantId, x.Prefix });
+            b.Property(x => x.Prefix).HasMaxLength(2);
+            b.Property(x => x.LastValue).IsConcurrencyToken();
+            b.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        });
+        builder.Entity<CompanyLogo>(b => {
+            b.HasKey(x => x.TenantId);
+            b.Property(x => x.FileName).HasMaxLength(160);
+            b.Property(x => x.ContentType).HasMaxLength(40);
+            b.HasOne<Tenant>().WithOne().HasForeignKey<CompanyLogo>(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        });
+        DevelopmentAccessModel.Configure(builder);
+        ProductModel.Configure(builder);
+        PartnerModel.Configure(builder);
+        ReceivingModel.Configure(builder);
+        ShippingModel.Configure(builder);
+        InventoryModel.Configure(builder);
+        StocktakeModel.Configure(builder);
         WarehouseModel.Configure(builder);
+        foreach (var type in new[] { typeof(InboundReceipt), typeof(OutboundShipment), typeof(Stocktake), typeof(InventoryOperation), typeof(Warehouse) })
+            builder.Entity(type).HasOne(typeof(TenantMembership)).WithMany().HasForeignKey("TenantId", "ContactUserId").OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<InventoryOperation>().Property(x => x.ContactName).HasMaxLength(200);
+        StorageBarcodeModel.Configure(builder, Database.IsNpgsql());
         WarehousePlanModel.Configure(builder);
+        WarehouseTemplateModel.Configure(builder);
         BillingModel.Configure(builder);
         var user = builder.Entity<ApplicationUser>();
         user.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
@@ -99,13 +156,43 @@ public sealed class WmsDbContext(
             t.HasCheckConstraint("CK_Position_Name", "length(trim(\"Name\")) > 0");
             t.HasCheckConstraint("CK_Position_Order", "\"SortOrder\" >= 0");
         });
+        ConfigureCollaborators(builder);
+        var grade = builder.Entity<PermissionGrade>();
+        grade.HasKey(x => x.Id);
+        grade.HasAlternateKey(x => new { x.TenantId, x.Id });
+        grade.HasOne<Tenant>().WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+        grade.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        grade.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
+        grade.Property(x => x.Description).HasMaxLength(500);
+        grade.Property(x => x.SystemRole).HasMaxLength(32);
+        grade.Property(x => x.Version).IsConcurrencyToken();
+        grade.HasIndex(x => new { x.TenantId, x.NormalizedName }).IsUnique();
+        grade.HasIndex(x => new { x.TenantId, x.SystemRole }).IsUnique();
+        grade.ToTable("PermissionGrades", t => t.HasCheckConstraint("CK_PermissionGrade_SystemRole", "\"SystemRole\" IS NULL OR \"SystemRole\" IN ('Administrator','Employee')"));
         var membership = builder.Entity<TenantMembership>();
+        membership.HasOne<PermissionGrade>().WithMany().HasForeignKey(x => new { x.TenantId, x.PermissionGradeId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        membership.ToTable("TenantMemberships", t => t.HasCheckConstraint("CK_Memberships_PermissionGrade", "\"PermissionGradeId\" IS NULL OR (\"AccountType\" = 'Internal' AND \"Role\" = 'Employee')"));
+        membership.HasOne(x => x.Collaborator).WithMany().HasForeignKey(x => new { x.TenantId, x.CollaboratorId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        membership.ToTable("TenantMemberships", t => t.HasCheckConstraint("CK_Memberships_Collaborator", "(\"AccountType\" = 'External' AND \"CollaboratorId\" IS NOT NULL) OR (\"AccountType\" = 'Internal' AND \"CollaboratorId\" IS NULL)"));
         membership.ToTable("TenantMemberships", t => t.HasCheckConstraint("CK_Memberships_Role",
             "\"Role\" IN ('Employee', 'Administrator', 'Master')"));
         membership.HasKey(x => new { x.TenantId, x.UserId });
         membership.HasIndex(x => x.TenantId).IsUnique().HasDatabaseName("IX_TenantMemberships_OneActiveMaster").HasFilter("\"Role\" = 'Master' AND \"IsActive\" = TRUE");
         membership.HasOne<Department>().WithMany().HasForeignKey(x => new { x.TenantId, x.DepartmentId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         membership.HasOne<JobPosition>().WithMany().HasForeignKey(x => new { x.TenantId, x.PositionId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        membership.Property(x => x.AccountType).HasMaxLength(16).HasDefaultValue("Internal").IsRequired();
+        membership.Property(x => x.CompanyName).HasMaxLength(200);
+        membership.Property(x => x.BusinessRegistrationNumber).HasMaxLength(64);
+        membership.Property(x => x.CompanyPhone).HasMaxLength(50);
+        membership.Property(x => x.ContactPhone).HasMaxLength(50);
+        membership.Property(x => x.ContactEmail).HasMaxLength(256);
+        membership.Property(x => x.ExternalPermissionsJson).HasDefaultValue("{}").IsRequired();
+        membership.HasIndex(x => new { x.TenantId, x.AccountType, x.IsActive });
+        membership.HasOne<Partner>().WithMany().HasForeignKey(x => new { x.TenantId, x.PartnerId }).HasPrincipalKey(x => new { x.TenantId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        membership.ToTable("TenantMemberships", t => {
+            t.HasCheckConstraint("CK_Memberships_AccountType", "\"AccountType\" IN ('Internal','External')");
+            t.HasCheckConstraint("CK_Memberships_External", "\"AccountType\" <> 'External' OR (\"Role\" = 'Employee' AND \"DepartmentId\" IS NULL AND \"PositionId\" IS NULL AND \"CompanyName\" IS NOT NULL AND length(trim(\"CompanyName\")) > 0)");
+        });
         membership.Property(x => x.DisplayName).HasMaxLength(200);
         membership.Property(x => x.Role).HasConversion<string>().HasMaxLength(32).IsRequired();
         membership.Property(x => x.Version).IsConcurrencyToken();
@@ -164,6 +251,7 @@ public sealed class WmsDbContext(
         ConfigureAudit<ApplicationUser>(builder);
         ConfigureAudit<Tenant>(builder);
         ConfigureAudit<TenantMembership>(builder);
+        ConfigureAudit<PermissionGrade>(builder);
     }
 
     private static void ConfigureAudit<TEntity>(ModelBuilder builder) where TEntity : class, IAuditableEntity
@@ -189,15 +277,43 @@ public sealed class WmsDbContext(
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
+    private readonly HashSet<Guid> unusedProductDeletions = [];
+    internal void AllowUnusedProductDeletion(IEnumerable<Guid> ids) => unusedProductDeletions.UnionWith(ids);
+
     private void ApplyAudit()
     {
-        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange or OrganizationChange or WarehouseChange or BillingChange or BillingFeedback) && x.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries().Any(x => (x.Entity is TenantStatusChange or AdministratorBootstrap or TenantPermissionChange or OrganizationChange or WarehouseChange or ProductChange or PartnerChange or ReceiptChange or ShipmentChange or StocktakeChange or InventoryOperation or InventoryChange or StockMovement or DevelopmentAccessChange or BillingChange or SupportChange or SupportAttachment) && x.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Administrative history and bootstrap receipts are immutable.");
+        foreach (var entry in ChangeTracker.Entries<BillingFeedback>())
+            if (entry.State == EntityState.Deleted || (entry.State == EntityState.Modified &&
+                new[] { "TenantId", "UserId", "RequestId", "Message", "Title", "Category", "Number", "CreatedAt", "RequestHash" }.Any(p => entry.Property(p).IsModified)))
+                throw new InvalidOperationException("Original inquiries are immutable.");
         foreach (var entry in ChangeTracker.Entries<Warehouse>().Where(x => x.State == EntityState.Modified))
             if (entry.Property(x => x.Code).IsModified) throw new InvalidOperationException("System warehouse codes are immutable.");
         foreach (var entry in ChangeTracker.Entries<BillingInvoice>().Where(x => x.State is EntityState.Modified or EntityState.Deleted))
             if (entry.State == EntityState.Deleted || entry.Property(x => x.AmountKrw).IsModified || entry.Property(x => x.UserCount).IsModified || entry.Property(x => x.CycleStart).IsModified || entry.Property(x => x.CycleEnd).IsModified || entry.Property(x => x.IdempotencyKey).IsModified || entry.Property(x => x.TenantId).IsModified)
                 throw new InvalidOperationException("Finalized invoice amounts and periods are immutable.");
+        if (ChangeTracker.Entries<Partner>().Any(x => x.State == EntityState.Deleted))
+            throw new InvalidOperationException("Partners are deactivated, never deleted.");
+        foreach (var entry in ChangeTracker.Entries<Product>())
+        {
+            if (entry.State == EntityState.Deleted && (!unusedProductDeletions.Contains(entry.Entity.Id) || entry.Entity.TrackingLockedAt.HasValue)) throw new InvalidOperationException("Product deletion requires unused-product validation.");
+            if (entry.State == EntityState.Modified && entry.Property(x => x.TrackingLockedAt).OriginalValue != null &&
+                (entry.Property(x => x.TrackingLockedAt).IsModified || entry.Property(x => x.Unit).IsModified || entry.Property(x => x.LotManaged).IsModified || entry.Property(x => x.ExpiryManaged).IsModified || entry.Property(x => x.SerialManaged).IsModified))
+                throw new InvalidOperationException("Used product tracking policy and unit are immutable.");
+        }
+        foreach (var entry in ChangeTracker.Entries<InboundReceipt>())
+            if (entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.Property(x => x.Status).OriginalValue is "Confirmed" or "Cancelled"))
+                throw new InvalidOperationException("Finalized receipts cannot be changed or deleted.");
+        foreach (var entry in ChangeTracker.Entries<OutboundShipment>())
+            if (entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.Property(x => x.Status).OriginalValue is "Confirmed" or "Cancelled"))
+                throw new InvalidOperationException("Finalized shipments cannot be changed or deleted.");
+        foreach (var entry in ChangeTracker.Entries<Stocktake>())
+            if (entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && entry.Property(x => x.Status).OriginalValue is "Confirmed" or "Cancelled"))
+                throw new InvalidOperationException("Finalized stocktakes are immutable.");
+        foreach (var entry in ChangeTracker.Entries<StocktakeTarget>())
+            if (entry.State == EntityState.Deleted || (entry.State == EntityState.Modified && new[]{"OriginalQuantity","OriginalReserved","OriginalSnapshotAt"}.Any(p=>entry.Property(p).IsModified)))
+                throw new InvalidOperationException("Original count snapshots are immutable.");
         var now = clock.GetUtcNow();
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {

@@ -23,7 +23,7 @@ public sealed class WarehouseWorkspaceService(WmsDbContext db, WarehouseService 
     {
         if (entity.Version != version) throw Conflict("창고 구조가 다른 작업에서 변경되었습니다. 작업 내용을 보관한 뒤 최신 정보를 다시 불러와 주세요.");
     }
-    private static StorageItemRequest Item(WorkspaceStructureRequest value) => new() { Version = value.Version, Code = value.Code, Name = value.Name, IsActive = value.IsActive };
+    private static StorageItemRequest Item(WorkspaceStructureRequest value) => new() { Version = value.Version, Code = value.Code, Name = value.Name, IsActive = value.IsActive, Barcode = (value as WorkspaceFloorRequest)?.Barcode };
     private static bool Changed(IStorageItem item, WorkspaceStructureRequest value) => item.Code != Code(value.Code) || item.Name != value.Name.Trim() || item.IsActive != value.IsActive;
     private static Guid? Resolve(Guid? clientId, Dictionary<Guid, Guid> map, string label) => clientId == null ? null : map.TryGetValue(clientId.Value, out var id) ? id : throw Invalid($"{label} 연결을 확인해 주세요. 현재 작업에 포함된 항목만 연결할 수 있습니다.");
 
@@ -52,6 +52,7 @@ public sealed class WarehouseWorkspaceService(WmsDbContext db, WarehouseService 
             throw Invalid("임시 구조 ID는 중복될 수 없으며 기존 항목의 ID는 변경할 수 없습니다.");
         if (!warehouseId.HasValue && all.Any(x => x.Id.HasValue)) throw Invalid("새 창고에는 다른 창고의 기존 구조를 가져올 수 없습니다.");
         if (!canCreateStructure && all.Any(x => x.Id == null)) throw new OrganizationException(403, "새 구역·랙·위치를 추가하려면 창고 등록 권한이 필요합니다.");
+        foreach (var rack in request.Racks) RackBarcodePolicy.Validate(rack.Barcode);
         if (request.Racks.Any(x => x.Levels * x.Bays > 1000)) throw Invalid("랙당 최대 1,000개 위치까지 설정할 수 있습니다.");
 
         var hash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { warehouseId, request })));
@@ -100,8 +101,8 @@ public sealed class WarehouseWorkspaceService(WmsDbContext db, WarehouseService 
             WarehouseRack? old = null;
             if (value.Id is Guid id) { if (!existingRacks.TryGetValue(id, out old)) throw Invalid("현재 창고의 랙만 수정할 수 있습니다."); CheckVersion(old, value.Version); }
             var levels = old?.Levels ?? 0; var bays = old?.Bays ?? 0;
-            var unchanged = old != null && !Changed(old, value) && old.ZoneId == zone && old.Levels == value.Levels && old.Bays == value.Bays;
-            var entity = unchanged ? old! : await storage.SaveRack(tenant, warehouse.Id, actor, value.Id, new RackRequest { Version = value.Version, Name = value.Name, Code = value.Code, IsActive = value.IsActive, ZoneId = zone, Levels = value.Levels, Bays = value.Bays }, ct);
+            var unchanged = old != null && !Changed(old, value) && old.ZoneId == zone && old.Levels == value.Levels && old.Bays == value.Bays && (value.Barcode == null || value.Barcode.Mode == "keep");
+            var entity = unchanged ? old! : await storage.SaveRack(tenant, warehouse.Id, actor, value.Id, new RackRequest { Version = value.Version, Name = value.Name, Code = value.Code, IsActive = value.IsActive, ZoneId = zone, Levels = value.Levels, Bays = value.Bays, Barcode = value.Barcode }, ct);
             racks[value.ClientId] = entity.Id;
             if (entity.Levels > levels || entity.Bays > bays) generatedRacks.Add((value.ClientId, entity.Id, levels, bays));
         }
@@ -115,7 +116,7 @@ public sealed class WarehouseWorkspaceService(WmsDbContext db, WarehouseService 
                 CheckVersion(old, value.Version);
                 if (old.ZoneId != zone) throw Invalid("기존 바닥 위치의 소속 구역은 변경할 수 없습니다.");
             }
-            var entity = old != null && !Changed(old, value) ? old : await storage.SaveLocation(tenant, warehouse.Id, actor, value.Id, Item(value), zone, ct);
+            var entity = old != null && !Changed(old, value) && (value.Barcode==null||value.Barcode.Mode=="keep") ? old : await storage.SaveLocation(tenant, warehouse.Id, actor, value.Id, Item(value), zone, ct);
             floors[value.ClientId] = entity.Id;
         }
         foreach (var entry in deactivateNewZones)

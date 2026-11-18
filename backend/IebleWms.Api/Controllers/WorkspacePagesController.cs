@@ -11,7 +11,13 @@ public sealed class WorkspacePagesController(IAuthorizationService authorization
     [HttpGet("{page}")]
     public async Task<IActionResult> Page(Guid tenantId, string page)
     {
-        if (page is "billing" or "permissions")
+        if (page == "barcode-lookup")
+        {
+            // Reuse the same effective tenant/collaborator grants as barcode lookup.
+            if (!(await authorization.AuthorizeAsync(User, HttpContext, "Permission:products:read")).Succeeded &&
+                !(await authorization.AuthorizeAsync(User, HttpContext, "Permission:warehouses:read")).Succeeded) return Forbid();
+        }
+        else if (page is "billing" or "permissions" or "activity-log")
         {
             if (!(await authorization.AuthorizeAsync(User, HttpContext, "TenantMaster")).Succeeded) return Forbid();
         }

@@ -1,3 +1,4 @@
+import CompanySwitchDialog from './CompanySwitchDialog'
 import { useEffect, useId, useRef, useState } from 'react'
 import { ChevronDown, KeyRound, LogOut, UserRound } from 'lucide-react'
 import type { Session } from '../api'
@@ -8,14 +9,19 @@ export default function UserProfileMenu({
   roleLabel,
   busy,
   onLogout,
+  onResolved,
+  onSwitched,
 }: {
   session: Session
   roleLabel: string
   busy: boolean
   onLogout: () => void
+  onResolved?: () => Promise<unknown>
+  onSwitched?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [changing, setChanging] = useState(false)
+  const [companies, setCompanies] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const panelId = useId()
@@ -63,6 +69,7 @@ export default function UserProfileMenu({
       </button>
       {open && (
         <div className="user-profile-panel" id={panelId}>
+          {session.memberships.length > 1 && onResolved && onSwitched && session.user.systemRole !== 'IebleAdministrator' && <button onClick={() => { setOpen(false); setCompanies(true) }}>기업 전환</button>}
           <button
             onClick={() => {
               setOpen(false)
@@ -84,6 +91,7 @@ export default function UserProfileMenu({
           </button>
         </div>
       )}
+      {companies && onResolved && onSwitched && <CompanySwitchDialog session={session} onClose={() => setCompanies(false)} onResolved={onResolved} onSwitched={onSwitched} />}
       {changing && (
         <PasswordChangeDialog
           name={session.user.displayName}

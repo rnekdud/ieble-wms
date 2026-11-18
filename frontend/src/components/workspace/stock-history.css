@@ -1,0 +1,45 @@
+.stock-history{min-width:0}.history-counts h2{font-size:16px;margin:0 0 7px}.history-counts p{font-size:12px;color:var(--ui-muted);margin:0;line-height:1.7}.history-table{width:100%;min-width:1680px;border-collapse:collapse}.history-table td{max-width:270px;overflow-wrap:anywhere}.history-table td small{display:block;margin-top:5px;line-height:1.6;white-space:normal}.history-table td:first-child{min-width:160px;font-variant-numeric:tabular-nums}.history-table :is(td,th).quantity{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.history-positive{color:#176b54;font-weight:700}.history-negative{color:#a23e36;font-weight:700}.history-type{white-space:nowrap}.history-receipt{background:#e7f3ee;color:#286852}.history-shipment{background:#eaf0fa;color:#3d6095}.history-move{background:#e8f2f4;color:#386b75}.history-adjust{background:#fff3db;color:#8b5b12}.history-count{background:#f0ecf8;color:#70558d}.history-detail-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:6px 0 20px}.history-detail-heading h3{font-size:18px;margin:12px 0 6px;overflow-wrap:anywhere}.history-detail-heading p{color:var(--ui-muted);font-size:12px;margin:0}.history-detail-heading>strong{font-size:24px;white-space:nowrap;font-variant-numeric:tabular-nums}.history-fields dd{overflow-wrap:anywhere;white-space:pre-wrap}.history-document{margin-top:24px;padding-top:20px;border-top:1px solid var(--ui-line)}.history-document h3{font-size:15px;margin:0 0 16px}.history-document h3 small{font-size:11px;font-weight:400;color:var(--ui-muted);margin-left:9px}
+@media(max-width:760px){.history-detail-heading{align-items:start;flex-direction:column}.stock-history .stats-search label{flex-basis:100%}.history-detail-heading>strong{font-size:22px}.history-table td:first-child{min-width:145px}}
+
+/* Mobile summary and history cards match the stock overview. */
+@media(max-width:1024px) {
+  .stock-history > .overview-summary { margin-bottom:12px; }
+  .stock-history > .overview-summary > div { padding:10px 12px; }
+  .stock-history > .overview-summary > div > div { font-size:12px; line-height:1.35; }
+  .stock-history > .overview-summary strong { margin-top:6px; font-size:22px; line-height:1.3; }
+  .stock-history > .overview-summary p { display:none; }
+  .stock-history .stats-filter-row { min-width:0; }
+  :root body .wms-content .stock-history .list-search-filters {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 8px; width:100%; min-width:0; align-items:end;
+  }
+  :root body .wms-content .stock-history .list-search-filters > .stats-period { display:contents; }
+  :root body .wms-content .stock-history .list-search-filters .report-period-range { grid-column:1/-1; grid-row:1; width:100%; min-width:0; max-width:100%; }
+  :root body .wms-content .stock-history .list-search-filters .report-period-tabs { grid-column:1/-1; grid-row:2; width:fit-content; margin:0; }
+  :root body .wms-content .stock-history .list-search-filters .stats-period > label { grid-column:1/-1; grid-row:3; width:100%; max-width:100%; margin:0; }
+  :root body .wms-content .stock-history .list-search-filters > .overview-filter-toggle {
+    grid-column:1/-1; grid-row:4; display:flex; align-items:center; justify-content:flex-start; gap:6px;
+    width:100%; min-width:0; min-height:40px; padding:8px 12px; border:1px solid var(--ui-line);
+    border-radius:8px; background:#f3f6fa; box-shadow:none; color:var(--ui-ink); font-size:13px; font-weight:600;
+  }
+  .stock-history .overview-filter-toggle[aria-expanded="true"] svg { transform:rotate(180deg); }
+  :root body .wms-content .stock-history .list-search-filters > .overview-advanced {
+    grid-column:1/-1; grid-row:5; display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px 8px; width:100%; min-width:0; margin:0; padding:0; background:transparent;
+  }
+  :root body .wms-content .stock-history .list-search-filters > .overview-advanced[hidden] { display:none; }
+  :root body .wms-content .stock-history .overview-advanced > .searchable-choice { width:100%; min-width:0; max-width:100%; margin:0; }
+  :root body .wms-content .stock-history .list-search-filters > label:has(input) { grid-column:1/-1; grid-row:6; width:100%; max-width:100%; min-width:0; }
+  :root body .wms-content .stock-history .list-search-filters > .list-search-actions { grid-column:1/-1; grid-row:8; width:auto; margin:0; }
+  :root body .wms-content .stock-history .list-search-filters > .overview-help { grid-column:1/-1; grid-row:9; margin:0; }
+  :root body .wms-content .stock-history .list-search-filters::after { display:none; }
+
+  :root body .wms-content .stock-history .list-search-filters > label:has(input[aria-label="문서번호 검색"]) { grid-row:7; }
+  .history-mobile-list { display:grid; gap:12px; min-width:0; }
+  .history-mobile-list > .mobile-stock-card { padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:#fff; min-width:0; }
+  .history-mobile-list h3 { overflow-wrap:anywhere; }
+  .history-mobile-list .history-type { flex:none; }
+  .history-mobile-list dl { grid-template-columns:minmax(85px,1fr) minmax(0,1.5fr); }
+  .history-mobile-list dd { overflow-wrap:anywhere; }
+  .history-mobile-list dd small { display:block; font-size:12px; font-weight:400; color:var(--ui-muted); }
+  .history-mobile-actions { display:flex; justify-content:flex-end; margin-top:12px; }
+}

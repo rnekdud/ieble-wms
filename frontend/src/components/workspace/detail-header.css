@@ -1,0 +1,26 @@
+:root body .work-detail-header { display:flex; flex-direction:column; align-items:stretch; gap:5px; width:100%; min-width:0; height:auto; min-height:0; }
+:root body .work-detail-main { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-width:0; }
+:root body .work-detail-main > :is(h1,h2) { display:block; flex:1 1 0; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.4; }
+:root body .work-detail-actions,
+:root body .work-detail-actions > :is(.receipt-actions,.organization-toolbar) { display:inline-flex; align-items:center; justify-content:flex-end; flex:0 0 auto; flex-wrap:nowrap; gap:8px; margin:0; width:auto; }
+:root body .work-detail-actions button { min-width:0; width:auto; white-space:nowrap; }
+:root body .work-detail-actions :is(.registration-back,.detail-delete) { display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; min-width:36px; height:36px; min-height:36px; padding:0; }
+:root body .work-detail-actions button > svg { display:block; flex:none; margin:0; }
+:root body .work-detail-meta { display:flex; align-items:center; flex-wrap:nowrap; gap:8px; min-width:0; font-size:12px; color:var(--ui-muted); }
+:root body .work-detail-code { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+:root body .work-detail-meta > :not(.work-detail-code) { flex:none; margin:0; white-space:nowrap; }
+:root body .dialog-layout > .work-detail-header { flex:none; padding:20px 24px 10px; position:static; background:#fff; border:0; }
+@media(max-width:1024px) {
+  :root body .work-detail-main > :is(h1,h2) { font-size:18px; letter-spacing:-.5px; }
+  :root body .work-detail-actions,
+  :root body .work-detail-actions > :is(.receipt-actions,.organization-toolbar) { gap:6px; }
+  :root body .work-detail-actions button { --ui-action-padding:8px; font-size:12px; }
+  :root body .dialog-layout > .work-detail-header { padding:14px 16px 8px; }
+}
+
+@media(max-width:1024px) {
+  .receipt-inspection-help { grid-template-columns:1fr; }
+  .receipt-inspection-help details { border-bottom:1px solid var(--ui-line); padding-bottom:8px; }
+  .receipt-inspection-help summary { cursor:pointer; min-height:36px; padding:8px 0; }
+  .receipt-inspection-help summary h3 { display:inline; }
+}

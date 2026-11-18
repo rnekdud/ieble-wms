@@ -1,3 +1,4 @@
+import { notifyInventoryChanged } from './inventory-refresh.ts'
 export type Membership = {
   tenantId: string
   name: string
@@ -13,10 +14,12 @@ export type Session = {
 export class ApiError extends Error {
   status: number
   code?: string
-  constructor(status: number, message: string, code?: string) {
+  details?: unknown
+  constructor(status: number, message: string, code?: string, details?: unknown) {
     super(message)
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 export async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -55,19 +58,22 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
       )
     const token = data.token
     headers['X-CSRF-TOKEN'] = token
-    headers['Content-Type'] = 'application/json'
+    if (!(body instanceof FormData)) headers['Content-Type'] = 'application/json'
   }
-  const response = await fetch(path, {
+  let response: Response
+  try { response = await fetch(path, {
     method: body === undefined ? 'GET' : 'POST',
     headers,
     credentials: 'same-origin',
     cache: 'no-store',
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+    body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
+  }) } catch {
+    throw new ApiError(0, '네트워크 연결을 확인한 후 다시 시도해 주세요.')
+  }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     const message =
-      data.message ||
+      (response.status >= 500 ? '서버 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.' : data?.message) ||
       (response.status === 401
         ? '로그인이 필요하거나 세션이 만료되었습니다.'
         : response.status === 403
@@ -77,7 +83,8 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
             : response.status === 400
               ? '입력 형식 또는 보안 토큰을 확인해 주세요. 다시 시도해 주세요.'
               : '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.')
-    throw new ApiError(response.status, message, data.code)
+    throw new ApiError(response.status, message, data?.code, response.status < 500 ? data : undefined)
   }
+  if (body !== undefined) notifyInventoryChanged(path)
   return response.status === 204 ? (undefined as T) : response.json()
 }

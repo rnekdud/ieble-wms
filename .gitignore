@@ -31,3 +31,26 @@ TestResults/
 # PostgreSQL / Docker 데이터
 postgres_data/
 pgdata/
+
+# Local plan-recognition runtime and temporary uploads
+backend/tools/plan-recognition/.venv/
+__pycache__/
+backend/IebleWms.Api/App_Data/PlanImports/
+
+# Local backups and temporary QA artifacts
+/backups/
+/docs/qa/
+
+# Native build artifacts and private signing material
+build/
+DerivedData/
+Pods/
+*.apk
+*.aab
+*.ipa
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.provisionprofile
+*.xcuserstate

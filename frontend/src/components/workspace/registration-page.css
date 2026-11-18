@@ -1,0 +1,94 @@
+.registration-page { min-width:0; width:100%; color:var(--ui-text,#233f4c); }
+.registration-header { position:sticky; top:64px; z-index:15; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 0; background:var(--ui-bg,#f5f7fa); border-bottom:1px solid var(--ui-line,#dce5e9); }
+.registration-heading,.registration-header-actions { display:flex; align-items:center; gap:12px; }
+.registration-heading h1 { margin:3px 0 0; font-size:26px; letter-spacing:-.7px; }
+.registration-heading small { color:#647d85; font-size:11px; letter-spacing:1px; }
+.registration-header-actions button { display:flex; align-items:center; justify-content:center; gap:7px; min-width:86px; min-height:40px; }
+.registration-back { display:grid; place-items:center; padding:10px; }
+.registration-intro { display:flex; justify-content:space-between; gap:12px; color:#657b85; font-size:13px; line-height:1.7; margin:18px 0 26px; }
+.registration-intro span { flex:none; font-size:12px; }
+.registration-form { margin:0; min-width:0; }
+.registration-content,.registration-content > fieldset { min-width:0; margin:0; padding:0; border:0; }
+.registration-form label { display:flex; flex-direction:column; gap:7px; min-width:0; margin:0; font-size:13px; font-weight:600; }
+.registration-form :is(input,select,textarea) { min-width:0; max-width:100%; width:100%; }
+.registration-form :is(input:not([type=checkbox]),select) { min-height:42px; }
+.registration-form textarea { min-height:90px; resize:vertical; }
+.registration-form input[type=checkbox] { width:17px; height:17px; }
+.registration-form :is(input,select,textarea):user-invalid,.registration-form [aria-invalid=true] { border-color:#bc534e; background:#fffafa; }
+.registration-field-error { color:#ac3732; font-size:12px; font-weight:400; }
+.registration-page .alert:focus { outline:2px solid #bc534e; outline-offset:3px; }
+.registration-form .dialog-actions { display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #dae4e8; padding:20px 0; margin-top:24px; }
+.registration-form .dialog-actions button { min-width:100px; }
+.registration-product-grid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:30px 36px; padding:26px; background:white; border-radius:10px; }
+.registration-product-grid .dialog-section { min-width:0; margin:0; padding:0; border:0; }
+.registration-product-grid .dialog-section-heading { margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid #e0e8eb; }
+.registration-product-grid h3 { font-size:16px; margin:0 0 5px; }
+.registration-product-grid .dialog-section-heading p { color:#6c818a; font-size:12px; margin:0; }
+.registration-product-grid .dialog-section-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:start; }
+.registration-product-grid :is(.products-full,.dialog-span) { grid-column:1/-1; }
+.registration-product-grid .products-checks,.registration-product-grid .products-checks label { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:10px; }
+.registration-product-grid details summary { cursor:pointer; font-size:12px; color:#316d73; margin-bottom:10px; }
+.registration-product-grid .rack-barcode-fields { padding:0; margin:0; border:0; }
+.registration-product-grid .rack-barcode-input-row { display:flex; align-items:start; }
+.registration-product-grid .rack-barcode-input-row button { flex:none; }
+.registration-product-grid small { color:#6c818a; font-weight:400; line-height:1.6; }
+.registration-form .dialog-work-basic { display:grid; grid-template-columns:160px minmax(0,1fr); gap:28px; padding:26px; background:white; border-radius:10px; }
+.registration-form .dialog-work-basic h3 { font-size:16px; margin:0; }
+.registration-form .dialog-work-basic .receipt-basic { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; align-items:start; }
+.registration-form .dialog-work-basic label:has([aria-label$="비고"]) { grid-column:1/-1; }
+.registration-form .receipt-section-heading { margin:32px 0 12px; }
+.registration-form .receipt-section-heading h3 { font-size:18px; margin:0; }
+.registration-line-list { background:white; border-radius:10px; padding:0 24px; }
+.registration-line-list .receipt-line-editor { display:grid; grid-template-columns:160px minmax(0,1fr); gap:18px 26px; border:0; border-radius:0; border-bottom:1px solid #dce6ea; padding:24px 0; margin:0; }
+.registration-line-list .receipt-line-editor:last-child { border-bottom:0; }
+.registration-line-list .receipt-line-title { flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:12px; margin:0; }
+.registration-line-list .receipt-line-title strong { font-size:13px; overflow-wrap:anywhere; }
+.registration-line-list .receipt-line-title small { display:block; font-weight:400; color:#73858e; margin-top:6px; }
+.registration-line-list .receipt-line-title button { font-size:12px; padding:6px 10px; }
+.registration-line-list .receipt-basic { grid-template-columns:minmax(200px,2fr) minmax(100px,1fr) minmax(120px,1fr) minmax(130px,1fr); gap:18px; align-items:start; }
+.registration-line-list .products-full { grid-column:1/-1; }
+.registration-line-list .shipment-stock { grid-column:2; margin:0; padding:14px 18px; border:0; border-radius:6px; background:#f0f7f7; }
+.registration-line-list .shipment-stock dd { font-size:17px; }
+.registration-line-list .shipment-stock small { color:#657b85; line-height:1.6; }
+.registration-summary { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; padding:18px 24px; color:#516e79; background:#eaf2f3; border-radius:0 0 8px 8px; font-size:13px; }
+.registration-summary strong { color:#176a69; }
+@media(max-width:1280px) { .registration-form .dialog-work-basic { grid-template-columns:1fr; gap:20px; } .registration-line-list .receipt-basic { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:900px) { .registration-product-grid { grid-template-columns:1fr; } .registration-form .dialog-work-basic .receipt-basic { grid-template-columns:repeat(2,minmax(0,1fr)); } .registration-line-list .receipt-line-editor { grid-template-columns:1fr; } .registration-line-list .receipt-line-title { flex-direction:row; justify-content:space-between; } .registration-line-list .shipment-stock { grid-column:1; } }
+@media(max-width:600px) {
+ .registration-header { top:58px; gap:12px; padding:12px 0; }
+ .registration-heading h1 { font-size:22px; } .registration-heading small { display:none; }
+ .registration-header-actions { margin-left:auto; gap:6px; } .registration-header-actions button { min-width:60px; padding:9px 12px; }
+ .registration-header-actions button:not(.registration-back) svg { display:none; } .registration-back { padding:8px; }
+ .registration-intro { display:block; font-size:12px; } .registration-intro span { display:block; margin-top:8px; }
+ .registration-product-grid,.registration-form .dialog-work-basic { padding:18px; }
+ .registration-product-grid .dialog-section-fields,.registration-form .dialog-work-basic .receipt-basic,.registration-line-list .receipt-basic { grid-template-columns:minmax(0,1fr); }
+ .registration-line-list { padding:0 18px; } .registration-line-list .shipment-stock { padding:14px; }
+ .registration-line-list .shipment-stock dl { gap:14px; } .registration-line-list .shipment-stock dd { font-size:14px; }
+ .registration-form .dialog-actions button { flex:1; } .registration-summary { padding:16px; gap:10px 14px; }
+}
+
+/* Document details share the registration shell, with one page scroll. */
+.detail-page .registration-heading small { display:block; max-width:100%; overflow-wrap:anywhere; letter-spacing:0; }
+.detail-page .registration-header-actions .receipt-actions { margin:0; gap:8px; justify-content:flex-end; }
+.detail-content { padding:24px 0; min-width:0; }
+.detail-content > h3 { font-size:18px; margin:30px 0 16px; }
+.detail-content > .products-detail { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin:28px 0; padding:24px 0; border-block:1px solid #dce5e9; }
+.detail-content .products-detail > div { min-width:0; }
+.detail-content .products-detail dd { overflow-wrap:anywhere; line-height:1.7; }
+.detail-page .receipt-steps { margin:0; }
+.detail-page .receipt-lines { max-width:100%; }
+.detail-page .receipt-lines table { min-width:850px; }
+.detail-page .product-master-detail .dialog-section { display:block; margin-bottom:28px; }
+.detail-page .product-master-detail .dialog-section-fields { display:block; }
+.detail-page .product-master-detail .products-detail { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+.dialog-small .receipt-confirm { background:transparent; border:0; padding:0; margin:0; }
+@media(max-width:900px) { .detail-content > .products-detail,.detail-page .product-master-detail .products-detail { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) {
+ .detail-content { padding:18px 0; }
+ .detail-content > .products-detail,.detail-page .product-master-detail .products-detail { grid-template-columns:1fr; gap:16px; }
+ .detail-page .registration-heading small { max-width:270px; font-size:10px; display:block; }
+ .detail-page .receipt-steps { flex-wrap:wrap; }
+}
+/* The global marketing header has a fixed height; work pages must grow when actions wrap. */
+.registration-header { height:auto; min-height:76px; }
+@media(max-width:600px) { .registration-header { min-height:64px; } }

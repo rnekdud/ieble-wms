@@ -40,9 +40,9 @@ public sealed class WarehouseTests
 
     [Theory]
     [InlineData(false, false, false)]
-    [InlineData(false, true, true)]
+    [InlineData(false, true, false)]
     [InlineData(true, true, false)]
-    public async Task DevelopmentPreviewRequiresOptInAndPreservesBillingOtherFeaturesAndRolePermissions(bool production, bool enabled, bool allowed)
+    public async Task RetiredGlobalDevelopmentFlagCannotBypassBillingOrRolePermissions(bool production, bool enabled, bool allowed)
     {
         using var f = new AuthFactory(production: production, warehouseSetup: enabled); using var c = f.Client(); using var employee = f.Client();
         var t = await Seed(f);
@@ -76,7 +76,7 @@ public sealed class WarehouseTests
     {
         using var f = new AuthFactory(); using var c = f.Client(); var t = await Seed(f); await Login(c, t);
         var w = await Create(c, Url(t), new { name = "중앙 창고", customCode = " w01 ", type = "일반/상온", address = "서울", addressDetail = "1층", contactName = "담당자", notes = "취급 주의" });
-        Assert.Equal("WH-0001", w.GetProperty("code").GetString());
+        Assert.Equal("WH01", w.GetProperty("code").GetString());
         Assert.Equal("w01", w.GetProperty("customCode").GetString());
         Assert.Equal(HttpStatusCode.Conflict, (await AuthTests.Post(c, Url(t), new { name = "중복", customCode = "W01" })).StatusCode);
         var updated = await AuthTests.Post(c, Url(t) + $"/{Id(w)}", new { name = "수정 창고", customCode = "W02", version = Version(w), isActive = false, contactName = "변경 담당" });
@@ -191,7 +191,7 @@ public sealed class WarehouseTests
         using(var scope=f.Services.CreateScope()) { var db=scope.ServiceProvider.GetRequiredService<WmsDbContext>();db.Add(new Warehouse{TenantId=t.Tenant,Name="기존 창고",Code="WH-0042",Type="기존 자유 유형"});await db.SaveChangesAsync(); }
         var requestId=Guid.NewGuid();var body=new {name="자동 창고",requestId,customCode=" own-1 ",type="기타",typeDescription="특수 분류"};
         var one=await Create(c,Url(t),body);var repeat=await Create(c,Url(t),body);
-        Assert.Equal("WH-0043",one.GetProperty("code").GetString());Assert.Equal(Id(one),Id(repeat));
+        Assert.Equal("WH01",one.GetProperty("code").GetString());Assert.Equal(Id(one),Id(repeat));
         Assert.Equal(HttpStatusCode.Conflict,(await AuthTests.Post(c,Url(t),new{name="중복",customCode="OWN-1"})).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest,(await AuthTests.Post(c,Url(t)+$"/{Id(one)}",new{name="변경",version=Version(one),code="WH-9999"})).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest,(await AuthTests.Post(c,Url(t),new{name="유형 오류",type="마음대로"})).StatusCode);

@@ -1,0 +1,14 @@
+.mobile-camera-preview { position:relative; width:100%; background:#101b2b; border-radius:10px; overflow:hidden; }
+.mobile-camera-preview video { display:block; width:100%; height:min(50dvh,420px); object-fit:contain; }
+.mobile-camera-preview video:not([data-ready="true"]) { visibility:hidden; }
+.mobile-scan-frame { pointer-events:none; position:absolute; inset:32% 10%; border:2px solid #fff; border-radius:8px; box-shadow:0 0 0 100vmax #0003; }
+.mobile-camera-dialog p { font-size:14px; line-height:1.5; }
+.mobile-camera-dialog > .organization-dialog-heading { display:flex; align-items:center; justify-content:flex-start; flex-wrap:nowrap; gap:12px; }
+.mobile-camera-dialog > .organization-dialog-heading > div:first-child { min-width:0; }
+.mobile-camera-dialog > .organization-dialog-heading h2 { margin:0; white-space:nowrap; }
+.camera-focus-controls { display:flex; flex:0 0 auto; }
+.camera-focus-controls button { white-space:nowrap; padding-inline:10px; }
+@media(max-width:400px) {
+  .mobile-camera-dialog > .organization-dialog-heading { gap:8px; }
+  .camera-focus-controls button { font-size:12px; padding-inline:8px; }
+}

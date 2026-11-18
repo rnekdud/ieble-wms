@@ -1,0 +1,10 @@
+import { createRoot } from 'react-dom/client'
+import Editor from '../../src/components/workspace/WarehouseWorkspaceEditor'
+import { BusinessAssigneeContext } from '../../src/business-assignee'
+import '../../src/index.css'
+import '../../src/components/workspace/workspace.css'
+import '../../src/business-ui.css'
+import '../../src/design-tokens.css'
+import '../../src/theme.css'
+const tenantId='11111111-1111-4111-8111-111111111111'
+createRoot(document.getElementById('root')!).render(<BusinessAssigneeContext.Provider value={{tenantId,current:{id:'qa-user',name:'QA',code:'QA'}}}><div className="wms-layout" style={{display:'block'}}><main className="wms-content" style={{margin:0,padding:16}}><Editor endpoint={`/api/tenants/${tenantId}/warehouses`} warehouseId={new URLSearchParams(location.search).has('new')?undefined:'w1'} initialStep={2} canCreate canUpdate canDelete onBack={()=>{}} onSaved={()=>{}}/></main></div></BusinessAssigneeContext.Provider>)

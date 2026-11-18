@@ -21,12 +21,29 @@ public static class AuthConfiguration
         services.AddHttpContextAccessor();
         services.AddScoped<IAuditActor, HttpAuditActor>();
         services.AddScoped<CompanyRegistrationService>();
+        services.AddScoped<LoginIdPolicy>();
         services.AddScoped<IebleWms.Api.Organization.MasterTransferService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseService>();
+        services.AddSingleton<IebleWms.Api.Barcodes.InternalBarcodeCandidates>();
+        services.AddScoped<IebleWms.Api.Products.ProductService>();
+        services.AddScoped<IebleWms.Api.Partners.PartnerService>();
+        services.AddScoped<IebleWms.Api.Receiving.ReceiptService>();
+        services.AddScoped<IebleWms.Api.Shipping.ShipmentService>();
+        services.AddScoped<IebleWms.Api.Inventory.InventoryService>();
+        services.AddScoped<IebleWms.Api.Inventory.StocktakeService>();
+        services.AddScoped<IebleWms.Api.Reports.StockOverviewService>();
+        services.AddScoped<IebleWms.Api.Reports.MovementStatsService>();
+        services.AddScoped<IebleWms.Api.Reports.StockHistoryService>();
+        services.AddScoped<IebleWms.Api.Reports.DashboardService>();
+        services.AddScoped<IebleWms.Api.Reports.WarehouseDashboardService>();
+        services.AddScoped<IebleWms.Api.Products.ProductUsagePolicy>();
+        services.AddSingleton<IebleWms.Api.Warehousing.RackBarcodeCandidates>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseWorkspaceService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehousePlanService>();
+        services.AddScoped<IebleWms.Api.Warehousing.WarehouseTemplateService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseSetupAccess>();
         services.AddScoped<TenantPermissionService>();
+        services.AddScoped<PermissionGradeService>();
         services.AddScoped<IebleWms.Api.Organization.OrganizationAudit>();
         services.AddScoped<IebleWms.Api.Organization.CompanyService>();
         services.AddScoped<IebleWms.Api.Organization.OrganizationStructureService>();
@@ -89,13 +106,19 @@ public static class AuthConfiguration
         });
         services.AddRateLimiter(options =>
         {
+            options.AddPolicy("stock-overview-export", context => RateLimitPartition.GetConcurrencyLimiter(
+                context.Request.RouteValues["tenantId"]?.ToString() ?? "anonymous",
+                _ => new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 }));
             options.RejectionStatusCode = 429;
             options.OnRejected = async (context, token) =>
             {
                 context.HttpContext.Response.Headers.RetryAfter = "60";
                 await context.HttpContext.Response.WriteAsJsonAsync(new { message = "요청이 많습니다. 잠시 후 다시 시도해 주세요." }, token);
             };
-            foreach (var (name, limit) in new[] { ("login", 10), ("register", 3), ("password-change", 10) })
+            options.AddPolicy("login-id-check", context => RateLimitPartition.GetFixedWindowLimiter(
+                    $"{context.User.FindFirstValue(ClaimTypes.NameIdentifier)}:{context.Connection.RemoteIpAddress}",
+                    _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            foreach (var (name, limit) in new[] { ("login", 10), ("register", 3), ("registration-login-id-check", 15), ("password-change", 10) })
                 options.AddPolicy(name, context => RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -135,11 +158,18 @@ internal sealed class WmsAuthorizationHandler(WmsDbContext db, MembershipAccessS
             if (parts.Length == 3 && await permissions.AllowsAsync(userId, tenantId, parts[1], parts[2])) context.Succeed(requirement);
             return;
         }
-        if (requirement.Scope == "manager" && role is not (TenantRole.Master or TenantRole.Administrator)) return;
+        if (requirement.Scope == "manager" && role is not (TenantRole.Master or TenantRole.Administrator))
+        {
+            // Custom roles may satisfy a legacy manager gate only on an explicitly permission-guarded endpoint.
+            var policies = request?.GetEndpoint()?.Metadata.GetOrderedMetadata<IAuthorizeData>()
+                .Select(x => x.Policy).Where(x => x?.StartsWith("Permission:", StringComparison.Ordinal) == true).ToArray();
+            if (policies == null || policies.Length == 0 || !await db.TenantMemberships.AnyAsync(x => x.TenantId == tenantId && x.UserId == userId && x.AccountType == "Internal" && x.PermissionGradeId != null)) return;
+            foreach (var policy in policies) { var parts = policy!.Split(':'); if (!await permissions.AllowsAsync(userId, tenantId, parts[1], parts[2])) return; }
+        }
         if (requirement.Scope == "active")
         {
             var tenant = await db.Tenants.AsNoTracking().SingleOrDefaultAsync(x => x.Id == tenantId);
-            if (tenant is null || !billing.Evaluate(tenant).CanAccessWms) return;
+            if (tenant is null || !(await billing.EvaluateWorkspace(tenant)).CanAccessWms) return;
         }
         context.Succeed(requirement);
     }

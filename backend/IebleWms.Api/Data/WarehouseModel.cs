@@ -49,6 +49,7 @@ internal static class WarehouseModel
         z.Property(x => x.CreationRequestHash).HasMaxLength(64);
         z.HasOne<Warehouse>().WithMany().HasForeignKey(x => new { x.TenantId, x.WarehouseId }).OnDelete(DeleteBehavior.Restrict);
         var r = Item<WarehouseRack>(builder, "WarehouseRacks", 32);
+        r.HasQueryFilter(x => x.DeletedAt == null);
         r.HasKey(x => new { x.TenantId, x.WarehouseId, x.Id });
         r.HasIndex(x => new { x.TenantId, x.WarehouseId, x.Code }).IsUnique();
         r.HasIndex(x => new { x.TenantId, x.WarehouseId, x.CreationRequestId }).IsUnique();
@@ -57,6 +58,7 @@ internal static class WarehouseModel
         r.HasOne<WarehouseZone>().WithMany().HasForeignKey(x => new { x.TenantId, x.WarehouseId, x.ZoneId }).OnDelete(DeleteBehavior.Restrict);
         r.ToTable("WarehouseRacks", t => t.HasCheckConstraint("CK_Racks_Dimensions", "\"Levels\" BETWEEN 1 AND 100 AND \"Bays\" BETWEEN 1 AND 100 AND \"Levels\" * \"Bays\" <= 1000"));
         var l = Item<StorageLocation>(builder, "StorageLocations", 64);
+        l.HasQueryFilter(x => x.DeletedAt == null);
         l.HasKey(x => new { x.TenantId, x.WarehouseId, x.Id });
         l.HasIndex(x => new { x.TenantId, x.WarehouseId, x.Code }).IsUnique();
         l.HasIndex(x => new { x.TenantId, x.WarehouseId, x.RackId, x.Level, x.Bay }).IsUnique();

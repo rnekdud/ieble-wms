@@ -9,17 +9,20 @@ namespace IebleWms.Api.Services;
 
 public sealed record RegistrationResult(bool Succeeded, bool Conflict, string? Message, string? Code = null);
 
-public sealed class CompanyRegistrationService(WmsDbContext db, UserManager<ApplicationUser> users, IebleWms.Api.Billing.BillingAccessService billing, TimeProvider clock)
+public sealed class CompanyRegistrationService(WmsDbContext db, UserManager<ApplicationUser> users, IebleWms.Api.Billing.BillingAccessService billing, TimeProvider clock, LoginIdPolicy loginIds)
 {
     public const string DuplicateCompanyMessage = "이미 등록된 기업입니다. 기존 기업 계정으로 로그인하거나, 계정 등록이 필요한 경우 기업 관리자에게 문의해 주세요.";
     public async Task<RegistrationResult> RegisterAsync(RegisterCompanyRequest request, CancellationToken token)
     {
         var email = request.Email.Trim();
+        var loginId = string.IsNullOrWhiteSpace(request.LoginId) ? email : request.LoginId.Trim();
         var businessNumber = BusinessRegistrationNumber.Normalize(request.BusinessRegistrationNumber);
         if (!BusinessRegistrationNumber.IsValid(businessNumber) || string.IsNullOrWhiteSpace(request.CompanyName))
             return new(false, false, "기업명과 사업자등록번호를 확인해 주세요.");
         if (await db.Tenants.AnyAsync(x => x.BusinessRegistrationNumber == businessNumber, token))
             return new(false, true, DuplicateCompanyMessage, "duplicate_company");
+        if (await loginIds.ExistsAsync(loginId, token))
+            return new(false, true, LoginIdPolicy.DuplicateMessage, "duplicate_login_id");
         if (await db.Users.AnyAsync(x => x.NormalizedEmail == users.NormalizeEmail(email), token))
             return new(false, true, "이미 등록된 이메일입니다. 기존 계정으로 로그인해 주세요.", "duplicate_email");
 
@@ -28,12 +31,14 @@ public sealed class CompanyRegistrationService(WmsDbContext db, UserManager<Appl
         {
             var user = new ApplicationUser
             {
-                UserName = email, Email = email, DisplayName = request.ContactName.Trim(),
+                UserName = loginId, Email = email, DisplayName = request.ContactName.Trim(),
                 PhoneNumber = request.ContactPhone.Trim(), SystemRole = SystemRole.None,
                 MustChangePassword = false // Masters keep their chosen signup password; staff initialization is separate.
             };
             var created = await users.CreateAsync(user, request.Password);
-            if (!created.Succeeded && created.Errors.Any(x => x.Code is "DuplicateEmail" or "DuplicateUserName"))
+            if (!created.Succeeded && created.Errors.Any(x => x.Code == "DuplicateUserName"))
+                return new(false, true, LoginIdPolicy.DuplicateMessage, "duplicate_login_id");
+            if (!created.Succeeded && created.Errors.Any(x => x.Code == "DuplicateEmail"))
                 return await db.Tenants.AnyAsync(x => x.BusinessRegistrationNumber == businessNumber, token)
                     ? new(false, true, DuplicateCompanyMessage, "duplicate_company")
                     : new(false, true, "이미 등록된 이메일입니다. 기존 계정으로 로그인해 주세요.", "duplicate_email");
@@ -50,7 +55,7 @@ public sealed class CompanyRegistrationService(WmsDbContext db, UserManager<Appl
             billing.InitializeNewContract(tenant);
             db.BillingChanges.Add(new BillingChange { TenantId = tenant.Id, ActorId = user.Id, ChangedAt = clock.GetUtcNow(), Action = "SubscriptionCreated",
                 AfterJson = System.Text.Json.JsonSerializer.Serialize(new { tenant.BillingPolicyVersion, tenant.TrialStartedAt, tenant.TrialEndsAt, tenant.FirstChargeAt, tenant.BillingAnchorDay, tenant.BillingTimeZone, billing.Policy.MonthlyPerUserKrw, billing.Policy.MonthlyBaseKrw, billing.Policy.IncludedUsers }) });
-            db.TenantMemberships.Add(new TenantMembership { User = user, Tenant = tenant, Role = TenantRole.Master, IsDefault = true, DisplayName = request.ContactName.Trim(),
+            db.TenantMemberships.Add(new TenantMembership { User = user, Tenant = tenant, Role = TenantRole.Master, IsDefault = true, DisplayName = request.ContactName.Trim(), ContactPhone = request.ContactPhone.Trim(),
                 BillingStartsAt = billing.FirstMemberChargeAt(tenant, new TenantMembership { CreatedAt = clock.GetUtcNow() }) });
             await db.SaveChangesAsync(token);
             await transaction.CommitAsync(token);
@@ -61,6 +66,8 @@ public sealed class CompanyRegistrationService(WmsDbContext db, UserManager<Appl
             // The unique indexes also protect against concurrent signups; never expose SQL/parameter details.
             await transaction.RollbackAsync(token);
             await transaction.DisposeAsync();
+            if (ex.InnerException is PostgresException { ConstraintName: "UserNameIndex" })
+                return new(false, true, LoginIdPolicy.DuplicateMessage, "duplicate_login_id");
             var companyExists = ex.InnerException is PostgresException { ConstraintName: "IX_Tenants_BusinessRegistrationNumber" }
                 || await db.Tenants.AnyAsync(x => x.BusinessRegistrationNumber == businessNumber, token);
             return companyExists

@@ -1,14 +1,21 @@
 .wms-pagination {
   container-type: inline-size;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
   width: 100%;
   min-width: 0;
-  margin-top: 20px;
-  padding-block: 4px;
+  margin-top: 10px;
+  margin-bottom: 14px;
+  padding-block: 0;
 }
+.wms-pagination-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+:root body .wms-pagination .table-page-size { justify-self:end; width:auto; margin:0; }
+:root body .wms-pagination .table-page-size > label { gap:6px; font-size:12px; }
+:root body .wms-pagination .table-page-size select { width:72px!important; height:28px!important; min-height:28px!important; padding:2px 22px 2px 8px!important; font-size:12px; line-height:22px; border-radius:6px; }
 .wms-pagination-summary {
   color: #667e77;
   font-size: 12px;
@@ -50,8 +57,12 @@
 .wms-pagination-buttons button[aria-current='page']:hover { background: #105c57; }
 .wms-pagination-buttons button:disabled { cursor: default; opacity: 0.45; }
 @container (max-width: 760px) {
-  .wms-pagination-summary { grid-column: 1 / -1; }
-  .wms-pagination-buttons { grid-column: 1 / -1; }
+  .wms-pagination-layout { grid-template-columns:minmax(0,1fr) auto; gap:8px 12px; }
+  .wms-pagination-summary { grid-column:1 / -1; }
+  .wms-pagination-buttons { grid-column:1 / -1; }
+  .wms-pagination-layout:has(> .table-page-size) > .wms-pagination-buttons { grid-column:1; }
+  .wms-pagination-layout > .table-page-size { grid-column:2; }
+  .wms-pagination-layout > .table-page-size > label > span { display:none; }
 }
 @container (max-width: 360px) {
   .wms-pagination-buttons { gap: 2px; }
@@ -59,4 +70,23 @@
 }
 @container (max-width: 300px) {
   .wms-pagination-buttons button { min-width: 24px; padding-inline: 1px; }
+}
+
+/* Mobile pagination keeps numeric and icon controls the same square size. */
+@media(max-width:1024px) {
+  :root body .wms-pagination .wms-pagination-buttons > button {
+    --ui-icon-min-height:32px;
+    box-sizing:border-box;
+    width:32px; min-width:32px; max-width:32px;
+    height:32px; min-height:32px; max-height:32px;
+    flex:0 0 32px; padding:0; line-height:1;
+  }
+  @container(max-width:300px) {
+    :root body .wms-pagination .wms-pagination-buttons > button {
+      --ui-icon-min-height:28px;
+      width:28px; min-width:28px; max-width:28px;
+      height:28px; min-height:28px; max-height:28px;
+      flex-basis:28px;
+    }
+  }
 }

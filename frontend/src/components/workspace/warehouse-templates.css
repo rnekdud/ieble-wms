@@ -1,0 +1,37 @@
+.template-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;}
+.template-toolbar>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.template-toolbar span{font-size:12px;color:#65796d;margin-right:8px;}
+.warehouse-workspace-editor.warehouse-wizard .plan-studio .plan-workbench.has-properties{grid-template-columns:minmax(0,1fr) 380px;}
+.warehouse-workspace-editor.warehouse-wizard .plan-studio .plan-properties{max-height:none;overflow:visible;padding:16px;}
+.rack-core-row{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:10px;}
+.rack-secondary-row{display:grid;grid-template-columns:1.6fr 1fr;gap:10px;}
+.rack-core-fields :is(.rack-core-row,.rack-secondary-row)>label{min-width:0;margin:0 0 10px!important;}
+.rack-core-fields :is(input,select){width:100%;min-width:0;}
+.rack-location-count{font-size:12px;padding:9px 10px;margin:3px 0 12px;background:#eef6f2;color:#285c4c;border-radius:5px;}
+.rack-location-count small{display:block;margin-top:5px;color:#687a72;}
+.rack-create-actions{display:flex;justify-content:flex-end;gap:8px;margin:12px 0 16px;}
+.rack-create-actions .primary{min-width:108px;}
+.rack-shelf-preview{padding-top:12px;border-top:1px solid #dce7e1;margin-top:12px;min-width:0;}
+.rack-shelf-preview summary{cursor:pointer;font-size:12px;font-weight:600;}
+.shelf-mini-grid{display:grid;gap:3px;margin:10px 0;overflow-x:auto;max-width:100%;padding:2px;}
+.shelf-mini-grid span{font-size:10px;text-align:center;padding:6px 2px;background:#edf5f2;border:1px solid #d1e3d9;border-radius:3px;}
+.rack-shelf-preview>small{font-size:11px;color:#647a6f;}
+.template-dialog-body{padding:0 26px 22px;}
+.template-dialog-body label{display:grid;gap:7px;margin-bottom:14px;}
+.template-dialog-body :is(input,textarea){width:100%;}
+.template-browser{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start;}
+.template-list{display:grid;gap:8px;}
+.template-option{text-align:left;display:grid;gap:6px;padding:12px;border:1px solid #d9e4df;background:#fff;color:#274b3e;border-radius:6px;overflow-wrap:anywhere;}
+.template-option[aria-pressed=true]{background:#eef7f1;border-color:#21826c;}
+.template-option span,.template-option small{font-size:12px;color:#62776c;line-height:1.6;}
+.template-preview{min-width:0;}
+.template-preview .warehouse-plan-canvas{height:300px;min-height:220px;}
+.template-metadata-actions{display:flex;justify-content:flex-end;gap:12px;}
+@media(max-width:1100px){.warehouse-workspace-editor.warehouse-wizard .plan-studio .plan-workbench.has-properties{grid-template-columns:minmax(0,1fr);}}
+@media(max-width:760px){.template-browser{grid-template-columns:minmax(0,1fr);}.template-dialog-body{padding:0 16px 16px;}.template-toolbar{align-items:stretch;}.template-toolbar span{width:100%;}.rack-core-row{grid-template-columns:1.4fr 1fr 1fr;}.template-preview .warehouse-plan-canvas{height:240px;}}
+
+.warehouse-workspace-editor .workspace-structure-row > .organization-row-actions{margin:0;padding:0;border:0;gap:10px;}
+.warehouse-workspace-editor .workspace-structure-row{padding:8px 0;gap:6px;}
+
+:root body .template-dialog-body > label { display:flex; flex-direction:column; gap:5px; width:100%; }
+:root body .template-dialog-body > label > :is(input,textarea) { width:100%; max-width:100%; box-sizing:border-box; }

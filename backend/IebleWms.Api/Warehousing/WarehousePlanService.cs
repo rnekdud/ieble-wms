@@ -6,7 +6,7 @@ using IebleWms.Api.Organization;
 using Microsoft.EntityFrameworkCore;
 namespace IebleWms.Api.Warehousing;
 
-public sealed class WarehousePlanService(WmsDbContext db, TimeProvider clock)
+public sealed partial class WarehousePlanService(WmsDbContext db, TimeProvider clock)
 {
     private static readonly HashSet<string> Types = ["wall","zone","rack","aisle","door","text","shape"];
     private static OrganizationException Missing()=>new(404,"현재 기업의 창고 또는 랙을 찾을 수 없습니다.");
@@ -25,14 +25,22 @@ public sealed class WarehousePlanService(WmsDbContext db, TimeProvider clock)
         return await db.WarehouseChanges.AsNoTracking().Where(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.Action=="PlanSaved")
             .OrderByDescending(x=>x.Id).Take(50).Select(x=>new{x.Id,x.ChangedByUserId,x.ChangedAt,x.BeforeJson,x.AfterJson}).ToListAsync(ct);
     }
-    public async Task<object> Rack(Guid tenant,Guid warehouse,Guid rack,CancellationToken ct)
+    public async Task<object> Rack(Guid tenant,Guid warehouse,Guid rack,CancellationToken ct,bool inventoryAvailable=false)
     {
         await RequireWarehouse(tenant,warehouse,ct);
         var r=await db.WarehouseRacks.AsNoTracking().SingleOrDefaultAsync(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.Id==rack,ct)??throw Missing();
         var locations=await db.StorageLocations.AsNoTracking().Where(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.RackId==rack).OrderBy(x=>x.Level).ThenBy(x=>x.Bay).ToListAsync(ct);
         var warehouseActive=await db.Warehouses.Where(x=>x.TenantId==tenant&&x.Id==warehouse).Select(x=>x.IsActive).SingleAsync(ct);
         var zoneActive=r.ZoneId==null||await db.WarehouseZones.AnyAsync(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.Id==r.ZoneId&&x.IsActive,ct);
-        return new{rack=r,locations=locations.Select(l=>new{location=l,effectiveActive=l.IsActive&&r.IsActive&&warehouseActive&&zoneActive}),inventoryAvailable=false};
+        var warehouseName=await db.Warehouses.Where(x=>x.TenantId==tenant&&x.Id==warehouse).Select(x=>x.Name).SingleAsync(ct);
+        var zoneName=r.ZoneId==null?null:await db.WarehouseZones.Where(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.Id==r.ZoneId).Select(x=>x.Name).SingleOrDefaultAsync(ct);
+        return new{rack=r,warehouseName,zoneName,locations=locations.Select(l=>new{location=l,effectiveActive=l.IsActive&&r.IsActive&&warehouseActive&&zoneActive}),inventoryAvailable};
+    }
+    public async Task RequireRackLocation(Guid tenant,Guid warehouse,Guid rack,Guid? location,CancellationToken ct)
+    {
+        await RequireWarehouse(tenant,warehouse,ct);
+        if(!await db.WarehouseRacks.AnyAsync(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.Id==rack,ct))throw Missing();
+        if(location.HasValue&&!await db.StorageLocations.AnyAsync(x=>x.TenantId==tenant&&x.WarehouseId==warehouse&&x.RackId==rack&&x.Id==location,ct))throw Missing();
     }
     public async Task<object> Save(Guid tenant,Guid warehouse,Guid actor,SaveWarehousePlanRequest request,CancellationToken ct)
     {

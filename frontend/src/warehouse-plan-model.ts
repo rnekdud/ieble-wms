@@ -40,3 +40,11 @@ export function duplicateRackLinks(doc: PlanDocument): boolean {
   const ids = doc.objects.flatMap(o => o.rackId ? [o.rackId] : [])
   return new Set(ids).size !== ids.length
 }
+
+// Array order is the existing 2D drawing order; only reorder visual objects, never their IDs or links.
+export function orderPlanObjects(doc: PlanDocument, ids: string[], front: boolean): PlanDocument {
+  const chosen = new Set(ids), selected = doc.objects.filter(o => chosen.has(o.id)), others = doc.objects.filter(o => !chosen.has(o.id))
+  if (!selected.length) return doc
+  const objects = front ? [...others, ...selected] : [...selected, ...others]
+  return objects.every((o, i) => o === doc.objects[i]) ? doc : { ...doc, objects }
+}

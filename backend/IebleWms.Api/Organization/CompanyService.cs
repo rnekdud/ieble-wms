@@ -10,7 +10,7 @@ namespace IebleWms.Api.Organization;
 
 public sealed class CompanyService(WmsDbContext db, OrganizationAudit audit)
 {
-    public static object View(Tenant t) => new { t.Id, t.Name, t.RepresentativeName, t.BusinessRegistrationNumber, t.Address, t.ContactName, t.ContactPhone, t.Version };
+    public static object View(Tenant t) => new { t.Id, t.Name, t.RepresentativeName, t.BusinessRegistrationNumber, t.Address, t.ContactName, t.ContactPhone, t.LogoVersion, t.Version };
 
     public async Task<object> GetAsync(Guid tenantId, CancellationToken token)
     {
@@ -34,6 +34,18 @@ public sealed class CompanyService(WmsDbContext db, OrganizationAudit audit)
         var tenant = await db.Tenants.SingleAsync(x => x.Id == tenantId, token);
         if (tenant.Version != request.Version) throw Stale();
         var before = View(tenant);
+        if (request.Logo != null)
+        {
+            // Validate before replacing anything. Logo, company and audit commit atomically.
+            var logo = request.Logo.Remove ? null : await IebleWms.Api.Support.CompanyLogoFiles.Read(tenantId, request.Logo, token);
+            var old = await db.CompanyLogos.SingleOrDefaultAsync(x => x.TenantId == tenantId, token);
+            if (logo == null) { if (old != null) db.CompanyLogos.Remove(old); tenant.LogoVersion = null; }
+            else {
+                if (old == null) db.CompanyLogos.Add(logo);
+                else { old.FileName=logo.FileName;old.ContentType=logo.ContentType;old.Content=logo.Content; }
+                tenant.LogoVersion = Guid.NewGuid();
+            }
+        }
         tenant.Name = request.Name.Trim(); tenant.RepresentativeName = Clean(request.RepresentativeName);
         tenant.Address = Clean(request.Address); tenant.ContactName = Clean(request.ContactName); tenant.ContactPhone = Clean(request.ContactPhone);
         if (JsonSerializer.Serialize(before) == JsonSerializer.Serialize(View(tenant))) return View(tenant);

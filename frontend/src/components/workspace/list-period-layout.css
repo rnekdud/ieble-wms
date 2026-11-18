@@ -1,0 +1,101 @@
+/* Dates and filters share the controls row; only quick period presets sit below it. */
+:root body .list-search-filters:has(.report-period-fields) {
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:flex-start; gap:8px;
+}
+:root body .list-search-filters:has(.report-period-fields) .report-period-fields { display:contents; }
+:root body .list-search-filters:has(.report-period-fields) .report-period-range {
+  flex:0 0 300px; width:300px; min-width:300px; order:-1; margin:0;
+}
+:root body .list-search-filters:has(.report-period-fields) .report-period-tabs {
+  flex:0 1 auto; width:fit-content; order:2; justify-content:flex-start; margin:0;
+}
+:root body .list-search-filters:has(.report-period-fields) > :is(label,.searchable-choice),
+:root body .list-search-filters:has(.report-period-fields) :is(.stats-period,.stats-search,.overview-advanced) > :is(label,.searchable-choice) {
+  flex:1 1 90px; width:auto; min-width:90px; max-width:180px; margin:0; order:0;
+}
+:root body .list-search-filters:has(.report-period-fields) label:has(> input:not([type=date])) {
+  flex:1 1 160px; width:auto; max-width:260px;
+}
+:root body .list-search-filters:has(.report-period-fields) > .list-search-actions {
+  flex:0 0 auto; width:auto; margin:0; order:0;
+}
+/* Force a second row without stretching the segmented control background. */
+:root body .list-search-filters:has(.report-period-fields)::after {
+  content:''; flex:0 0 100%; height:0; margin-block:-4px; order:1;
+}
+:root body .list-search-filters:has(.report-period-fields) .overview-help { order:3; }
+@media (min-width:1000px) and (max-width:1350px) {
+  :root body .list-search-filters:has(.report-period-fields) > :is(label,.searchable-choice),
+  :root body .list-search-filters:has(.report-period-fields) :is(.stats-period,.stats-search,.overview-advanced) > :is(label,.searchable-choice) { flex-basis:70px; min-width:70px; }
+  :root body .list-search-filters:has(.report-period-fields) label:has(> input:not([type=date])) { flex-basis:110px; }
+}
+@media (max-width:600px) {
+  :root body .list-search-filters:has(.report-period-fields) .report-period-range { flex:1 0 100%; min-width:0; max-width:100%; }
+  :root body .list-search-filters:has(.report-period-fields) .report-period-tabs { overflow-x:auto; }
+}
+
+:root body .list-search-filters:has(.report-period-fields) select,
+:root body .list-search-filters:has(.report-period-fields) .searchable-choice-placeholder {
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+:root body .list-search-filters:has(.report-period-fields) select option { white-space:normal; }
+:root body .list-search-filters:has(.report-period-fields) .report-period-dates input { padding-inline:8px; }
+
+:root body .list-search-filters:has(.report-period-fields) select { display:block; appearance:none; }
+
+/* Field DOM order is selects, search inputs, actions. Keep widths independent of first-child. */
+:root body .list-search-filters.select-first-filters label:has(> select) { min-width:0; }
+:root body .list-search-filters.select-first-filters label:has(> input:not([type=date])) {
+  flex:1 1 160px; width:auto; min-width:0; max-width:260px;
+}
+@media (max-width:767px) {
+  :root body .wms-content .list-search-filters.select-first-filters {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:row;
+    width:100%; min-width:0; gap:12px 8px; align-items:end;
+  }
+  :root body .wms-content .select-first-filters > :is(.products-toolbar,.inventory-filter-grid) { display:contents; }
+  :root body .wms-content .select-first-filters > :is(label,.searchable-choice),
+  :root body .wms-content .select-first-filters > :is(.products-toolbar,.overview-main-filters,.inventory-filter-grid) > :is(label,.searchable-choice) {
+    grid-column:auto; grid-row:auto; min-width:0; width:100%; max-width:100%; margin:0;
+  }
+  :root body .wms-content .list-search-filters.select-first-filters > label:has(> input:not([type=date])) {
+    grid-column:1/-1; grid-row:auto; width:100%; max-width:100%;
+  }
+  :root body .wms-content .list-search-filters.select-first-filters > .list-search-actions {
+    grid-column:1/-1; grid-row:auto; width:auto; justify-content:flex-start; gap:8px;
+  }
+  :root body .wms-content .list-search-filters.select-first-filters .report-period-range,
+  :root body .wms-content .list-search-filters.select-first-filters .report-period-tabs,
+  :root body .wms-content .list-search-filters.select-first-filters .overview-help { grid-column:1/-1; min-width:0; max-width:100%; }
+  :root body .wms-content .list-search-filters.select-first-filters::after { display:none; }
+}
+
+/* Keep quick periods immediately after dates before the remaining filters. */
+@media (max-width:1024px) {
+  :root body .list-search-filters:has(.report-period-fields) .report-period-range { order:-3; }
+  :root body .list-search-filters:has(.report-period-fields) .report-period-tabs { order:-2; }
+  :root body .list-search-filters:has(.report-period-fields)::after { order:-1; }
+}
+@media (min-width:768px) and (max-width:1024px) {
+  :root body .list-search-filters:has(.report-period-fields) .report-period-range { flex:0 0 100%; width:100%; min-width:0; }
+}
+@media (min-width:1025px) {
+  /* Keep dates and presets together even when adjacent PC filters wrap. */
+  :root body .list-search-filters.select-first-filters:has(.report-period-fields) { align-items:flex-start; }
+  :root body .list-search-filters.select-first-filters .report-period-fields {
+    display:flex; flex-direction:column; align-items:flex-start; gap:8px;
+    flex:0 0 300px; width:300px; min-width:0; order:-1;
+  }
+  :root body .list-search-filters.select-first-filters .report-period-fields > .report-period-range { flex:none; width:100%; min-width:0; order:0; }
+  :root body .list-search-filters.select-first-filters .report-period-fields > .report-period-tabs { flex:none; width:fit-content; max-width:100%; order:0; }
+  :root body .list-search-filters.select-first-filters:has(.report-period-fields)::after { display:none; }
+  /* Search and actions wrap together; their bottom edge follows the input, not the date tabs. */
+  :root body .list-search-filters:has(.report-period-fields) > .list-search-query-actions {
+    display:flex; flex:1 1 322px; min-width:282px; max-width:422px; width:auto;
+    align-items:flex-end; align-self:flex-start; gap:8px; margin:0; order:0;
+  }
+  :root body .list-search-filters > .list-search-query-actions > label {
+    display:flex; flex-direction:column; flex:1 1 160px; width:auto; min-width:120px; max-width:260px; gap:6px; margin:0;
+  }
+  :root body .list-search-filters > .list-search-query-actions > .list-search-actions { flex:none; margin:0; padding:0; }
+}

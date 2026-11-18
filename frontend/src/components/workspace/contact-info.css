@@ -1,0 +1,10 @@
+.contact-info-link { display: inline-block; max-width: 13rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; color: var(--brand, #19776c); }
+.contact-info-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.organization-user-table .contact-info-link { max-width: 11rem; }
+.organization-user-table td:nth-child(4),
+.organization-user-table td:nth-child(5),
+.organization-user-table td:nth-child(7),
+.organization-user-table td:nth-child(8) { min-width: 5.5rem; }
+.organization-user-table td:nth-child(4),
+.organization-user-table td:nth-child(5),
+.organization-user-table .badge { white-space: nowrap; }

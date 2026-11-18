@@ -11,7 +11,7 @@ namespace IebleWms.Api.Organization;
 
 public sealed record EmployeeCredentialResult(EmployeeView User);
 
-public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser> users, BillingAccessService billing, OrganizationAudit audit, TimeProvider clock, OrganizationStructureService structure)
+public sealed partial class EmployeeService(WmsDbContext db, UserManager<ApplicationUser> users, BillingAccessService billing, OrganizationAudit audit, TimeProvider clock, OrganizationStructureService structure, IebleWms.Api.Permissions.PermissionGradeService grades, IebleWms.Api.Permissions.TenantPermissionService permissions, IebleWms.Api.Services.LoginIdPolicy loginIds)
 {
     // Scoped exception for initial credentials only. Never change shared Identity password options
     // or validators: personal passwords and public company signup keep the normal policy.
@@ -22,39 +22,49 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         user.PasswordHash = users.PasswordHasher.HashPassword(user, user.UserName);
         return await users.UpdateSecurityStampAsync(user);
     }
-    private static object Snapshot(TenantMembership m) => new { m.UserId, m.DisplayName, role = m.Role.ToString(), m.IsActive, m.DeactivatedAt, m.DepartmentId, m.PositionId };
+    private static object Snapshot(TenantMembership m) => new { m.UserId, m.PermissionGradeId, m.DisplayName, role = m.Role.ToString(), m.IsActive, m.DeactivatedAt, m.DepartmentId, m.PositionId, m.AccountType, m.PartnerId, m.CompanyName, m.BusinessRegistrationNumber, m.CompanyPhone, m.ContactPhone, m.ContactEmail, m.ExternalPermissionsJson, m.CollaboratorId, m.UseIndividualPermissions };
 
     public async Task<EmployeeCredentialResult> CreateAsync(Guid tenantId, Guid actor, CreateEmployeeRequest request, CancellationToken token)
     {
         var name = request.Name.Trim(); var loginId = request.LoginId.Trim(); var email = request.Email.Trim();
         if (name.Length == 0 || email.Any(char.IsControl) || request.Role is not ("Administrator" or "Employee"))
             throw new OrganizationException(400, "이름, 이메일, 권한을 확인해 주세요.");
-        var normalizedName = users.NormalizeName(loginId); var normalizedEmail = users.NormalizeEmail(email);
-        if (await db.Users.AnyAsync(x => x.NormalizedUserName == normalizedName || x.NormalizedEmail == normalizedEmail, token)) throw Duplicate();
+        request.ContactPhone = NormalizeContactPhone(request.ContactPhone);
+        var normalizedEmail = users.NormalizeEmail(email);
+        if (await loginIds.ExistsAsync(loginId, token)) throw DuplicateLogin();
+        if (await db.Users.AnyAsync(x => x.NormalizedEmail == normalizedEmail, token)) throw Duplicate();
         await using var transaction = await db.Database.BeginTransactionAsync(token);
         await OrganizationStructureService.LockAsync(db, tenantId, token);
         var actorRole = await db.TenantMemberships.AsNoTracking().Where(x => x.TenantId == tenantId && x.UserId == actor && x.IsActive && x.User.IsActive).Select(x => (TenantRole?)x.Role).SingleOrDefaultAsync(token);
-        if (actorRole is not (TenantRole.Master or TenantRole.Administrator) || (request.Role == "Administrator" && actorRole != TenantRole.Master))
+        if ((actorRole is not (TenantRole.Master or TenantRole.Administrator) && !await permissions.AllowsAsync(actor, tenantId, "users", "create", token)) || (request.Role == "Administrator" && actorRole != TenantRole.Master))
             throw new OrganizationException(403, "기업 관리자 지정은 기업 마스터만 할 수 있습니다.");
+        if (request.PermissionGradeId != null && actorRole != TenantRole.Master) throw new OrganizationException(403, "권한 등급 지정은 기업 마스터만 할 수 있습니다.");
+        await grades.ValidateAssignment(tenantId, request.Role, request.AccountType, request.PermissionGradeId, true, token);
+        var collaborator = await ResolveCollaborator(tenantId, request.AccountType, request.CollaboratorId, request.PartnerId, request.CompanyName, request.BusinessRegistrationNumber, request.CompanyPhone, null, token);
+        if (collaborator != null) { request.PartnerId = collaborator.PartnerId; request.CompanyName = collaborator.Name; }
+        await ValidateExternal(tenantId, request.AccountType, request.Role, request.DepartmentId, request.PositionId, request.PartnerId, request.CompanyName, null, token);
         await structure.ValidateAssignmentAsync(tenantId, request.DepartmentId, request.PositionId, null, null, token);
         try
         {
             var user = new ApplicationUser { UserName = loginId, Email = email, DisplayName = name, MustChangePassword = true };
             var created = await users.CreateAsync(user);
-            if (!created.Succeeded) throw created.Errors.Any(x => x.Code is "DuplicateEmail" or "DuplicateUserName") ? Duplicate() : new OrganizationException(400, "직원 정보를 확인해 주세요.");
+            if (!created.Succeeded) throw created.Errors.Any(x => x.Code == "DuplicateUserName") ? DuplicateLogin() : created.Errors.Any(x => x.Code == "DuplicateEmail") ? Duplicate() : new OrganizationException(400, "직원 정보를 확인해 주세요.");
             var assigned = await SetInitialPasswordAsync(user);
             if (!assigned.Succeeded) throw new OrganizationException(409, "직원 생성이 충돌했습니다. 목록을 다시 확인해 주세요.");
             var tenant = await db.Tenants.SingleAsync(x => x.Id == tenantId, token);
             var membership = new TenantMembership { TenantId = tenantId, User = user, DisplayName = name,
-                Role = Enum.Parse<TenantRole>(request.Role), IsDefault = true, DepartmentId = request.DepartmentId, PositionId = request.PositionId,
+                PermissionGradeId = request.PermissionGradeId, Role = Enum.Parse<TenantRole>(request.Role), IsDefault = true, DepartmentId = request.DepartmentId, PositionId = request.PositionId,
                 BillingStartsAt = billing.FirstMemberChargeAt(tenant, new TenantMembership { CreatedAt = clock.GetUtcNow() }) };
+            membership.IsActive = request.IsActive; membership.DeactivatedAt = request.IsActive ? null : clock.GetUtcNow();
+            ApplyExternal(membership, request.AccountType, request.PartnerId, request.CompanyName, request.BusinessRegistrationNumber, request.CompanyPhone, request.ContactPhone, request.ContactEmail ?? email);
+            BindCollaborator(membership, collaborator);
             db.TenantMemberships.Add(membership);
-            audit.Add(tenantId, actor, "EmployeeCreated", new { }, new { user.Id, request.Role, membership.BillingStartsAt, membership.DepartmentId, membership.PositionId }, user.Id);
+            audit.Add(tenantId, actor, "EmployeeCreated", new { }, new { user.Id, membership.BillingStartsAt, membership = Snapshot(membership) }, user.Id);
             await db.SaveChangesAsync(token);
             await transaction.CommitAsync(token);
             return new(EmployeeView.From(membership, billing));
         }
-        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: "23505" }) { throw Duplicate(); }
+        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: "23505" }) { throw e.InnerException is PostgresException { ConstraintName: "UserNameIndex" } ? DuplicateLogin() : Duplicate(); }
     }
 
     public async Task<EmployeeView> UpdateAsync(Guid tenantId, Guid actor, Guid userId, UpdateEmployeeRequest request, CancellationToken token)
@@ -62,6 +72,19 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         await using var transaction = await db.Database.BeginTransactionAsync(token);
         await OrganizationStructureService.LockAsync(db, tenantId, token);
         var membership = await FindAsync(tenantId, userId, token);
+        request.AccountType ??= membership.AccountType;
+        var gradeId = request.PermissionGradeIdSpecified ? request.PermissionGradeId : membership.PermissionGradeId;
+        if (gradeId != membership.PermissionGradeId && (actor == userId || !await db.TenantMemberships.AnyAsync(x => x.TenantId == tenantId && x.UserId == actor && x.IsActive && x.User.IsActive && x.Role == TenantRole.Master, token)))
+            throw new OrganizationException(403, "권한 등급 변경은 기업 마스터만 할 수 있습니다.");
+        await grades.ValidateAssignment(tenantId, request.Role, request.AccountType, gradeId, gradeId != membership.PermissionGradeId || membership.Role.ToString() != request.Role || membership.AccountType != request.AccountType, token);
+        request.ContactPhone = request.ContactPhoneSpecified ? NormalizeContactPhone(request.ContactPhone) : membership.ContactPhone;
+        var collaborator = await ResolveCollaborator(tenantId, request.AccountType, request.CollaboratorId, request.PartnerId, request.CompanyName, request.BusinessRegistrationNumber, request.CompanyPhone, membership, token);
+        if (collaborator != null) { request.PartnerId = collaborator.PartnerId; request.CompanyName = collaborator.Name; }
+        await ValidateExternal(tenantId, request.AccountType, request.Role, request.DepartmentId, request.PositionId, request.PartnerId, request.CompanyName, membership.PartnerId, token);
+        if (membership.AccountType != request.AccountType) {
+            if (actor == userId || request.Role != "Employee" || !await db.TenantMemberships.AnyAsync(x => x.TenantId == tenantId && x.UserId == actor && x.IsActive && x.User.IsActive && x.Role == TenantRole.Master && x.AccountType == "Internal", token))
+                throw new OrganizationException(403, "계정 유형 변경은 기업 마스터가 일반 직원 권한으로만 처리할 수 있습니다. 본인 유형은 변경할 수 없습니다.");
+        }
         await structure.ValidateAssignmentAsync(tenantId, request.DepartmentId, request.PositionId, membership.DepartmentId, membership.PositionId, token);
         Protect(membership, actor, request.Role, request.IsActive);
         if (membership.Role.ToString() != request.Role && !await db.TenantMemberships.AsNoTracking().AnyAsync(x => x.TenantId == tenantId && x.UserId == actor && x.IsActive && x.User.IsActive && x.Role == TenantRole.Master, token))
@@ -69,7 +92,10 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         if (membership.Version != request.Version) throw Stale();
         if (string.IsNullOrWhiteSpace(request.Name) || request.Role is not ("Administrator" or "Employee")) throw new OrganizationException(400, "이름과 권한을 확인해 주세요.");
         var before = Snapshot(membership);
+        ApplyExternal(membership, request.AccountType, request.PartnerId, request.CompanyName, request.BusinessRegistrationNumber, request.CompanyPhone, request.ContactPhone, request.ContactEmail ?? membership.User.Email);
+        BindCollaborator(membership, collaborator);
         membership.DepartmentId = request.DepartmentId; membership.PositionId = request.PositionId;
+        membership.PermissionGradeId = gradeId;
         membership.DisplayName = request.Name.Trim(); membership.Role = Enum.Parse<TenantRole>(request.Role);
         if (membership.IsActive != request.IsActive) membership.DeactivatedAt = request.IsActive ? null : clock.GetUtcNow();
         membership.IsActive = request.IsActive;
@@ -86,13 +112,19 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
     {
         await using var tx = await db.Database.BeginTransactionAsync(token); await OrganizationStructureService.LockAsync(db, tenantId, token);
         var member = await FindAsync(tenantId, userId, token);
-        if (actor != userId || member.Role != TenantRole.Master) throw new OrganizationException(403, "마스터 본인의 부서·직급만 설정할 수 있습니다.");
+        if (actor != userId || member.Role != TenantRole.Master || member.User.SystemRole != SystemRole.None) throw new OrganizationException(403, "마스터 본인의 이메일·연락처·부서·직급만 설정할 수 있습니다.");
         if (member.Version != request.Version) throw Stale();
         await structure.ValidateAssignmentAsync(tenantId, request.DepartmentId, request.PositionId, member.DepartmentId, member.PositionId, token);
-        var before = Snapshot(member); member.DepartmentId = request.DepartmentId; member.PositionId = request.PositionId;
-        if (JsonSerializer.Serialize(before) != JsonSerializer.Serialize(Snapshot(member)))
+        var before = new { Profile = Snapshot(member), Email = member.User.Email };
+        member.DepartmentId = request.DepartmentId; member.PositionId = request.PositionId;
+        // Empty string is an explicit clear; null retains the legacy signup phone fallback.
+        // Never update the global identity phone or another tenant's contact.
+        if (request.ContactPhoneSpecified) member.ContactPhone = NormalizeContactPhone(request.ContactPhone) ?? "";
+        if (request.EmailSpecified) await UpdateMasterEmailAsync(member, request.Email, token);
+        var after = new { Profile = Snapshot(member), Email = member.User.Email };
+        if (JsonSerializer.Serialize(before) != JsonSerializer.Serialize(after))
         {
-            audit.Add(tenantId, actor, "MemberOrganizationUpdated", before, Snapshot(member), userId);
+            audit.Add(tenantId, actor, "MemberOrganizationUpdated", before, after, userId);
             try { await db.SaveChangesAsync(token); } catch (DbUpdateConcurrencyException) { throw Stale(); }
         }
         await tx.CommitAsync(token); return EmployeeView.From(member, billing);
@@ -103,6 +135,7 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         await using var transaction = await db.Database.BeginTransactionAsync(token);
         await OrganizationStructureService.LockAsync(db, tenantId, token);
         var membership = await FindAsync(tenantId, userId, token);
+        if (membership.AccountType == "External") throw new OrganizationException(403, "외부 협력사 로그인 계정의 비밀번호는 기업 관리자가 초기화할 수 없습니다. 계정 소유자가 직접 변경해야 합니다.");
         if (membership.Role == TenantRole.Master || membership.User.SystemRole != SystemRole.None || userId == actor) throw new OrganizationException(403, "마스터 또는 본인의 비밀번호는 이 화면에서 초기화할 수 없습니다.");
         if (membership.Version != version) throw Stale();
         if (!membership.IsActive || !membership.User.IsActive) throw new OrganizationException(409, "활성 상태인 직원만 비밀번호를 초기화할 수 있습니다.");
@@ -131,5 +164,7 @@ public sealed class EmployeeService(WmsDbContext db, UserManager<ApplicationUser
         if (membership.UserId == actor && (role != membership.Role.ToString() || !active)) throw new OrganizationException(403, "본인의 권한과 활성 상태는 변경할 수 없습니다.");
     }
     private static OrganizationException Stale() => new(409, "사용자 정보가 변경되었습니다. 목록을 새로 불러와 주세요.");
+    public Task<object> CheckLoginId(string value, CancellationToken token) => loginIds.CheckAsync(value, token);
+    private static OrganizationException DuplicateLogin()=>new(409,IebleWms.Api.Services.LoginIdPolicy.DuplicateMessage);
     private static OrganizationException Duplicate() => new(409, "이미 등록된 로그인 아이디 또는 이메일입니다. 기존 계정을 중복 생성하거나 다른 기업에 자동 연결하지 않습니다.");
 }

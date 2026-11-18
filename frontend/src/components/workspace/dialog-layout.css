@@ -1,0 +1,150 @@
+/* Dialog chrome is independent of the form's scrolling area. */
+dialog.organization-dialog.dialog-layout { padding:0; width:min(760px,calc(100vw - 40px)); max-width:none; max-height:calc(100dvh - 40px); overflow:hidden; border:1px solid #d7e1e5; border-radius:14px; color:#233f4c; }
+dialog.dialog-layout[open] { display:flex; flex-direction:column; }
+dialog.organization-dialog.dialog-small { width:min(520px,calc(100vw - 40px)); }
+dialog.organization-dialog.dialog-large { width:min(1200px,calc(100vw - 40px)); }
+body:has(dialog[open]) { overflow:hidden; }
+.dialog-layout > .organization-dialog-heading { position:relative; top:auto; margin:0; padding:24px 24px 8px; flex:none; border-bottom:0; background:#fff; }
+.dialog-layout .organization-dialog-heading h2 { font-size:20px; letter-spacing:-.5px; line-height:1.4; }
+.dialog-layout .organization-dialog-heading p { color:#6a7f89; margin:5px 0 0; font-size:12px; line-height:1.5; }
+.dialog-layout .dialog-body { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:20px 24px; scrollbar-gutter:stable; }
+.dialog-layout .dialog-body:has(> .dialog-form:not([hidden])) { display:flex; flex-direction:column; overflow:hidden; padding:0; }
+.dialog-layout .dialog-body > .alert { flex:none; margin:12px 24px; }
+.dialog-layout .dialog-form:not([hidden]) { display:flex; flex-direction:column; min-height:0; overflow:hidden; margin:0; }
+.dialog-layout .dialog-form-scroll > fieldset { display:block; min-height:0; min-width:0; margin:0; border:0; padding:0 24px; }
+.dialog-layout .dialog-actions { display:flex; flex:none; justify-content:flex-end; align-items:center; gap:8px; padding:16px 24px; margin:0; border-top:1px solid #dfe7eb; background:#f7f9fa; }
+.dialog-layout .dialog-actions > button { min-width:0; width:auto; flex:0 1 auto; }
+.dialog-layout .dialog-section { display:grid; grid-template-columns:135px minmax(0,1fr); gap:26px; padding:24px 0; margin:0; border:0; border-bottom:1px solid #e7edef; background:transparent; }
+.dialog-layout .dialog-section:last-child { border-bottom:0; }
+.dialog-layout .dialog-section-heading h3 { margin:1px 0 6px; font-size:14px; font-weight:700; color:#233f4c; }
+.dialog-layout .dialog-section-heading p { margin:0; font-size:12px; color:#73848c; line-height:1.6; }
+.dialog-layout .dialog-section-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:16px 20px; min-width:0; }
+.dialog-layout .dialog-section-fields > :is(p,small,details,.rack-barcode-fields,.products-checks) { grid-column:1/-1; }
+.dialog-layout .dialog-section-fields label { display:grid; min-width:0; gap:6px; margin:0; }
+.dialog-layout .dialog-section-fields :is(.organization-checkbox,.products-checks) { display:flex; align-items:center; }
+.dialog-layout .dialog-section-fields :is(input,select,textarea) { width:100%; min-width:0; }
+.dialog-layout .dialog-section-fields input[type=checkbox] { width:16px; }
+.dialog-layout :is(input,textarea,select):user-invalid { border-color:#bd4a41; outline-color:#bd4a41; background:#fff9f8; }
+.dialog-layout .dialog-section-fields small { line-height:1.5; font-weight:400; color:#71828c; }
+.dialog-layout .dialog-section-fields .dialog-span { grid-column:1/-1; }
+.dialog-layout .dialog-section-fields > .products-full { grid-column:1/-1; }
+.dialog-layout .dialog-section-fields > details { padding:0; }
+.dialog-layout details > summary { cursor:pointer; color:#426775; font-size:12px; padding:7px 0; }
+.dialog-layout .dialog-section-fields .rack-barcode-fields { margin:0; padding:0; border:0; }
+.dialog-layout .dialog-section-fields .rack-barcode-input-row { display:flex; }
+.dialog-layout .dialog-section-fields .rack-barcode-input-row button { flex:none; }
+.dialog-layout .dialog-section-fields .rack-barcode-input-row input { flex:1; }
+.dialog-layout .dialog-form .receipt-basic { grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.dialog-layout .dialog-form .receipt-basic label { margin:0; }
+.dialog-layout .dialog-form .receipt-section-heading { margin:22px 0 12px; }
+.dialog-layout .dialog-form .receipt-line-editor { margin:0 0 16px; padding:16px; border:1px solid #dde6ea; border-left:3px solid #1a7a78; border-radius:8px; background:#fff; }
+.dialog-layout .dialog-form .receipt-line-title { margin:0 0 14px; }
+.dialog-layout .dialog-form .receipt-line-title strong { font-size:13px; }
+.dialog-layout .dialog-work-basic { margin:0; padding:22px 0; border-bottom:1px solid #dfe7eb; }
+.dialog-layout .dialog-work-basic > h3 { font-size:14px; margin:0 0 18px; }
+.dialog-layout .dialog-form .dialog-inventory-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 26px; }
+.dialog-layout .dialog-inventory-grid > .inventory-section { margin:0; padding:22px 0; border:0; min-width:0; }
+.dialog-layout .dialog-inventory-grid > .inventory-section:last-child { grid-column:1/-1; border-top:1px solid #dfe7eb; }
+.dialog-layout .dialog-inventory-grid .inventory-filter-grid { grid-template-columns:1fr; }
+.dialog-layout .dialog-inventory-grid .inventory-mode { grid-column:1/-1; margin-top:20px; }
+.dialog-layout .dialog-inventory-grid .products-detail { gap:12px; }
+.dialog-layout .dialog-form .support-form { padding:0; }
+.dialog-layout .support-answer { border:0; border-left:3px solid #1a7a78; background:#f1f7f7; padding:20px; border-radius:0 8px 8px 0; }
+.dialog-layout .support-message { overflow-wrap:anywhere; line-height:1.85; }
+.dialog-layout .support-admin-editor { padding:24px 0 0; border-top:1px solid #dfe7eb; }
+.dialog-layout .support-admin-editor > h3 { margin:0 0 16px; }
+.dialog-layout .support-admin-editor .dialog-actions { position:sticky; bottom:-20px; margin:20px -24px -20px; }
+.dialog-layout .products-detail { gap:0 24px; margin:0 0 20px; }
+.dialog-layout .products-detail > div { padding:12px 0; border-bottom:1px solid #e7edef; min-width:0; }
+.dialog-layout .dialog-form .organization-form-grid { gap:16px 20px; }
+.dialog-layout .dialog-form .organization-form-grid > label:has(textarea) { grid-column:1/-1; }
+.dialog-layout .dialog-form .organization-form-grid label { margin:0; }
+.dialog-layout .dialog-form > .alert { margin:12px 24px; flex:none; }
+@media(max-width:900px) {
+ .dialog-layout .dialog-form .receipt-basic { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .dialog-layout .dialog-section { grid-template-columns:110px minmax(0,1fr); gap:18px; }
+}
+@media(max-width:600px) {
+ dialog.organization-dialog.dialog-layout { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); border-radius:10px; }
+ .dialog-layout > .organization-dialog-heading { padding:16px; }
+ .dialog-layout .organization-dialog-heading h2 { font-size:18px; }
+ .dialog-layout .dialog-body { padding:16px; }
+ .dialog-layout .dialog-form-scroll > fieldset { padding:0 16px; }
+ .dialog-layout .dialog-section { grid-template-columns:1fr; gap:12px; padding:20px 0; }
+ .dialog-layout .dialog-section-fields,.dialog-layout .dialog-form .receipt-basic,.dialog-layout .dialog-form .dialog-inventory-grid { grid-template-columns:minmax(0,1fr); }
+ .dialog-layout .dialog-actions { padding:12px 16px; }
+ .dialog-layout .dialog-actions > button { flex:1; min-width:0; }
+ .dialog-layout .dialog-form .receipt-line-editor { padding:12px; }
+ .dialog-layout .support-admin-editor .dialog-actions { bottom:-16px; margin:20px -16px -16px; }
+}
+.dialog-layout .dialog-section-fields > .organization-form-grid { grid-column:1/-1; }
+.dialog-layout .dialog-section-fields > label:has(:is(textarea,input[name=address],input[name=addressDetail])) { grid-column:1/-1; }
+.dialog-layout .dialog-detail-tabs { display:flex; flex-wrap:wrap; gap:4px; border-bottom:1px solid #dce5e9; margin:18px 0 24px; }
+.dialog-layout .dialog-detail-tabs button { padding:10px 16px; background:transparent; border:0; border-bottom:3px solid transparent; color:#637b86; border-radius:0; }
+.dialog-layout .dialog-detail-tabs button[aria-pressed=true] { border-color:#197b79; color:#146765; font-weight:700; }
+
+.dialog-layout .dialog-section-fields .products-checks label { display:flex; align-items:center; gap:6px; }
+
+.dialog-layout .dialog-form-scroll { min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; flex:1 1 auto; }
+.dialog-layout .dialog-section-fields :is(.products-checks,.products-checks label,.organization-checkbox) { flex-direction:row; }
+
+/* Confirmation copy and actions use the same readable, bottom-right composition. */
+.dialog-small .dialog-body { padding-top:16px; padding-bottom:24px; }
+.dialog-small .dialog-body :is(p,.organization-help) { font-size:16px; line-height:1.75; color:#344e5b; margin:0 0 28px; }
+.dialog-layout :is(.organization-row-actions,.receipt-actions,.inventory-actions,.dialog-actions) { justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+.dialog-small .dialog-body > section { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:8px; }
+.dialog-small .dialog-body > section > :is(p,div) { flex-basis:100%; }
+.dialog-small .dialog-body > section > p { margin-bottom:18px; }
+.dialog-layout :is(.organization-row-actions,.receipt-actions,.dialog-actions) > button,.dialog-small .dialog-body > section > button { min-height:40px; padding:10px 16px; }
+@media(max-width:600px) { .dialog-layout .dialog-actions > button { flex:0 1 auto; } .dialog-small .dialog-body { padding:16px; } .dialog-small .dialog-body button { white-space:normal; } }
+.dialog-layout .row-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+.dialog-layout [role=alertdialog] { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+.dialog-layout [role=alertdialog] > :is(p,h3,div) { flex-basis:100%; }
+.dialog-layout [role=alertdialog] > p { font-size:16px; line-height:1.75; color:#344e5b; margin:0 0 18px; }
+.dialog-layout [role=alertdialog] > button { min-height:40px; padding:10px 16px; }
+@media(max-width:760px) { .dialog-layout .receipt-actions > button { flex:0 1 auto; } }
+.dialog-layout .dialog-body > section:not([class]):has(> button.secondary):has(> button.primary) { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+.dialog-layout .dialog-body > section:not([class]):has(> button.secondary):has(> button.primary) > p { flex-basis:100%; font-size:16px; line-height:1.75; color:#344e5b; margin:0 0 24px; }
+
+/* Confirmation-only composition; registration/edit form actions keep their layout. */
+:root dialog.organization-dialog.dialog-layout.dialog-confirmation {
+ width:min(480px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); border-radius:22px;
+}
+:root .dialog-confirmation > .organization-dialog-heading { padding:24px 24px 0; }
+:root .dialog-confirmation .organization-dialog-heading h2 { margin:0; font-size:20px; font-weight:700; line-height:1.4; }
+:root .dialog-confirmation > .dialog-body {
+ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:flex-end; gap:8px;
+ padding:12px 24px 24px; scrollbar-gutter:auto;
+}
+:root .dialog-confirmation > .dialog-body > :not(button):not([hidden]) { flex-basis:100%; min-width:0; }
+:root .dialog-confirmation > .dialog-body > section {
+ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:flex-end; gap:8px;
+ margin:0; padding:0; border:0; background:transparent;
+}
+:root .dialog-confirmation > .dialog-body > section > :not(button) { flex-basis:100%; min-width:0; }
+:root .dialog-confirmation > .dialog-body :is(p,.organization-help) {
+ margin:0; font-size:16px; line-height:1.6; color:var(--ui-ink); word-break:keep-all; overflow-wrap:anywhere;
+}
+:root .dialog-confirmation > .dialog-body h3 { margin:0; font-size:16px; line-height:1.6; }
+:root .dialog-confirmation > .dialog-body :is(.confirmation-actions,.organization-row-actions,.receipt-actions,.inventory-actions,.dialog-actions,.row-actions) {
+ display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px;
+ margin:18px 0 0; padding:0; border:0; background:transparent;
+}
+:root .dialog-confirmation > .dialog-body button {
+ flex:0 1 auto; min-height:42px; min-width:0; max-width:100%; margin:0; padding:10px 16px; line-height:20px; white-space:normal; overflow-wrap:anywhere;
+}
+:root .dialog-confirmation > .dialog-body > button,
+:root .dialog-confirmation > .dialog-body > section > button { margin-top:18px; }
+
+/* Unsaved confirmation sentences form one compact reading block. */
+:root .dialog-confirmation > .dialog-body > .unsaved-changes-content { row-gap:0; }
+:root .dialog-confirmation > .dialog-body > .unsaved-changes-content > p { line-height:1.5; }
+:root .dialog-confirmation > .dialog-body > .unsaved-changes-content > .confirmation-actions { margin-top:28px; }
+
+/* Compact text-only close actions; other dialog actions retain their sizes. */
+:root dialog .dialog-close { width:auto; min-width:0; flex:0 0 auto; padding-inline:14px; min-height:40px; text-align:center; justify-content:center; }
+:root .dialog-layout .dialog-actions:has(> .dialog-close) { gap:8px; }
+@media(max-width:600px) { :root dialog .dialog-close { min-height:44px; } }
+
+:root .dialog-layout .dialog-actions > button { width:auto; min-width:0; flex:0 1 auto; min-height:40px; padding:8px 18px; display:inline-flex; align-items:center; justify-content:center; }
+:root .dialog-layout .dialog-actions { gap:8px; }

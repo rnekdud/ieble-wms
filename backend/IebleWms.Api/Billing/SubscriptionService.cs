@@ -23,17 +23,18 @@ public sealed class SubscriptionService(WmsDbContext db, BillingAccessService bi
     });
     public async Task<object> Read(Guid tenantId, Guid actor, CancellationToken ct)
     {
-        var t = await Tenant(tenantId, ct); var access = billing.Evaluate(t); var now = clock.GetUtcNow();
+        var t = await Tenant(tenantId, ct); var access = await billing.EvaluateWorkspace(t, ct); var now = clock.GetUtcNow();
         var today = billing.LocalDate(t, now); var firstDay = billing.LocalDate(t, access.FirstChargeAt);
         var days = firstDay.DayNumber - today.DayNumber;
         var dismissed = await db.BillingReminderDismissals.AnyAsync(x => x.TenantId == tenantId && x.UserId == actor && x.LocalDate == today, ct);
         var currentUsers = await db.TenantMemberships.CountAsync(x => x.TenantId == tenantId && x.IsActive && x.User.IsActive && (billing.Policy.BillMasterAccounts || x.Role != TenantRole.Master), ct);
         var billable = await BillableCount(t, access.FirstChargeAt, ct);
         return new { t.BillingPolicyVersion, t.TrialStartedAt, trialEndsAt = access.FreeUntil, firstChargeAt = access.FirstChargeAt,
+            nextChargeAt = t.AutoBillingCanceledAt.HasValue ? (DateTimeOffset?)null : billing.CycleAtOrAfter(t, now),
             billingAnchorDay = t.BillingAnchorDay ?? billing.Policy.BillingDayOfMonth, t.BillingTimeZone, t.PaidThrough,
             autoBillingCanceled = t.AutoBillingCanceledAt.HasValue, t.AutoBillingCanceledAt, t.ServiceEndsAt,
             daysUntilFirstCharge = Math.Max(0, days), currentUsers, estimatedMonthlyKrw = Amount(currentUsers), firstChargeUsers = billable, firstChargeEstimateKrw = Amount(billable),
-            reminderVisible = t.IsActive && t.ServiceStatus == TenantServiceStatus.Active && !access.HasRegisteredCard && !t.AutoBillingCanceledAt.HasValue && days <= billing.Policy.ReminderDays && !dismissed,
+            reminderVisible = access.DevelopmentTest == null && t.IsActive && t.ServiceStatus == TenantServiceStatus.Active && !access.HasRegisteredCard && !t.AutoBillingCanceledAt.HasValue && days <= billing.Policy.ReminderDays && !dismissed,
             providerConfigured = false, access,
             invoices = await db.BillingInvoices.AsNoTracking().Where(x => x.TenantId == tenantId).OrderByDescending(x => x.CycleStart).Take(24).Select(x => new { x.Id, x.CycleStart, x.CycleEnd, x.UserCount, x.AmountKrw, x.State }).ToListAsync(ct) };
     }
@@ -56,7 +57,7 @@ public sealed class SubscriptionService(WmsDbContext db, BillingAccessService bi
         await using var tx = await Lock(tenantId, ct);
         var prior = await db.BillingFeedbacks.SingleOrDefaultAsync(x => x.TenantId == tenantId && x.UserId == actor && x.RequestId == requestId, ct);
         if (prior != null) { if (prior.Message != trimmed) throw new OrganizationException(409, "이미 저장된 요청입니다. 화면을 다시 열어 주세요."); }
-        else db.BillingFeedbacks.Add(new() { TenantId = tenantId, UserId = actor, RequestId = requestId, Message = trimmed, CreatedAt = clock.GetUtcNow() });
+        else db.BillingFeedbacks.Add(new() { Number = await IebleWms.Api.Services.BusinessCodes.Next(db,tenantId,"QA",ct), TenantId = tenantId, UserId = actor, RequestId = requestId, Message = trimmed, CreatedAt = clock.GetUtcNow() });
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
     }
     public async Task Cancel(Guid tenantId, Guid actor, CancellationToken ct)

@@ -13,12 +13,12 @@ public static class PermissionCatalog
         new("receipts", "입고관리", ["menu", "read", "create", "update", "delete", "confirm"]),
         new("shipments", "출고관리", ["menu", "read", "create", "update", "delete", "confirm"]),
         new("stock-adjustments", "재고 이동 및 조정", ["menu", "read", "move", "adjust"]),
-        new("stocktake", "재고 실사", ["menu", "read", "create", "update", "delete", "count"]),
+        new("stocktake", "재고 실사/조사", ["menu", "read", "create", "update", "delete", "count", "confirm"]),
         new("partners", "거래처관리", ["menu", "read", "create", "update", "delete"]),
         new("stock-overview", "재고 현황", ["menu", "read"]),
         new("movement-stats", "입출고 통계", ["menu", "read"]),
         new("stock-history", "재고 변동 이력", ["menu", "read"]),
-        new("support", "문의하기", ["menu", "read"], false),
+        new("support", "문의하기", ["menu", "read", "create", "readAll"], false),
         new("org-chart", "조직도", ["menu", "read"], false),
         new("organization-items", "항목 관리", ["menu", "read", "create", "update", "delete"], false),
         new("company", "기업 관리", ["menu", "read", "update"], false),
@@ -27,14 +27,14 @@ public static class PermissionCatalog
     // Preserve existing page access; employees receive read-only business access by default.
     public static Dictionary<string, Dictionary<string, string[]>> Defaults() => EditableRoles.ToDictionary(role => role,
         role => Features.ToDictionary(f => f.Key, f => f.Key is "org-chart" or "organization-items" ? [] : role == "Administrator" ? f.Actions.ToArray() :
-            f.Key is "company" or "users" ? [] : new[] { "menu", "read" }));
+            f.Key is "company" or "users" ? [] : f.Key == "support" ? ["menu", "read", "create"] : new[] { "menu", "read" }));
 
     // User mutation endpoints also require the manager role; do not offer ineffective staff write grants.
     public static string[] ActionsForRole(PermissionFeature feature, string role) => role == "Employee" && feature.Key == "organization-items" ? []
-        : role == "Employee" && feature.Key == "users" ? ["menu", "read"] : feature.Actions;
+        : role == "Employee" && feature.Key == "support" ? ["menu", "read", "create"] : role == "Employee" && feature.Key == "users" ? ["menu", "read"] : feature.Actions;
     public static string[] ImplementedActions(PermissionFeature feature) => feature.Key switch {
-        "warehouses" or "users" => feature.Actions.Where(x => x != "delete").ToArray(),
-        "company" or "organization-items" or "org-chart" => feature.Actions,
+        "partners" or "receipts" or "shipments" or "users" or "stocktake" => feature.Actions.Where(x => x != "delete").ToArray(),
+        "warehouses" or "products" or "support" or "dashboard" or "company" or "organization-items" or "org-chart" or "stock-adjustments" or "stock-overview" or "movement-stats" or "stock-history" => feature.Actions,
         _ => []
     };
 

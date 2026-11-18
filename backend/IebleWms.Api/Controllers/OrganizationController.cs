@@ -19,6 +19,14 @@ public sealed class OrganizationController(WmsDbContext db, CompanyService compa
     [HttpGet("company"), Authorize(Policy = "Permission:company:read")]
     public async Task<IActionResult> Company(Guid tenantId, CancellationToken token) => Ok(await companies.GetAsync(tenantId, token));
 
+    [HttpGet("company/logo")]
+    public async Task<IActionResult> CompanyLogo(Guid tenantId, CancellationToken token)
+    {
+        if (!await db.TenantMemberships.AnyAsync(x => x.TenantId == tenantId && x.UserId == Actor && x.AccountType == "Internal", token)) return Forbid();
+        var logo = await db.CompanyLogos.AsNoTracking().SingleOrDefaultAsync(x => x.TenantId == tenantId, token);
+        return logo == null ? NotFound() : File(logo.Content, logo.ContentType);
+    }
+
     [HttpPost("company"), Authorize(Policy = "Permission:company:update")]
     public async Task<IActionResult> UpdateCompany(Guid tenantId, UpdateCompanyRequest request, CancellationToken token) =>
         Ok(await companies.UpdateAsync(tenantId, Actor, request, token));
@@ -29,14 +37,16 @@ public sealed class OrganizationController(WmsDbContext db, CompanyService compa
 
     [HttpGet("users"), Authorize(Policy = "Permission:users:read")]
     public async Task<IActionResult> Users(Guid tenantId, CancellationToken token, [FromQuery] string? search = null,
-        [FromQuery] string? role = null, [FromQuery] string status = "all", [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        [FromQuery] string? accountType = null, [FromQuery] string? role = null, [FromQuery] string status = "all", [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         if (page < 1 || page > 100000 || pageSize is < 1 or > 100 || search?.Length > 100 || status is not ("all" or "active" or "inactive")) return BadRequest();
+        if (!string.IsNullOrEmpty(accountType) && accountType is not ("Internal" or "External")) return BadRequest();
         var query = db.TenantMemberships.AsNoTracking().Include(x => x.User).Where(x => x.TenantId == tenantId);
+        if (!string.IsNullOrEmpty(accountType)) query = query.Where(x => x.AccountType == accountType);
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim().ToLowerInvariant();
-            query = query.Where(x => (x.DisplayName ?? x.User.DisplayName).ToLower().Contains(term) || x.User.Email!.ToLower().Contains(term) || x.User.UserName!.ToLower().Contains(term));
+            query = query.Where(x => (x.DisplayName ?? x.User.DisplayName).ToLower().Contains(term) || x.User.Email!.ToLower().Contains(term) || x.User.UserName!.ToLower().Contains(term) || (x.CompanyName != null && x.CompanyName.ToLower().Contains(term)) || (x.ContactPhone != null && x.ContactPhone.Contains(term)));
         }
         if (!string.IsNullOrEmpty(role))
         {
@@ -53,6 +63,16 @@ public sealed class OrganizationController(WmsDbContext db, CompanyService compa
             monthlyPerUserKrw = billing.Policy.MonthlyPerUserKrw, billMasterAccounts = billing.Policy.BillMasterAccounts, billingTerminationPolicy = "Undecided" });
     }
 
+    [HttpGet("users/partner-options"), Authorize(Policy = "TenantAdministrator"), Authorize(Policy = "Permission:users:read")]
+    public async Task<IActionResult> PartnerOptions(Guid tenantId, CancellationToken ct, string? search = null, int page = 1)
+    {
+        if (search?.Length > 100 || page < 1 || page > 100000) return BadRequest();
+        var q = db.Partners.AsNoTracking().Where(x => x.TenantId == tenantId && x.IsActive);
+        if (!string.IsNullOrWhiteSpace(search)) { var term = search.Trim().ToLowerInvariant(); q = q.Where(x => x.Name.ToLower().Contains(term) || x.Code.ToLower().Contains(term)); }
+        var total = await q.CountAsync(ct);
+        return Ok(new { items = await q.OrderBy(x => x.Name).ThenBy(x => x.Id).Skip((page - 1) * 20).Take(20).Select(x => new { x.Id, x.Code, x.Name, x.BusinessRegistrationNumber, companyPhone = x.Phone, x.Address, x.AddressDetail, x.PostalCode }).ToListAsync(ct), total, page, pageSize = 20 });
+    }
+
     [HttpGet("users/master-transfer"), Authorize(Policy = "TenantMaster")]
     public async Task<IActionResult> TransferCandidates(Guid tenantId, CancellationToken token) => Ok(await transfer.Candidates(tenantId, Actor, token));
 
@@ -62,6 +82,9 @@ public sealed class OrganizationController(WmsDbContext db, CompanyService compa
         await transfer.Transfer(tenantId, Actor, request, token);
         return Ok(new { message = "마스터 위임이 완료되었습니다. 본인은 기업 관리자로 변경되었습니다." });
     }
+
+    [HttpPost("users/login-id-check"), Authorize(Policy = "TenantAdministrator"), Authorize(Policy = "Permission:users:create"), Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("login-id-check")]
+    public Task<object> CheckLoginId(Guid tenantId, CheckLoginIdRequest request, CancellationToken token) => employees.CheckLoginId(request.LoginId, token);
 
     [HttpPost("users"), Authorize(Policy = "TenantAdministrator"), Authorize(Policy = "Permission:users:create")]
     public async Task<IActionResult> CreateUser(Guid tenantId, CreateEmployeeRequest request, CancellationToken token) =>

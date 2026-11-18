@@ -1,0 +1,162 @@
+.receipt-filters > label:first-child { min-width:220px; }
+.receipt-warehouse-filter { margin-bottom:18px; color:var(--ui-muted); font-size:13px; }
+.receipt-warehouse-filter > summary { cursor:pointer; padding:4px 0; }
+.receipt-warehouse-filter .receipt-choice { max-width:420px; margin-top:10px; }
+.receipt-choice { display:grid; gap:7px; min-width:0; }
+.receipt-choice label { margin:0; }
+.receipt-choice-pages { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.receipt-basic { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px; }
+.receipt-basic label { margin:0; }
+.receipt-rack-choice { min-width:220px; }
+.receipt-reference-price { white-space:nowrap; text-align:right; font-variant-numeric:tabular-nums; }
+.receipt-table-totals { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:8px 0; color:#16345f; }
+.receipt-table-totals small { flex-basis:100%; font-weight:400; color:#52647a; }
+.receipt-placement-cell { min-width:500px; }
+.receipt-placement-status { display:grid; gap:4px; margin-bottom:12px; font-size:13px; }
+.receipt-placement-status.is-over,.receipt-placement-status.is-invalid { color:#b42332; }
+.receipt-placement-status.is-under { color:#916000; }
+.receipt-placement-status.is-matched { color:#247147; }
+.registration-receipt-registration .receipt-placement .searchable-choice { min-width:220px; }
+.detail-page:has(.receipt-scan-station) .receipt-scan-summary { display:flex; flex-wrap:wrap; gap:16px 28px; padding:16px; }
+.detail-page:has(.receipt-scan-station) .receipt-scan-summary strong { font-size:14px; }
+.receipt-inspection-quantity { min-width:170px; }
+.receipt-inspection-quantity > input { width:120px; text-align:right; }
+.receipt-quantity-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; max-width:220px; }
+.receipt-quantity-actions input { width:100%; min-width:0; }
+.receipt-scan-table td label { display:grid; gap:4px; font-size:12px; margin:4px 0; }
+.receipt-scan-table td label input { min-width:140px; }
+.detail-page:has(.receipt-steps) .registration-header-actions .receipt-actions { margin-top:0; }
+.receipt-summary, .receipt-section-heading, .receipt-line-title { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.receipt-summary h3 { overflow-wrap:anywhere; }
+.receipt-steps { display:grid; grid-template-columns:repeat(4,1fr); list-style:none; padding:0; gap:6px; margin:20px 0; }
+.receipt-steps li { padding:10px 12px; border-radius:6px; background:#f0f3f6; color:#73828b; font-size:12px; }
+.receipt-steps li.done { background:#e6f3ee; color:#286852; }
+.receipt-section-heading { margin:24px 0 12px; }
+.receipt-line-editor { padding:18px; border:1px solid var(--ui-line); border-radius:8px; margin:12px 0; }
+.receipt-line-title { margin-bottom:14px; }
+.receipt-placement { display:grid; grid-template-columns:minmax(180px,2fr) minmax(100px,1fr) auto; gap:12px; align-items:end; padding:12px 0; border-bottom:1px solid var(--ui-line); margin-bottom:12px; }
+.receipt-placement:has(textarea) { grid-template-columns:minmax(180px,2fr) minmax(100px,1fr) minmax(150px,2fr) auto; }
+.receipt-placement label { margin:0; }
+.receipt-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:20px; }
+.receipt-confirm { background:#f0f6f8; border-radius:8px; padding:16px; margin-top:18px; }
+.receipt-lines { overflow-x:auto; margin-top:20px; }
+.receipt-lines table { width:100%; border-collapse:collapse; font-size:13px; }
+.receipt-lines th, .receipt-lines td { padding:12px; text-align:left; border-bottom:1px solid var(--ui-line); }
+.receipt-lines th { white-space:nowrap; background:#f5f8fa; }
+.receipt-lines td small { display:block; }
+@media(max-width:760px) { .receipt-basic, .receipt-placement, .receipt-placement:has(textarea) { grid-template-columns:1fr; } .receipt-line-editor { padding:14px; } .receipt-steps { grid-template-columns:repeat(2,1fr); } .receipt-actions > button { flex:1; } }
+
+/* Shipping shares the document workflow surfaces with receiving. */
+.shipment-stock { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border, #e2e8f0); }
+.shipment-stock dl { display: flex; flex-wrap: wrap; gap: 16px 40px; margin: 0 0 8px; }
+.shipment-stock dt { color: #64748b; font-size: 12px; }
+.shipment-stock dd { margin: 4px 0; font-size: 18px; font-weight: 650; color: #1e293b; }
+.shipment-stock dl > div:last-child dd { color: #1d4ed8; }
+.shipment-stock details { margin-top: 12px; }
+.shipment-complete { display: flex; align-items: center; gap: 8px; margin: 16px 0; }
+.shipment-complete input { width: 16px; height: 16px; }
+.receipt-steps.shipment-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.status-badge.Requested { color: #475569; background: #f1f5f9; }
+.status-badge.Picking { color: #92400e; background: #fffbeb; }
+.status-badge.Picked, .status-badge.Inspected { color: #1e40af; background: #eff6ff; }
+@media (max-width: 760px) { .receipt-steps.shipment-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* White work surfaces on the existing gray document shell, without nested shadows. */
+.registration-page:has(#receipt-registration, #shipment-registration) .dialog-work-basic,
+.registration-page:has(#receipt-registration, #shipment-registration) .registration-line-list { background:#fff; border:1px solid #dce5e9; }
+.detail-page:has(.receipt-steps) .detail-content > .products-detail { background:#fff; padding:24px; border:1px solid #dce5e9; border-radius:10px; }
+.detail-page:has(.receipt-steps) .receipt-lines,
+.registration-page:has(#shipment-registration) .receipt-lines,
+.detail-page:has(.receipt-scan-summary) .table-scroll { background:#fff; border:1px solid #dce5e9; border-radius:8px; }
+@media(max-width:600px) { .detail-page:has(.receipt-steps) .detail-content > .products-detail { padding:18px; } }
+
+/* Keep location metadata and serial textareas from shifting the input baseline. */
+.receipt-placement { align-items: start; gap: 12px; }
+.receipt-placement > label, .receipt-placement > .searchable-choice { display: grid; align-content: start; gap: 5px; min-width: 0; margin: 0; font-size: 13px; line-height: 20px; }
+.receipt-placement > .searchable-choice > label { margin: 0; font-size: 13px; line-height: 20px; }
+.receipt-placement > label > input, .receipt-placement > .searchable-choice > .searchable-choice-trigger { width: 100%; height: 40px; min-height: 40px; box-sizing: border-box; margin: 0; }
+.receipt-placement > button { margin: 25px 0 0; height: 40px; min-height: 40px; }
+@media (max-width: 760px) { .receipt-placement > button { margin-top: 0; justify-self: start; } }
+
+/* Match the adjacent quantity field to a detailed, two-line location choice. */
+:root body .receipt-placement:has(.searchable-choice-trigger.has-selection-detail) > label > input { --choice-height:60px; --choice-min-height:60px; height:60px; min-height:60px; }
+
+/* Registration lines: retain the desktop table and group mobile inputs by purpose. */
+:is(.receipt-registration-products,.shipment-registration-products) .document-product > strong { display:block; font-size:14px; line-height:1.5; }
+:is(.receipt-registration-products,.shipment-registration-products) .document-quantity { min-width:150px; }
+:is(.receipt-registration-products,.shipment-registration-products) .receipt-quantity-unit { margin-left:6px; font-size:12px; color:var(--ui-muted); }
+:is(.receipt-registration-products,.shipment-registration-products) .receipt-reference-price { font-variant-numeric:tabular-nums; }
+@media(max-width:600px) {
+  :root body .document-line-scroll:has(> :is(.receipt-registration-products,.shipment-registration-products)) { border:0; border-radius:0; background:transparent; overflow:visible; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products).mobile-record-table { background:transparent; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products).mobile-record-table tbody { display:grid; gap:12px; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products).mobile-record-table tbody > tr {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-areas:"product product" "quantity rack" "price total" "tracking tracking" "actions actions";
+    gap:12px; padding:14px; border:1px solid var(--ui-line); border-radius:12px; background:#fff;
+  }
+  :root body :is(.receipt-registration-products,.shipment-registration-products).mobile-record-table tbody > tr > td { min-width:0; max-width:none; padding:0; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-product { grid-area:product; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-product::before { display:none; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-product > strong { font-size:16px; font-weight:600; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-product > small { font-size:12px; margin-top:3px; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-quantity { grid-area:quantity; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-quantity > input { width:calc(100% - 34px); min-width:0; height:40px; min-height:40px; text-align:right; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .receipt-quantity-unit { display:inline-block; max-width:28px; margin-left:6px; overflow-wrap:anywhere; vertical-align:middle; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .receipt-rack-choice { grid-area:rack; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .receipt-rack-choice .searchable-choice { margin:0; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .receipt-rack-choice .searchable-choice-trigger { width:100%; height:40px; min-height:40px; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) td[data-label="소비자가"] { grid-area:price; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) td[data-label="참고 금액"] { grid-area:total; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .receipt-reference-price { font-size:13px; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products).mobile-record-table tbody > tr > td.document-tracking { grid-area:tracking; padding-top:12px; border-top:1px solid var(--ui-line); }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-tracking small { margin-top:6px; font-size:12px; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .document-actions { grid-area:actions; display:flex; justify-content:flex-end; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) tfoot { margin-top:12px; border-radius:8px; background:var(--ui-neutral); }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) tfoot td { padding:10px 14px; box-sizing:border-box; }
+  :root body :is(.receipt-registration-products,.shipment-registration-products) .receipt-table-totals { padding:0; gap:6px 12px; font-size:12px; }
+}
+
+/* Shipping keeps its availability and rack checks within the shared registration layout. */
+@media(max-width:600px) {
+  :root body .shipment-registration-products.mobile-record-table tbody > tr {
+    grid-template-areas:"product product" "quantity rack" "price total" "stock rackstock" "tracking tracking" "actions actions";
+  }
+  :root body .shipment-registration-products .shipment-rack-choice { grid-area:rack; }
+  :root body .shipment-registration-products .shipment-rack-choice .searchable-choice { margin:0; }
+  :root body .shipment-registration-products .shipment-rack-choice .searchable-choice-trigger { width:100%; height:40px; min-height:40px; }
+  :root body .shipment-registration-products .document-stock-number { grid-area:stock; }
+  :root body .shipment-registration-products .shipment-rack-stock { grid-area:rackstock; }
+}
+
+/* Detail product rows share the mobile document card surface; desktop stays a table. */
+@media (max-width:1024px) {
+  :root body :is(.detail-page,.registration-page) :is(.table-scroll,.document-line-scroll):has(> .document-detail-products) { overflow:visible; background:transparent; border:0; border-radius:0; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products { display:block; width:100%; min-width:0; background:transparent; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products > thead { display:none; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products > tbody { display:grid; gap:12px; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products > tbody > tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:14px; border:1px solid var(--ui-line); border-radius:12px; background:#fff; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products > tbody > tr > td { display:block; min-width:0; width:auto; padding:0; border:0; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td[data-label]::before { content:attr(data-label); display:block; margin-bottom:5px; color:var(--ui-muted); font-size:12px; font-weight:400; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td.document-detail-product { grid-column:1/-1; padding-bottom:12px; border-bottom:1px solid var(--ui-line); font-size:16px; font-weight:600; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td.document-detail-product::before { display:none; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td.document-detail-product small { margin-top:4px; font-size:12px; font-weight:400; color:var(--ui-muted); }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td:is(.document-detail-wide,[colspan]) { grid-column:1/-1; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td details > summary { min-height:32px; padding:6px 0; cursor:pointer; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products > tbody > tr.is-scan-selected { border-color:#79b7a5; background:#edf8f4; }
+  :root body :is(.detail-page,.registration-page) .document-detail-products td details small { margin-top:6px; }
+}
+
+/* Keep each product's placement controls inside its mobile card. */
+@media (max-width:1024px) {
+  :root body .registration-page .receipt-placement-products .document-product { max-width:none; }
+  :root body .registration-page .receipt-placement-products .receipt-placement-cell { grid-column:1/-1; }
+  :root body .registration-page .receipt-placement-products .receipt-placement { grid-template-columns:1fr; min-width:0; gap:12px; }
+  :root body .registration-page .receipt-placement-products .receipt-placement > .searchable-choice { min-width:0; }
+  :root body .registration-page .receipt-placement-products .receipt-placement > button { margin-top:0; justify-self:start; }
+  :root body .registration-page .receipt-placement-products details summary { white-space:normal; overflow-wrap:anywhere; }
+  :root body .registration-page .receipt-placement-products :is(tfoot,tfoot > tr,tfoot > tr > td) { display:block; width:100%; box-sizing:border-box; }
+  :root body .registration-page .receipt-placement-products tfoot { margin-top:12px; padding:12px 14px; background:var(--ui-neutral); border-radius:8px; }
+  :root body .registration-page .receipt-placement-products tfoot > tr > td { padding:0; border:0; }
+  :root body .registration-page .receipt-placement-products .receipt-table-totals { gap:8px 12px; padding:0; font-size:12px; }
+}

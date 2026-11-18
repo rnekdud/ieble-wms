@@ -16,6 +16,8 @@ public class WorkspaceStructureRequest
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class WorkspaceRackRequest : WorkspaceStructureRequest
 {
+    // Keep pre-barcode workspace receipt hashes stable when an older client omits this field.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public RackBarcodeChange? Barcode { get; set; }
     public Guid? ZoneClientId { get; set; }
     [Range(1, 100)] public int Levels { get; set; } = 1;
     [Range(1, 100)] public int Bays { get; set; } = 1;
@@ -23,6 +25,7 @@ public sealed class WorkspaceRackRequest : WorkspaceStructureRequest
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class WorkspaceFloorRequest : WorkspaceStructureRequest
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public RackBarcodeChange? Barcode { get; set; }
     public Guid? ZoneClientId { get; set; }
 }
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

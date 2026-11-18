@@ -1,0 +1,17 @@
+.permission-matrix-scroll { max-width:100%; min-width:0; max-height:65vh; overflow:auto; border:1px solid #E5EAF1; border-radius:10px; isolation:isolate; }
+.permission-matrix { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; color:#16345F; font-size:14px; }
+.permission-matrix caption { text-align:left; padding:12px 16px; font-weight:600; background:#fff; }
+.permission-matrix .permission-menu-column { width:220px; }
+.permission-matrix th,.permission-matrix td { box-sizing:border-box; height:48px; padding:4px 10px; text-align:center; vertical-align:middle; border-bottom:1px solid #E5EAF1; background:#fff; }
+.permission-matrix thead th { position:sticky; top:0; z-index:3; background:#f4f6fa; font-weight:600; overflow-wrap:anywhere; }
+.permission-matrix tr>th:first-child { position:sticky; left:0; z-index:2; text-align:left; padding-left:16px; white-space:normal; overflow-wrap:anywhere; }
+.permission-matrix thead th:first-child { z-index:4; }
+.permission-matrix tbody tr:hover>* { background:#fffbee; }
+.permission-matrix .permission-group>* { height:36px; background:#f4f6fa; font-weight:700; }
+.permission-matrix tr>th.permission-child { padding-left:32px; font-weight:500; }
+.permission-matrix .permission-checkbox { display:flex; align-items:center; justify-content:center; width:40px; height:40px; margin:auto; cursor:pointer; }
+:root .permission-matrix .permission-checkbox input[type='checkbox'] { appearance:auto; width:18px; height:18px; min-height:0; padding:0; margin:0; flex:none; accent-color:#FFC107; cursor:pointer; }
+.permission-matrix .permission-checkbox:has(:disabled),.permission-matrix input:disabled { cursor:default; }
+.permission-matrix input:focus-visible { outline:2px solid #16345F; outline-offset:4px; }
+.permission-matrix-scroll:focus-visible { outline:2px solid #16345F; outline-offset:2px; }
+.permission-unavailable { color:#748297; }

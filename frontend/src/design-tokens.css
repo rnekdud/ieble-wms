@@ -1,0 +1,36 @@
+/* Approved white / navy / yellow foundation, shared by tenant and admin UI.
+   Inventory risk, document statuses and canvas object colors remain domain-owned. */
+:root {
+  --ui-navy: #16345f;
+  --ui-deep-navy: #102747;
+  --ui-light-navy: #284a79;
+  --ui-yellow: #ffc107;
+  --ui-yellow-hover: #ffb300;
+  --ui-yellow-soft: #fff6d5;
+  --ui-ink: #1f2937;
+  --ui-muted: #64748b;
+  --ui-line: #e5eaf1;
+  --ui-surface: #ffffff;
+  --ui-canvas: #ffffff;
+  --ui-neutral: #f7f7f7;
+  --ui-accent: var(--ui-navy);
+  --ui-bg: var(--ui-canvas);
+  --ui-text: var(--ui-ink);
+  --ui-focus: #527fc0;
+  --ui-radius-card: 18px;
+  --ui-radius-dialog: 24px;
+  --ui-radius-button: 12px;
+  --ui-action-height: 40px;
+  --ui-action-padding: 16px;
+  --ui-action-gap: 8px;
+  --ui-radius-input: 12px;
+  --ui-radius-badge: 9px;
+  --ui-radius-menu: 14px;
+  --ui-radius-table: 16px;
+  --ui-shadow: 0 2px 8px rgb(31 41 55 / 4%);
+  --ui-shadow-popover: 0 8px 28px rgb(16 39 71 / 12%);
+  /* Existing business components already consume these aliases. */
+  --brand: var(--ui-navy);
+  --text: var(--ui-ink);
+  --muted: var(--ui-muted);
+}

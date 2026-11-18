@@ -1,14 +1,9 @@
-using IebleWms.Api.Billing;
 using IebleWms.Api.Models;
-
 namespace IebleWms.Api.Warehousing;
 
-// Explicit local-development exception for warehouse setup only. Never grants
-// membership/action permissions and never changes card/payment entitlement.
-public sealed class WarehouseSetupAccess(IHostEnvironment environment, IConfiguration configuration, BillingAccessService billing)
+// Compatibility shim: the former global development flag no longer grants access.
+// All business access now uses BillingAccessService.EvaluateWorkspace and a per-tenant timed grant.
+public sealed class WarehouseSetupAccess
 {
-    public bool AllowsWithoutCard(Tenant tenant) => environment.IsDevelopment()
-        && tenant.BillingPolicyVersion == 1
-        && configuration.GetValue<bool>("DevelopmentFeatures:AllowWarehouseSetupWithoutCard")
-        && billing.Evaluate(tenant).State == "CardRequired";
+    public bool AllowsWithoutCard(Tenant tenant) => false;
 }

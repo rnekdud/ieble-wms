@@ -1,0 +1,386 @@
+/* Shared business surface: company workspace, system administration and dialogs. */
+:root { --ui-ink:#20333c; --ui-muted:#627581; --ui-line:#dfe7eb; --ui-surface:#fff; --ui-canvas:#f5f7fa; --ui-accent:#16776e; }
+.wms-layout { background:var(--ui-canvas); color:var(--ui-ink); --wms-side-width:232px; }
+.wms-layout.sidebar-collapsed { --wms-side-width:68px; }
+.wms-layout .wms-header { height:64px; padding:0 28px; border-color:var(--ui-line); }
+.wms-brand { height:64px; font-size:20px; }
+.wms-sidebar-caption { padding:20px 22px 10px; letter-spacing:.4px; font-size:11px; }
+.wms-sidebar .wms-nav-link { min-height:42px; padding:10px 12px; color:#516570; font-size:13px; }
+.wms-sidebar .wms-nav-link.is-current { background:#e7f3f0; color:#11695f; box-shadow:inset 3px 0 #16776e; }
+.wms-sidebar .wms-nav-link.is-nested { font-size:12px; }
+.wms-layout .wms-content { padding:22px 28px 36px; }
+:root .wms-breadcrumb { margin:0 0 5px; color:var(--ui-muted); font-size:12px; }
+:root .wms-page-heading { margin-bottom:20px; align-items:flex-start; }
+.wms-page-heading .eyebrow { display:none; }
+.wms-page-heading h1 { margin:0; font-size:26px; font-weight:700; letter-spacing:-.8px; color:var(--ui-ink); }
+.wms-page-heading p { color:var(--ui-muted); font-size:13px; }
+.wms-card { border-color:var(--ui-line); border-radius:10px; margin-bottom:20px; box-shadow:none; }
+.wms-card-heading { padding:18px 20px; }
+.wms-card-heading span, .wms-note, .permission-help { color:var(--ui-muted); font-size:12px; }
+.wms-layout .products-card { padding:20px 20px 0; }
+.products-toolbar { gap:12px; margin-bottom:18px; }
+.products-toolbar label { margin-bottom:0; min-width:120px; }
+.products-toolbar > .primary { margin-left:auto; }
+.wms-content label, .organization-dialog label, .admin-panel label { font-size:12px; font-weight:600; color:#435763; }
+.wms-content :is(input,select), .organization-dialog :is(input,select), .admin-panel :is(input,select) { min-width:0; height:40px; padding:8px 11px; border-radius:6px; border-color:#ccd8df; color:var(--ui-ink); font-size:13px; }
+:is(.wms-content,.organization-dialog,.admin-panel) :is(input[type=checkbox],input[type=radio]) { width:16px; height:16px; min-height:0; padding:0; accent-color:var(--ui-accent); flex-shrink:0; }
+:is(.wms-content,.organization-dialog,.admin-panel) textarea { width:100%; min-height:86px; padding:10px 12px; border-color:#ccd8df; border-radius:6px; font-size:13px; }
+:is(.wms-layout,.organization-dialog,.admin-panel,.status-dialog,.shell) :is(.primary,.secondary) { min-height:38px; padding:8px 14px; border-radius:6px; font-size:13px; gap:8px; line-height:1.5; }
+:is(.wms-layout,.organization-dialog,.admin-panel) .secondary { background:white; border:1px solid #ccd8df; color:#38535e; }
+:is(.wms-layout,.organization-dialog,.admin-panel) .secondary:hover { background:#f1f6f7; border-color:#9ab2bc; }
+:is(.wms-layout,.organization-dialog,.admin-panel) button:disabled { cursor:not-allowed; }
+:is(.wms-layout,.admin-panel) :is(.organization-table,.wms-table,.admin-table) { font-size:13px; }
+:is(.wms-layout,.admin-panel) :is(.organization-table,.wms-table,.admin-table) th { padding:12px 14px; background:#f5f8fa; color:#516571; font-weight:600; font-size:12px; border-bottom:1px solid var(--ui-line); white-space:nowrap; }
+:is(.wms-layout,.admin-panel) :is(.organization-table,.wms-table,.admin-table) td { padding:13px 14px; border-bottom:1px solid #edf1f3; vertical-align:middle; }
+:is(.wms-layout,.admin-panel) tbody tr:hover { background:#f9fbfc; }
+:root .wms-pagination { margin:10px 0 14px; padding:0; gap:12px; border-top:0; }
+:root .searchable-choice-popup .wms-pagination { padding:8px; margin:8px 0; }
+.wms-pagination-buttons button { border-radius:6px; min-width:32px; height:32px; font-size:12px; }
+.organization-dialog { width:min(760px,calc(100vw - 32px)); padding:24px; border-color:var(--ui-line); border-radius:12px; box-shadow:0 16px 60px #193a4626; }
+.organization-dialog.is-wide { width:min(1160px,calc(100vw - 32px)); }
+.organization-dialog-heading { padding-bottom:16px; margin-bottom:20px; border-bottom:1px solid var(--ui-line); }
+.organization-dialog h2 { font-size:21px; }
+.organization-dialog .products-form { gap:16px 20px; }
+.organization-dialog .products-form label { margin-bottom:0; }
+.organization-row-actions { margin-top:24px; padding-top:16px; border-top:1px solid var(--ui-line); }
+.products-detail { gap:0 24px; }
+.products-detail > div { padding:13px 0; border-bottom:1px solid #edf1f3; }
+.products-detail dt { color:var(--ui-muted); }
+.products-detail dd { font-size:14px; }
+.wms-empty { padding:44px 24px; max-width:640px; margin:auto; }
+.wms-empty h3 { font-size:16px; color:var(--ui-ink); }
+.wms-empty p { color:var(--ui-muted); font-size:13px; }
+.wms-chip, .status-badge { display:inline-flex; align-items:center; padding:4px 9px; font-size:12px; border-radius:5px; border:0; background:#edf2f6; color:#516571; white-space:nowrap; }
+.status-badge.Confirmed { background:#e5f4eb; color:#25613e; }
+.status-badge.Inspecting { background:#e8effc; color:#3655a0; }
+.status-badge.Cancelled { background:#f3eeee; color:#8c5959; }
+.wms-content .alert, .organization-dialog .alert { padding:12px 16px; border-radius:7px; margin:0 0 16px; font-size:13px; }
+.development-notice { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#edf4f8; border:1px solid #dce8ee; color:#4e6b7a; }
+.development-notice strong { font-size:12px; }
+.development-notice details { margin-left:auto; font-size:12px; }
+.development-notice summary { cursor:pointer; }
+.development-notice details p { margin-top:8px; }
+.wms-metrics { grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; }
+.wms-metric { padding:20px; }
+.wms-metric > div, .wms-metric small { color:var(--ui-muted); font-size:12px; }
+.wms-metric > p { margin:16px 0 8px; }
+.dashboard-actions { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:24px; }
+.dashboard-actions button { text-align:left; display:grid; gap:4px; padding:18px; background:#fff; border:1px solid var(--ui-line); border-radius:8px; color:var(--ui-ink); }
+.dashboard-actions button:hover { border-color:#82b6ad; }
+.dashboard-actions small { font-weight:400; }
+.wms-layout .wms-footer { padding:16px 28px; background:transparent; border-top:1px solid var(--ui-line); }
+.wms-mobile-menu { display:none; }
+.workspace-layout { width:100%; max-width:none; margin:0; grid-template-columns:232px minmax(0,1fr); }
+.workspace-layout > aside { border-right:1px solid var(--ui-line); background:white; padding:24px; }
+.workspace-content { min-width:0; padding:28px; background:var(--ui-canvas); }
+.admin-panel { max-width:none; padding:24px; border:1px solid var(--ui-line); border-radius:10px; box-shadow:none; margin-bottom:20px; }
+.admin-filters { align-items:end; flex-wrap:wrap; gap:12px; }
+.admin-filters label { margin:0; }
+.permission-table { font-size:13px; }
+.permission-table th, .permission-table td { padding:12px 14px; }
+.shell:has(.workspace-layout) > header { height:64px; padding:0 28px; border-color:var(--ui-line); }
+.shell:has(.workspace-layout) > header .user-profile { margin-left:auto; }
+@media(max-width:1000px) { .products-toolbar label:first-child { flex-basis:100%; } .wms-layout .wms-content { padding:20px; } }
+@media(max-width:760px) {
+ .wms-layout, .wms-layout.sidebar-collapsed { --wms-side-width:232px; }
+ .wms-layout.sidebar-collapsed .wms-sidebar { display:none; }
+ .wms-mobile-menu { display:inline-flex; }
+ .wms-layout .wms-header { height:60px; padding:0 14px; gap:12px; }
+ .wms-company { flex:1; font-size:13px; }
+ .wms-layout .wms-content { padding:16px 12px 24px; }
+ .wms-page-heading h1 { font-size:23px; }
+ .wms-page-heading { gap:12px; margin-bottom:18px; }
+ .wms-layout .products-card { padding:14px 12px 0; }
+ .products-toolbar label { flex:1; min-width:120px; }
+ .products-toolbar > .primary { width:100%; }
+ .organization-dialog { padding:18px; width:calc(100vw - 20px); max-height:calc(100dvh - 20px); }
+ .development-notice { gap:6px; }
+ .development-notice details { width:100%; margin-left:0; }
+ .workspace-layout { display:block; }
+ .workspace-layout > aside { padding:12px; border-right:0; }
+ .workspace-layout > aside nav { display:flex; flex-wrap:wrap; }
+ .workspace-layout .sidebar-foot { display:none; }
+ .workspace-content { padding:12px; }
+ .admin-panel { padding:16px; }
+ .shell > header { padding:0 16px; height:64px; gap:12px; }
+ .shell .header-caption { display:none; }
+}
+
+/* Detail tables use the same available width and secondary-text rhythm as lists. */
+.organization-dialog .organization-table { width:100%; border-collapse:collapse; }
+.organization-dialog .organization-table td small { display:block; margin-top:3px; color:var(--ui-muted); }
+.organization-dialog .organization-table input[type=number] { min-width:90px; }
+
+/* Long business forms keep their title and close action reachable while scrolling. */
+.organization-dialog-heading { position:sticky; top:0; z-index:3; background:var(--ui-surface); }
+.organization-dialog-heading h2 { min-width:0; overflow-wrap:anywhere; }
+.organization-dialog-heading > button { flex-shrink:0; }
+.receipt-summary h3 small { display:block; margin-top:5px; font-size:12px; font-weight:400; color:var(--ui-muted); }
+
+/* Cover the dialog padding while scrolling, so text cannot bleed above its sticky heading. */
+.organization-dialog-heading { top:-24px; margin:-24px -24px 20px; padding:20px 24px 16px; }
+.receipt-actions:empty { display:none; }
+@media(max-width:760px) {
+ .organization-dialog-heading { top:-18px; margin:-18px -18px 18px; padding:18px 18px 14px; }
+}
+
+/* A single title baseline below the breadcrumb, including document/warehouse headers. */
+:root .wms-page-header { align-items:flex-start; padding-top:0; min-height:0; }
+:root .wms-page-header :is(h1,h2) { margin-top:0; }
+:root .wms-page-header .registration-heading { align-items:flex-start; }
+:root .wms-page-header .registration-heading > div { min-width:0; }
+:root .wms-page-header .registration-heading h1 { overflow-wrap:anywhere; }
+:root .wms-page-header .registration-heading small { display:block; margin-top:4px; overflow-wrap:anywhere; }
+:root .wms-page-header .organization-toolbar { margin:0; padding:0; justify-content:flex-end; gap:8px; }
+:root .warehouse-detail-header.wms-page-header { flex-wrap:wrap; }
+:root .registration-intro { margin:20px 0 16px; }
+:root .registration-intro span { margin:0 0 0 auto; }
+
+/* Header-to-content spacing is owned once, including grid/flex page wrappers. */
+:root .support-page > .wms-page-heading { margin-bottom:0; }
+:root .simple-stocktake-heading { align-items:flex-start; margin-bottom:20px; }
+:root .simple-stocktake-heading > .wms-page-heading { margin-bottom:0; }
+:root .dashboard-heading > .wms-page-heading { margin-bottom:20px; }
+:root .warehouse-detail-header.wms-page-header { margin-bottom:20px; }
+:root .warehouse-wizard .wizard-heading.wms-page-header { padding:0; margin-bottom:20px; }
+:root .registration-header.wms-page-header { padding-bottom:0; border-bottom:0; }
+:root .detail-content { padding-top:20px; }
+:root .warehouse-directory > .organization-toolbar { padding-top:0; }
+
+:root .wms-page-heading.wms-page-header { align-items:center; gap:16px; }
+:root .wms-page-heading:has(> .wms-page-actions) > div:first-child { align-self:flex-start; }
+:root .wms-page-heading:has(> .wms-page-actions) h1 { line-height:40px; }
+:root .wms-page-actions .receipt-actions { gap:8px; }
+:root .wms-page-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+:root .wms-page-actions > :is(button,.receipt-actions) { margin:0; }
+.list-search-filters :is(.products-toolbar,.overview-main-filters,.overview-advanced,.stats-period,.stats-search,.inventory-filter-grid) { display:contents; }
+.list-search-filters > .products-toolbar { margin-bottom:0; }
+.list-search-filters { margin-bottom:16px; }
+.stock-overview .quantity { text-align:right; font-variant-numeric:tabular-nums; }
+
+:root .list-search-filters { display:flex; align-items:flex-end; flex-wrap:wrap; gap:8px; }
+:root .list-search-filters :is(label,.searchable-choice) { flex:0 1 160px; min-width:0; max-width:100%; }
+:root .list-search-filters label:has(input:not([type=date])) { flex:0 1 260px; width:260px; }
+:root .list-search-filters .searchable-choice > label { display:block; }
+:root .list-search-filters :is(input,select,.searchable-choice-trigger) { min-height:40px; height:40px; width:100%; }
+:root .list-search-filters .searchable-choice-trigger small { display:none; }
+:root .list-search-filters .overview-help { flex-basis:100%; order:2; margin:0; }
+@media(max-width:600px) { :root .list-search-filters > :is(label,.searchable-choice), :root .list-search-filters :is(.overview-advanced,.stats-period,.stats-search) > :is(label,.searchable-choice) { flex:0 1 140px; } }
+
+.overview-cell-lines { display:flex; flex-direction:column; gap:3px; white-space:normal; overflow-wrap:anywhere; }
+.overview-cell-lines > small, .organization-dialog .organization-table .overview-cell-lines > small { margin:0; }
+.overview-location td { vertical-align:middle; }
+@media(max-width:600px) { :root .list-search-filters label:has(input:not([type=date])) { flex:1 1 240px; width:auto; } }
+
+.business-assignee-detail { display:inline-flex; flex-direction:column; gap:3px; }
+.business-assignee-detail small { color:var(--ui-muted); overflow-wrap:anywhere; }
+
+/* Compact shared query controls, retaining the title-style warehouse selector. */
+:root .list-search-actions { display:flex; align-items:center; gap:8px; flex:none; }
+:root .list-search-actions button { min-height:40px; margin:0; }
+:root .wms-breadcrumb { gap:4px; align-items:center; }
+:root .wms-breadcrumb .lucide-chevron-right { margin-inline:0; padding-inline:0; flex-shrink:0; }
+:root :is(.wms-layout,.admin-workspace,.organization-dialog) button:is(.primary,.secondary,.text-button):has(> svg) { display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+:root button > svg { flex-shrink:0; vertical-align:middle; }
+:root :where(.wms-layout,.organization-dialog,.admin-workspace) select,
+:root .searchable-choice-trigger { min-height:40px; border:1px solid var(--ui-line); border-radius:8px; background-color:#fff; color:var(--ui-ink); padding:8px 12px; font:inherit; }
+:root :where(.wms-layout,.organization-dialog,.admin-workspace) select { appearance:none; padding-right:34px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2316345F' stroke-width='1.6'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; }
+:root :where(select,.searchable-choice-trigger):focus-visible { outline:2px solid var(--ui-accent); outline-offset:2px; }
+:root :where(select,.searchable-choice-trigger):disabled { opacity:.55; cursor:not-allowed; }
+:root .dashboard-warehouse-title .searchable-choice-trigger { background:transparent; border:0; border-radius:0; padding:0; box-shadow:none; }
+:root .report-period-fields { flex-basis:100%; min-width:0; display:flex; flex-direction:column; gap:10px; }
+:root .report-period-tabs { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+:root .report-period-tabs button { min-height:32px; padding:5px 12px; }
+:root .org-chart-toolbar { justify-content:flex-end; }
+:root .org-chart-toolbar .organization-row-actions { border-top:0; padding-top:0; margin-top:0; gap:8px; }
+:root .org-chart-toolbar button[aria-label^="조직도"] { display:inline-flex; align-items:center; justify-content:center; width:36px; min-width:36px; height:36px; min-height:36px; padding:0; }
+:root .inventory-map-title-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
+:root .warehouse-dashboard .inventory-map-title-row .dashboard-warehouse-title.is-title-picker { margin:0; min-width:0; max-width:100%; }
+:root .warehouse-dashboard-heading:empty { display:none; }
+
+/* Route-loaded styles must not redefine choice geometry. */
+:root { --choice-height:40px; --choice-radius:8px; --choice-border:#cbd5e1; --choice-ink:#16345f; --choice-active:#e8f0fc; }
+:root body select:not([multiple]), :root body .searchable-choice-trigger:not(.is-title-trigger) { box-sizing:border-box; min-height:40px!important; height:40px!important; max-height:40px; border:1px solid var(--choice-border)!important; border-radius:var(--choice-radius)!important; background-color:#fff!important; color:var(--choice-ink)!important; padding:8px 34px 8px 12px!important; font-family:inherit; font-size:14px!important; font-weight:400; line-height:22px; box-shadow:none; text-align:left; }
+:root body select:not([multiple]) { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2316345F' stroke-width='1.6'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E")!important; background-repeat:no-repeat!important; background-position:right 12px center!important; }
+:root body .searchable-choice-trigger:not(.is-title-trigger) { position:relative; }
+:root body .searchable-choice-trigger:not(.is-title-trigger) > svg { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; }
+:root body .searchable-choice-trigger:not(.is-title-trigger) > span { overflow:hidden; min-width:0; }
+:root body .searchable-choice-trigger:not(.is-title-trigger) strong { font-size:14px; line-height:22px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+:root body :is(select,.searchable-choice-trigger:not(.is-title-trigger)):not(:disabled):hover { border-color:#64748b!important; }
+:root body :is(select,.searchable-choice-trigger:not(.is-title-trigger)):focus-visible, :root body .searchable-choice-trigger:not(.is-title-trigger)[aria-expanded=true] { outline:2px solid var(--choice-ink); outline-offset:2px; }
+:root body :is(select,.searchable-choice-trigger:not(.is-title-trigger)):disabled { background-color:#f1f5f9!important; opacity:.6; cursor:not-allowed; }
+:root body .searchable-choice-options button[aria-selected=true] { color:var(--choice-ink); background:var(--choice-active); }
+:root body .searchable-choice-options button.is-highlighted { background:#f1f5f9; }
+@supports (appearance:base-select) {
+ :root body select:not([multiple]), :root body select::picker(select) { appearance:base-select; }
+ :root body select::picker-icon { display:none; }
+ :root body select::picker(select) { border:1px solid var(--choice-border); border-radius:8px; padding:6px; background:#fff; box-shadow:0 8px 24px #16345f20; max-height:260px; overflow:auto; }
+ :root body select option { color:var(--choice-ink); border-radius:5px; padding:8px 10px; min-height:36px; }
+ :root body select option:checked { background:var(--choice-active); }
+ :root body select option:hover { background:#f1f5f9; }
+}
+:root body .list-search-filters { justify-content:flex-start; column-gap:8px; }
+:root body .list-search-filters > label { margin:0; display:flex; flex-direction:column; gap:6px; }
+:root body .list-search-filters .list-search-actions { margin:0; padding:0; align-self:flex-end; }
+:root body .organization-card .list-search-filters { grid-template-columns:none; width:100%; }
+:root body .organization-card .organization-row-actions { border-top:0; padding-top:0; margin-top:0; box-shadow:none; }
+:root body .organization-card .organization-row-actions::before, :root body .organization-card .organization-row-actions::after { content:none; }
+:root body .report-period-fields { order:-1; flex:0 0 100%; gap:8px; align-items:flex-start; }
+:root body .wms-segmented { display:inline-flex; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:2px; width:fit-content; max-width:100%; padding:2px; border:0; border-radius:10px; background:#f1f3f6; box-shadow:none; }
+:root body .wms-segmented > button { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:0 1 auto; min-width:0; min-height:34px; height:auto; padding:6px 12px; margin:0; border:0; border-radius:8px!important; background:transparent; color:#526277; font-size:13px; font-weight:500; line-height:22px; box-shadow:none; }
+:root body .wms-segmented > button:is(.primary,[aria-selected=true],[aria-pressed=true],[aria-current=page]) { background:#16345f; color:#fff; }
+:root body .wms-segmented > button::after { content:none; }
+:root body .wms-segmented > button:not(:disabled):hover { background:#e1e6ed; color:#16345f; }
+:root body .wms-segmented > button:is(.primary,[aria-selected=true],[aria-pressed=true],[aria-current=page]):hover { background:#234775; color:#fff; }
+:root body .wms-segmented.report-period-tabs { padding:2px; gap:2px; }
+:root body .wms-segmented.report-period-tabs > button { min-height:28px; padding:3px 10px; font-size:12px; }
+:root body .org-chart-toolbar { margin-bottom:8px; }
+
+/* Form controls share geometry even in lazily loaded forms and dialogs. */
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden],[type=button],[type=submit],[type=color]) {
+ box-sizing:border-box; height:40px!important; min-height:40px!important; max-height:40px;
+ border:1px solid var(--choice-border)!important; border-radius:var(--choice-radius)!important;
+ background-color:#fff!important; color:var(--choice-ink)!important; padding:8px 12px!important; font-family:inherit; font-size:14px; line-height:22px; box-shadow:none;
+}
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]):not(:disabled):hover { border-color:#64748b!important; }
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]):focus-visible { outline:2px solid var(--choice-ink); outline-offset:2px; box-shadow:none; }
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]):disabled { background-color:#f1f5f9!important; opacity:.6; cursor:not-allowed; }
+:root body :is(input,select,.searchable-choice-trigger)[aria-invalid=true] { border-color:#b42318!important; }
+:root body .searchable-choice { align-content:start; justify-content:stretch; gap:5px; }
+:root body .searchable-choice > label:not(.sr-only) { display:block; flex:none; width:auto; min-width:0; min-height:0; margin:0; padding:0; align-self:start; }
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) label:has(> input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]), > select, > textarea) { justify-content:flex-start; align-content:start; gap:5px; }
+/* General account/inquiry fields fill their own grid column. The shared
+   flex-start label rule otherwise shrinks implicit grid tracks to intrinsic width. */
+:root body .organization-dialog:is(.user-account-dialog,.support-create-dialog) .dialog-section-fields label:has(> :is(input:not([type]),input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea)) {
+ min-width:0; grid-template-columns:minmax(0,1fr); justify-content:stretch;
+}
+:root body .organization-dialog:is(.user-account-dialog,.support-create-dialog) .dialog-section-fields label > :is(input:not([type]),input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea) {
+ width:100%; min-width:0; box-sizing:border-box;
+}
+:root body .organization-dialog.support-create-dialog .dialog-section-fields textarea { max-width:100%; resize:vertical; }
+:root body .list-search-filters .searchable-choice > label { flex:none; width:auto; }
+:root body .wms-segmented { margin-left:0; margin-right:0; align-self:flex-start; justify-self:start; }
+:root body .list-search-filters .organization-filters { flex:0 1 auto; justify-content:flex-start; gap:8px; margin:0; }
+:root body .list-search-filters .organization-filters > label { margin:0; }
+:root body .permission-viewbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
+:root body .permission-viewbar .permission-tabs { margin:0; }
+:root body .permission-toolbar .searchable-choice { width:min(100%,320px); }
+:root body .simple-stocktake-fields { align-items:start; }
+:root body .simple-stocktake-fields .searchable-choice { gap:5px; }
+:root body .shipment-rack-field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+:root body .shipment-rack-field > .organization-help { margin:0; text-align:left; font-size:12px; font-weight:400; }
+
+.activity-detail pre { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; max-width:400px; max-height:300px; overflow:auto; font:inherit; }
+
+:root body .list-search-actions > button { height:40px!important; min-height:40px!important; }
+:root body :is(.receipt-basic,.simple-stocktake-fields,.stocktake-register-fields,.stocktake-found-fields,.dialog-section-fields,.product-field-grid,.organization-form-grid) > label { margin:0; align-content:start; justify-content:flex-start; }
+
+/* Partner editor: stretch general fields within the existing grid, keeping
+   the short code and nested postcode/search controls at their existing sizes. */
+:root body #partner-editor .dialog-section-fields > label:not(.partner-code-field) {
+ min-width:0; grid-template-columns:minmax(0,1fr); justify-content:stretch;
+}
+:root body #partner-editor .dialog-section-fields > label:not(.partner-code-field) > :is(input,select,textarea) {
+ width:100%; min-width:0; box-sizing:border-box;
+}
+:root body #partner-editor .dialog-section-fields textarea { max-width:100%; resize:vertical; }
+
+/* Keep labels outside the controls row so they cannot shift the separator. */
+:root body .report-period-range { width:min(100%,328px); display:flex; flex-direction:column; gap:5px; }
+:root body .report-period-labels { display:grid; grid-template-columns:minmax(0,1fr) 1ch minmax(0,1fr); gap:8px; }
+:root body .report-period-labels > label { display:block; width:auto; min-width:0; margin:0; padding:0; font-size:12px; }
+:root body .report-period-dates { display:flex; align-items:center; justify-content:flex-start; gap:8px; width:100%; }
+:root body .report-period-dates > input { flex:1 1 0; width:0; min-width:0; height:40px; min-height:40px; margin:0; box-sizing:border-box; }
+:root body .report-period-dates > span { display:flex; align-items:center; justify-content:center; flex:0 0 1ch; height:40px; margin:0; padding:0; }
+
+/* Keep document date inputs and search controls on the same row. */
+:root body .list-search-filters.inline-period-filters {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(160px, 240px) minmax(100px, 140px) minmax(110px, 160px) max-content;
+  align-items: end;
+  justify-content: start;
+  gap: 8px;
+}
+:root body .inline-period-filters .report-period-fields { display: contents; }
+:root body .inline-period-filters .report-period-range { grid-column: 1; grid-row: 1; width: 100%; }
+:root body .inline-period-filters .report-period-tabs { grid-column: 1 / -1; grid-row: 2; justify-self: start; }
+:root body .inline-period-filters > :is(label, .searchable-choice, .list-search-actions) { grid-row: 1; width: 100%; min-width: 0; margin: 0; }
+@media (max-width: 1199px) {
+  :root body .list-search-filters.inline-period-filters { display: flex; flex-wrap: wrap; }
+  :root body .inline-period-filters .report-period-range { flex: 0 1 300px; order: -2; }
+  :root body .inline-period-filters .report-period-tabs { flex: 0 0 100%; order: -1; }
+  :root body .inline-period-filters > :is(label, .searchable-choice) { width: auto; }
+  :root body .inline-period-filters > .list-search-actions { width: auto; }
+}
+/* Match the stock overview's extra reset to the adjacent search actions. */
+:root body .stock-overview .overview-advanced > button.secondary {
+  height: 40px !important;
+  min-height: 40px !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Icon-only controls identified by their existing roles/classes, not by SVG presence alone. */
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content) button:is(
+ .wms-icon-button,.registration-back,.dialog-close-icon,
+ [aria-label="도면 확대"],[aria-label="도면 축소"],[aria-label="도면 화면 맞춤"],
+ [aria-label="3D 확대"],[aria-label="3D 축소"],[aria-label="조직도 확대"],[aria-label="조직도 축소"],
+ [aria-label="이미지 확대"],[aria-label="이미지 축소"],
+ [aria-label="객체 선택"],[aria-label="화면 이동"],[aria-label="도면 실행 취소"],[aria-label="도면 다시 실행"]
+):not(:where(.studio-tool-rail button)), :root body .product-gallery-order > button, :root body .wms-pagination-buttons button:has(>svg), :root body button[aria-label="삭제"]:has(>svg:only-child) {
+ --ui-icon-min-height:36px;
+ width:36px; min-width:36px; max-width:36px; height:36px; min-height:36px; max-height:36px;
+ padding:0; flex:0 0 36px; display:inline-flex; align-items:center; justify-content:center;
+}
+:root body .quantity-input-error { display:block; color:var(--ui-danger,#b13b32); font-size:12px; line-height:1.4; margin:4px 0 0; white-space:normal; }
+
+/* Workspace chrome: the mobile opener must never override its desktop visibility. */
+:root body .wms-layout .wms-header { justify-content:flex-start; }
+:root body .wms-header > .wms-company { gap:8px; }
+:root body .wms-header > .user-profile { margin-left:auto; }
+:root body .wms-layout .wms-header > button.wms-mobile-menu { display:none; }
+@media(max-width:760px) { :root body .wms-layout .wms-header > button.wms-mobile-menu { display:inline-flex; } }
+
+/* Text actions use content width. Navigation, pickers, tabs and icon tools keep
+   their own geometry; auth buttons are outside these business surfaces. */
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.admin-panel) :is(button,a[href]):is(.primary,.secondary,.text-button):not(
+ .wms-icon-button,.registration-back,.dialog-close-icon,[hidden],
+ [aria-label="도면 확대"],[aria-label="도면 축소"],[aria-label="도면 화면 맞춤"],
+ [aria-label="3D 확대"],[aria-label="3D 축소"],[aria-label="조직도 확대"],[aria-label="조직도 축소"],
+ [aria-label="이미지 확대"],[aria-label="이미지 축소"],
+ [aria-label="객체 선택"],[aria-label="화면 이동"],[aria-label="도면 실행 취소"],[aria-label="도면 다시 실행"],
+ [aria-label="삭제"]:has(> svg:only-child)
+):not(:where(
+ [role=tab],[role=option],[role=tablist] button,.wms-segmented button,.wms-pagination button,
+ .user-profile-panel button,.tenant-select button,.document-paste-candidates button,
+ .barcode-aliases button,.product-gallery-order button,.product-gallery-actions button,
+ .studio-tool-rail button,.plan-object-list button,.overview-tabs button,.admin-tabs button
+)) {
+ box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+ width:var(--ui-action-width,auto); min-width:0; max-width:100%; flex:0 0 auto;
+ height:var(--ui-action-height,40px); min-height:var(--ui-action-height,40px);
+ padding:8px var(--ui-action-padding,16px); line-height:22px; white-space:nowrap;
+}
+:root body :is(.wms-page-actions,.registration-header-actions,.wizard-heading-actions,
+ .receipt-section-buttons,.receipt-actions,.organization-row-actions,.dialog-actions,
+ .list-search-actions,.template-metadata-actions,.warehouse-workspace-actions,
+ .inventory-top-actions,.inventory-top-actions > div) { gap:var(--ui-action-gap,8px); flex-wrap:wrap; }
+:root body :is(.wms-page-actions,.registration-header-actions,.dialog-actions,.list-search-actions) > button > svg { margin:0; flex-shrink:0; }
+@media(max-width:760px) {
+ /* Keep the established full-width mobile toolbar CTA. */
+ :root body .wms-layout .products-toolbar > button.primary:not(.wms-icon-button) { --ui-action-width:100%; }
+}
+
+/* Auth forms use the same control geometry; password visibility stays inside. */
+:root body .password-input-wrap > input { padding-right:44px!important; }
+:root body .password-input-wrap > .password-visibility { --ui-icon-min-height:36px; width:36px; height:36px; min-width:36px; min-height:36px; padding:0; }
+:root body .auth-shell .password-field > label { margin-bottom:5px; }
+
+/* Company branding uses the same rounded image on desktop and in the app. */
+:root body .wms-header .wms-company-logo { border-radius:8px; }
+@media(min-width:1025px) {
+  :root body .wms-layout .wms-header { padding-inline:28px !important; }
+}

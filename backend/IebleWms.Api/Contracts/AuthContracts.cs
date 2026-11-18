@@ -4,6 +4,10 @@ namespace IebleWms.Api.Contracts;
 
 public sealed class RegisterCompanyRequest
 {
+    // Omitted by legacy clients: preserve email-as-login signup compatibility.
+    [RegularExpression(IebleWms.Api.Services.LoginIdPolicy.Pattern, ErrorMessage = IebleWms.Api.Services.LoginIdPolicy.FormatMessage)]
+    public string? LoginId { get => loginId; set => loginId = value?.Trim(); }
+    private string? loginId;
     [Required, StringLength(200, MinimumLength = 1)] public string CompanyName { get; set; } = "";
     [Required, IebleWms.Api.Services.BusinessRegistrationNumberAttribute]
     public string BusinessRegistrationNumber { get; set; } = "";
