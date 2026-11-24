@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 import {
@@ -180,16 +181,16 @@ export default function OrganizationChart({
   function employeeList(id: string | null) {
     const people = groups.employees.get(id) || []
     return people.length ? (
-      <ul className="org-card-employees" aria-label="소속 직원">
+      <ul className="org-card-employees" aria-label={uiText("소속 직원")}>
         {people.map((person) => (
           <li key={person.userId}>
             <strong>{person.name}</strong>
-            <span>{person.positionName || '직급 미지정'}</span>
+            <span>{person.positionName || uiText("직급 미지정")}</span>
           </li>
         ))}
       </ul>
     ) : (
-      <p className="org-card-empty">소속 직원 없음</p>
+      <p className="org-card-empty">{uiText("소속 직원 없음")}</p>
     )
   }
   const expandable = (data?.departments || []).filter(d => (groups.children.get(d.id)?.length || 0) > 0).map(d => d.id)
@@ -204,21 +205,19 @@ export default function OrganizationChart({
         <li key={department.id} className="org-branch">
           <article
             className="org-department-card"
-            aria-label={`${department.name} 부서`}
+            aria-label={uiText("{v0} 부서", { v0: department.name })}
             data-department-id={department.id}
           >
             <header>
               <div>
                 <h2>{department.name}</h2>
-                <p>
-                  직속 {groups.employees.get(department.id)?.length || 0}명
-                  {department.isActive ? '' : ' · 사용 중지'}
+                <p> {uiText("직속")} {groups.employees.get(department.id)?.length || 0}{uiText("명")} {department.isActive ? '' : uiText("· 사용 중지")}
                 </p>
               </div>
               {hasChildren && (
                 <button
                   className="wms-icon-button"
-                  aria-label={`${department.name} ${expanded ? '접기' : '펼치기'}`}
+                  aria-label={uiText("{v0} {v1}", { v0: department.name, v1: expanded ? uiText('접기') : uiText('펼치기') })}
                   aria-expanded={expanded}
                   onClick={() =>
                     setClosed((value) => {
@@ -229,11 +228,7 @@ export default function OrganizationChart({
                     })
                   }
                 >
-                  {expanded ? (
-                    <ChevronDown size={18} />
-                  ) : (
-                    <ChevronRight size={18} />
-                  )}
+                  {expanded ? (<ChevronDown size={18} />) : (<ChevronRight size={18} />)}
                 </button>
               )}
             </header>
@@ -249,19 +244,19 @@ export default function OrganizationChart({
   return (
     <>
       <PageHeading
-        title="조직도"
+        title={uiText("조직도")}
       />
       {error && (
         <div className="alert error" role="alert">
-          {error}
+          {uiText(error)}
         </div>
       )}
       <section className="wms-card organization-card">
         <div className="organization-toolbar org-chart-toolbar">
-          <div className="org-chart-zoom-controls" role="group" aria-label="조직도 배율">
+          <div className="org-chart-zoom-controls" role="group" aria-label={uiText("조직도 배율")}>
             <button
               className="secondary wms-icon-button"
-              aria-label="조직도 축소"
+              aria-label={uiText("조직도 축소")}
               disabled={zoom <= 1}
               onClick={() => setZoom((x) => Math.max(1, x - 10))}
             >
@@ -272,48 +267,35 @@ export default function OrganizationChart({
             </span>
             <button
               className="secondary wms-icon-button"
-              aria-label="조직도 확대"
+              aria-label={uiText("조직도 확대")}
               disabled={zoom >= 200}
               onClick={() => setZoom((x) => Math.min(200, x + 10))}
             >
               <Plus size={16} />
             </button>
-            <button className="secondary org-chart-reset" onClick={() => setZoom(100)}>
-              100% 보기
-            </button>
+            <button className="secondary org-chart-reset" onClick={() => setZoom(100)}> {uiText("100% 보기")} </button>
           </div>
-          <div className="org-chart-view-controls" role="group" aria-label="조직도 보기">
+          <div className="org-chart-view-controls" role="group" aria-label={uiText("조직도 보기")}>
             <button className="secondary" disabled={!data} onClick={fit}>
-              <Scan size={16} /> 전체 화면 맞춤
-            </button>
+              <Scan size={16} /> {uiText("전체 화면 맞춤")} </button>
             <button className="secondary" disabled={!expandable.length} onClick={() => setClosed(allExpanded ? new Set(expandable) : new Set())}>
-              {allExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{allExpanded ? '전체 접기' : '전체 펼치기'}
+              {allExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{allExpanded ? uiText("전체 접기") : uiText("전체 펼치기")}
             </button>
           </div>
 
         </div>
-        {!data ? (
-          <p>
-            {error
-              ? '접근 권한과 연결 상태를 확인해 주세요.'
-              : '조직도를 불러오는 중…'}
-          </p>
-        ) : (
-          <>
+        {!data ? (<p>
+            {error ? uiText("접근 권한과 연결 상태를 확인해 주세요.") : uiText("조직도를 불러오는 중…")}
+          </p>) : (<>
             {!data.departments.length && (
               <div className="organization-section">
-                <h2>아직 조직도가 없습니다</h2>
-                <p>
-                  항목 관리에서 부서를 등록한 뒤 사용자 관리에서 직원의 부서를
-                  지정해 주세요.
-                </p>
+                <h2>{uiText("아직 조직도가 없습니다")}</h2>
+                <p> {uiText("항목 관리에서 부서를 등록한 뒤 사용자 관리에서 직원의 부서를 지정해 주세요.")} </p>
                 {canManage && (
                   <button
                     className="primary"
                     onClick={() => onNavigate('/app/settings/items')}
-                  >
-                    부서 등록하러 가기
-                  </button>
+                  > {uiText("부서 등록하러 가기")} </button>
                 )}
               </div>
             )}
@@ -321,7 +303,7 @@ export default function OrganizationChart({
               ref={viewport}
               className={`org-chart-viewport${dragging ? ' is-panning' : ''}`}
               role="region"
-              aria-label="부서 계층"
+              aria-label={uiText("부서 계층")}
               tabIndex={0}
               onPointerDown={startPan}
               onPointerMove={pan}
@@ -339,15 +321,12 @@ export default function OrganizationChart({
                   <li className="org-branch org-unassigned">
                     <article
                       className="org-department-card"
-                      aria-label="부서 미지정"
+                      aria-label={uiText("부서 미지정")}
                     >
                       <header>
                         <div>
-                          <h2>부서 미지정</h2>
-                          <p>
-                            소속 직원 {groups.employees.get(null)?.length || 0}
-                            명
-                          </p>
+                          <h2>{uiText("부서 미지정")}</h2>
+                          <p> {uiText("소속 직원")} {groups.employees.get(null)?.length || 0} {uiText("명")} </p>
                         </div>
                       </header>
                       {employeeList(null)}
@@ -356,8 +335,7 @@ export default function OrganizationChart({
                 </ul>
               </div>
             </div>
-          </>
-        )}
+          </>)}
       </section>
     </>
   )

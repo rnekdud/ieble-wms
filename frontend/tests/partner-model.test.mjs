@@ -30,3 +30,24 @@ test('blank codes are delegated to the server and existing overseas classificati
  const request=partnerRequest({...partnerDraft(p),name:'이름 수정'},'r',p)
  assert.equal(request.code,'OLD-1');assert.equal(request.registrationCountry,'OTHER');assert.equal(request.businessRegistrationNumber,'GB-123')
 })
+
+test('default shipping address is optional and independent from business address',()=>{
+ const d=partnerDraft({name:'거래처',address:'사업장',addressDetail:'사무실',defaultShippingAddress:'안양 출고지',defaultShippingAddressDetail:'물류동'})
+ const next={...d,defaultShippingAddress:'서울 출고지'}
+ assert(partnerDirty(next,d))
+ const r=partnerRequest(next,'request')
+ assert.equal(r.address,'사업장');assert.equal(r.addressDetail,'사무실')
+ assert.equal(r.defaultShippingAddress,'서울 출고지');assert.equal(r.defaultShippingAddressDetail,'물류동')
+ const empty=partnerRequest({...next,defaultShippingAddress:'',defaultShippingAddressDetail:''},'request',d)
+ assert.equal(empty.defaultShippingAddress,'');assert.equal(empty.defaultShippingAddressDetail,'')
+ assert.equal(partnerDraft({name:'기존 거래처'}).defaultShippingAddress,'');assert.equal(partnerRequest(partnerDraft(),'r').defaultShippingAddress,undefined)
+})
+
+test('shipping postcode stays separate from business postcode and clears explicitly',()=>{
+ const p={name:'거래처',postalCode:'11111',defaultShippingPostalCode:'22222',defaultShippingAddress:'출고지'}
+ const d=partnerDraft(p);assert.equal(d.defaultShippingPostalCode,'22222')
+ const request=partnerRequest({...d,defaultShippingPostalCode:'33333'},'r',p)
+ assert.equal(request.postalCode,'11111');assert.equal(request.defaultShippingPostalCode,'33333')
+ assert.equal(partnerRequest({...d,defaultShippingPostalCode:''},'r',p).defaultShippingPostalCode,'')
+ assert.equal(partnerDraft({name:'기존 거래처'}).defaultShippingPostalCode,'')
+})

@@ -1,3 +1,6 @@
+import { useLanguage } from '../../use-language'
+import { getLocale } from '../../i18n.ts'
+import { t as uiText } from '../../i18n.ts'
 import { Trash2 } from 'lucide-react'
 import FormLabel from '../FormLabel'
 import BarcodePackagingInputs, { type BarcodePackagingDraft, type BarcodePackagingChange } from './BarcodePackagingInputs'
@@ -18,6 +21,7 @@ function BarcodeRow({ packaging, packagingDraft, onPackagingChange, unit, row, i
   packaging: Packaging; packagingDraft: BarcodePackagingDraft; onPackagingChange: BarcodePackagingChange; unit: string; row: BarcodeDraft; index: number; duplicate: boolean; endpoint: string; productId?: string; code: string; busy: boolean
   update: (patch: Partial<BarcodeDraft>) => void; select: () => void; primary: (checked: boolean) => void; remove: () => void
 }) {
+  const language = useLanguage()
   const value = barcodeInputValue(row.change, row.current), id = useId()
   const [validationVisible, setValidationVisible] = useState(false)
   const showMessage = !!value || validationVisible
@@ -29,7 +33,7 @@ function BarcodeRow({ packaging, packagingDraft, onPackagingChange, unit, row, i
   const message = duplicate ? '동일 상품에 같은 바코드를 두 번 등록할 수 없습니다.' : invalid || result?.error || (!result ? '바코드 중복 확인 중…' : result.data?.available ? '사용 가능한 바코드입니다.' : conflict ? conflict.kind === 'product' ? `이미 ${conflict.name}(${conflict.code}) 상품에 등록된 바코드입니다.` : `이미 ${conflict.kind === 'rack' ? '랙' : '보관 위치'} ${conflict.code}에 사용 중입니다. 창고: ${conflict.warehouseName}` : '사용할 수 없는 바코드입니다.')
   const packageProblem = barcodePackageError(packaging, unit, row.packageCode || 'EA')
   const packageSelect = useRef<HTMLSelectElement>(null)
-  useLayoutEffect(() => { packageSelect.current?.setCustomValidity(packageProblem || '') }, [packageProblem])
+  useLayoutEffect(() => { packageSelect.current?.setCustomValidity(uiText(packageProblem || '')) }, [packageProblem, language])
   const blocked = duplicate || !!invalid || !result?.data?.available
   useEffect(() => {
     let active = true, running = false
@@ -49,21 +53,21 @@ function BarcodeRow({ packaging, packagingDraft, onPackagingChange, unit, row, i
   }, [key, endpoint, productId, value, invalid, duplicate, row.change.mode])
   useLayoutEffect(() => {
     const input = root.current?.querySelector<HTMLInputElement>('.rack-barcode-input-row input')
-    if (input) { root.current?.querySelector('.registration-field-error')?.remove(); input.removeAttribute('aria-errormessage'); input.setCustomValidity(blocked ? message : ''); input.setAttribute('aria-invalid', String(showMessage && blocked && (!!result || !!invalid || duplicate))); input.setAttribute('aria-describedby', showMessage ? id : root.current?.querySelector('.rack-barcode-fields > small')?.id || '') }
-  }, [blocked, message, result, invalid, duplicate, id, showMessage])
-  return <section ref={root} className="product-barcode-row" aria-label={`바코드 ${index + 1} 영역`} onFocusCapture={select} onInvalidCapture={e => { if ((e.target as HTMLElement).matches('.rack-barcode-input-row input')) setValidationVisible(true) }}>
-    <div className="product-barcode-heading"><strong>바코드 {index + 1}</strong><label className="products-checks"><input type="checkbox" checked={row.isPrimary} onChange={e => primary(e.target.checked)} />대표</label><button type="button" className="secondary product-barcode-delete" aria-label="바코드 삭제" onClick={remove}><Trash2 size={16} aria-hidden="true" /></button></div>
+    if (input) { root.current?.querySelector('.registration-field-error')?.remove(); input.removeAttribute('aria-errormessage'); input.setCustomValidity(blocked ? uiText(message) : ''); input.setAttribute('aria-invalid', String(showMessage && blocked && (!!result || !!invalid || duplicate))); input.setAttribute('aria-describedby', showMessage ? id : root.current?.querySelector('.rack-barcode-fields > small')?.id || '') }
+  }, [blocked, message, result, invalid, duplicate, id, showMessage, language])
+  return <section ref={root} className="product-barcode-row" aria-label={uiText("바코드 {v0} 영역", { v0: index + 1 })} onFocusCapture={select} onInvalidCapture={e => { if ((e.target as HTMLElement).matches('.rack-barcode-input-row input')) setValidationVisible(true) }}>
+    <div className="product-barcode-heading"><strong>{uiText("바코드")} {index + 1}</strong><label className="products-checks"><input type="checkbox" checked={row.isPrimary} onChange={e => primary(e.target.checked)} />{uiText("대표")}</label><button type="button" className="secondary product-barcode-delete" aria-label={uiText("바코드 삭제")} onClick={remove}><Trash2 size={16} aria-hidden="true" /></button></div>
     <div className="product-barcode-entry">
-      <label><FormLabel required>바코드 적용 단위</FormLabel><select aria-required="true" ref={packageSelect} aria-label={`바코드 ${index + 1} 포장 단위`} aria-invalid={!!packageProblem} aria-describedby={packageProblem ? `${id}-package` : undefined} value={row.packageCode || 'EA'} onChange={e => update({ packageCode: e.target.value })}>{Object.entries(packageLabels).map(([code, label]) => <option key={code} value={code} disabled={code !== 'EA' && unit !== 'EA'}>{code === 'EA' ? unit === 'EA' ? '낱개(EA)' : `기존 단위(${unit})` : label}</option>)}</select></label>
-      <div className="product-barcode-factor"><span>환산 수량</span><output aria-label={`바코드 ${index + 1} 환산 수량`}>{packageProblem ? '설정 필요' : `${packageFactors(packaging)[(row.packageCode || 'EA') as PackageCode]?.toLocaleString('ko-KR')} ${unit}`}</output></div>
+      <label><FormLabel required>{uiText("바코드 적용 단위")}</FormLabel><select aria-required="true" ref={packageSelect} aria-label={uiText("바코드 {v0} 포장 단위", { v0: index + 1 })} aria-invalid={!!packageProblem} aria-describedby={packageProblem ? `${id}-package` : undefined} value={row.packageCode || 'EA'} onChange={e => update({ packageCode: e.target.value })}>{Object.entries(packageLabels).map(([code, label]) => <option key={code} value={code} disabled={code !== 'EA' && unit !== 'EA'}>{code === 'EA' ? unit === 'EA' ? uiText("낱개(EA)") : uiText("기존 단위({v0})", { v0: unit }) : uiText(label)}</option>)}</select></label>
+      <div className="product-barcode-factor"><span>{uiText("환산 수량")}</span><output aria-label={uiText("바코드 {v0} 환산 수량", { v0: index + 1 })}>{packageProblem ? uiText("설정 필요") : `${packageFactors(packaging)[(row.packageCode || 'EA') as PackageCode]?.toLocaleString(getLocale())} ${unit}`}</output></div>
       {unit === 'EA' && <BarcodePackagingInputs key={row.packageCode || 'EA'} draft={packagingDraft} change={onPackagingChange} packageCode={row.packageCode || 'EA'} index={index} busy={busy} />}
       <div className="product-barcode-value-field" onBlurCapture={e => { if ((e.target as HTMLElement).matches('.rack-barcode-input-row input')) { setValidationVisible(true); checkNow.current() } }}>
-        <RackBarcodeFields required inputOnly label={`상품 바코드 ${index + 1}`} kind="product" warehouseEndpoint={endpoint} candidateEndpoint={endpoint + '/barcode-candidates'} rackId={row.key} rackCode={code} current={row.current} value={row.change} disabled={busy} onChange={change => { setValidationVisible(true); select(); update({ change, ...(change.mode === 'auto' ? { barcodeType: 'Internal' } : {}) }) }} />
-        {showMessage && <div id={id} className={`barcode-check ${blocked ? result?.error || conflict || duplicate || invalid || result?.data?.available === false ? 'error' : 'pending' : 'available'}`} aria-live="polite"><span>{message}</span>{conflict?.kind === 'product' && <a href={`/app/products/${conflict.id}`} target="_blank" rel="noopener noreferrer">상품 확인 ↗</a>}{result?.error && <button type="button" className="secondary" onClick={() => checkNow.current()}>다시 확인</button>}</div>}
+        <RackBarcodeFields required inputOnly label={uiText("상품 바코드 {v0}", { v0: index + 1 })} kind="product" warehouseEndpoint={endpoint} candidateEndpoint={endpoint + '/barcode-candidates'} rackId={row.key} rackCode={code} current={row.current} value={row.change} disabled={busy} onChange={change => { setValidationVisible(true); select(); update({ change, ...(change.mode === 'auto' ? { barcodeType: 'Internal' } : {}) }) }} />
+        {showMessage && <div id={id} className={`barcode-check ${blocked ? result?.error || conflict || duplicate || invalid || result?.data?.available === false ? 'error' : 'pending' : 'available'}`} aria-live="polite"><span>{uiText(message)}</span>{conflict?.kind === 'product' && <a href={`/app/products/${conflict.id}`} target="_blank" rel="noopener noreferrer">{uiText("상품 확인 ↗")}</a>}{result?.error && <button type="button" className="secondary" onClick={() => checkNow.current()}>{uiText("다시 확인")}</button>}</div>}
       </div>
     </div>
-    {packageProblem && <p id={`${id}-package`} className="barcode-check error" role="alert">{packageProblem}</p>}
-    <div className="product-barcode-meta"><label>용도 (선택)<input maxLength={200} placeholder="제조사·포장 등" value={row.description} onChange={e => update({ description: e.target.value })} /></label><label>구분<select disabled={row.change.mode === 'auto' || (row.change.mode === 'keep' && row.isGenerated)} value={row.barcodeType} onChange={e => update({ barcodeType: e.target.value as BarcodeDraft['barcodeType'] })}><option value="Internal">내부 관리용 Code 128</option><option value="External">외부·제조사 바코드</option></select></label></div>
+    {packageProblem && <p id={`${id}-package`} className="barcode-check error" role="alert">{uiText(packageProblem)}</p>}
+    <div className="product-barcode-meta"><label>{uiText("용도 (선택)")}<input maxLength={200} placeholder={uiText("제조사·포장 등")} value={row.description} onChange={e => update({ description: e.target.value })} /></label><label>{uiText("구분")}<select disabled={row.change.mode === 'auto' || (row.change.mode === 'keep' && row.isGenerated)} value={row.barcodeType} onChange={e => update({ barcodeType: e.target.value as BarcodeDraft['barcodeType'] })}><option value="Internal">{uiText("내부 관리용 Code 128")}</option><option value="External">{uiText("외부·제조사 바코드")}</option></select></label></div>
   </section>
 }
 export default function ProductBarcodes({ packaging, packagingDraft, onPackagingChange, unit, rows, setRows, endpoint, productId, code, productName, productCode, busy }: {
@@ -86,25 +90,25 @@ export default function ProductBarcodes({ packaging, packagingDraft, onPackaging
   }
   const preview = rows.find(r => r.key === selected) || rows.find(r => r.isPrimary) || rows[0]
   const value = preview ? barcodeInputValue(preview.change, preview.current) : ''
-  return <section className="dialog-section product-barcode-section" aria-label="바코드 관리 영역">
-    <div className="dialog-section-heading product-barcode-toolbar"><h3>바코드 관리</h3>
-      <button type="button" className="secondary" disabled={busy || rows.length >= 30} onClick={() => { const key = crypto.randomUUID(); setSelected(key); setRows(list => [...list, { key, change: { mode: 'keep' }, isPrimary: list.length === 0, description: '', barcodeType: 'Internal', isGenerated: false }]) }}>+ 바코드 추가</button>
+  return <section className="dialog-section product-barcode-section" aria-label={uiText("바코드 관리 영역")}>
+    <div className="dialog-section-heading product-barcode-toolbar"><h3>{uiText("바코드 관리")}</h3>
+      <button type="button" className="secondary" disabled={busy || rows.length >= 30} onClick={() => { const key = crypto.randomUUID(); setSelected(key); setRows(list => [...list, { key, change: { mode: 'keep' }, isPrimary: list.length === 0, description: '', barcodeType: 'Internal', isGenerated: false }]) }}>{uiText("+ 바코드 추가")}</button>
     </div>
     <div className="products-full product-barcode-workspace">
     <div className="product-barcode-scan">
-      <BarcodeScanInput label="등록할 바코드 스캔" scanLabel="바코드 추가" autoFocus={false} disabled={busy} onScan={event => addScan(event.barcode)} />
-      {scanError && <p className="alert error" role="alert">{scanError}</p>}
-      {scanMessage && <p role="status">{scanMessage}</p>}
+      <BarcodeScanInput label={uiText("등록할 바코드 스캔")} scanLabel="바코드 추가" autoFocus={false} disabled={busy} onScan={event => addScan(event.barcode)} />
+      {scanError && <p className="alert error" role="alert">{uiText(scanError)}</p>}
+      {scanMessage && <p role="status">{uiText(scanMessage)}</p>}
     </div>
     <div className="product-barcode-inputs">{rows.map((row, index) => <BarcodeRow packaging={packaging} packagingDraft={packagingDraft} onPackagingChange={onPackagingChange} unit={unit} key={row.key} row={row} index={index} endpoint={endpoint} productId={productId} code={code} busy={busy}
       duplicate={!!barcodeInputValue(row.change, row.current) && rows.some(r => r.key !== row.key && barcodeInputValue(r.change, r.current) === barcodeInputValue(row.change, row.current))}
       select={() => setSelected(row.key)} update={patch => setRows(list => list.map(r => r.key === row.key ? { ...r, ...patch } : r))}
       primary={checked => { setSelected(row.key); setRows(list => list.map(r => ({ ...r, isPrimary: r.key === row.key && checked }))) }}
       remove={() => setRows(list => list.filter(r => r.key !== row.key))} />)}
-      {!rows.length && <p className="organization-help">바코드는 선택 사항입니다. 직접 입력하거나 자동 생성할 수 있습니다.</p>}
+      {!rows.length && <p className="organization-help">{uiText("바코드는 선택 사항입니다. 직접 입력하거나 자동 생성할 수 있습니다.")}</p>}
     </div>
-    <aside className="product-barcode-preview" aria-label="선택 바코드 미리보기"><strong>바코드 미리보기{preview ? ` · 바코드 ${rows.indexOf(preview) + 1}${preview.isPrimary ? ' · 대표' : ''}` : ''}</strong>
-      {value && !barcodeError(value) ? <RackBarcodeLabel kind="product" productName={productName} productCode={productCode} value={value} rackId={preview.key} rackCode={code} draft={value !== preview.current} /> : <p className="barcode-preview-empty">유효한 바코드를 입력하면 이미지가 바로 표시됩니다.</p>}
+    <aside className="product-barcode-preview" aria-label={uiText("선택 바코드 미리보기")}><strong>{uiText("바코드 미리보기")}{preview ? uiText("· 바코드 {v0}{v1}", { v0: rows.indexOf(preview) + 1, v1: preview.isPrimary ? uiText(' · 대표') : '' }) : ''}</strong>
+      {value && !barcodeError(value) ? <RackBarcodeLabel kind="product" productName={productName} productCode={productCode} value={value} rackId={preview.key} rackCode={code} draft={value !== preview.current} /> : <p className="barcode-preview-empty">{uiText("유효한 바코드를 입력하면 이미지가 바로 표시됩니다.")}</p>}
     </aside>
     </div>
   </section>

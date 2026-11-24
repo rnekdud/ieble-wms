@@ -1,3 +1,5 @@
+import { t as uiText, getLocale } from '../../i18n.ts'
+import ReadOnlyInput from '../ReadOnlyInput'
 import PageSizeSelect from '../PageSizeSelect'
 import FormLabel from '../FormLabel'
 import SearchFilters from './SearchFilters'
@@ -48,7 +50,7 @@ export default function UserManagement({
 }) {
   const [grades, setGrades] = useState<PermissionGrade[]>([])
   const [gradeKey, setGradeKey] = useState('Employee')
-  const gradeLabel = (key: string) => grades.find(x => x.id === key)?.name || roles[key] || '사용자 정의 권한'
+  const gradeLabel = (key: string) => { const grade = grades.find(x => x.id === key); return grade ? (grade.isBuiltIn ? uiText(grade.name) : grade.name) : uiText(roles[key] || '사용자 정의 권한') }
   const [filters, setFilters] = useState({
     search: '',
     role: '',
@@ -217,7 +219,7 @@ export default function UserManagement({
   async function resetPassword(user: Employee) {
     if (
       !window.confirm(
-        `${user.name}님의 비밀번호를 초기화하시겠습니까? 로그인 아이디와 같은 초기 비밀번호로 설정됩니다. 기존 로그인은 해제되고 개인 비밀번호 변경이 필요합니다.`,
+        uiText('{v0}님의 비밀번호를 초기화하시겠습니까? 로그인 아이디와 같은 초기 비밀번호로 설정됩니다. 기존 로그인은 해제되고 개인 비밀번호 변경이 필요합니다.', { v0: user.name }),
       )
     )
       return
@@ -238,32 +240,34 @@ export default function UserManagement({
       setBusy(false)
     }
   }
-  const contactField = editing && (<label className="member-contact">연락처 (선택)<input name="contactPhone" type="text" inputMode="tel" autoComplete="tel" maxLength={50} placeholder="010-1234-5678" defaultValue={editing === 'create' ? '' : editing.contactPhone || ''} /></label>)
+  const contactField = editing && (<label className="member-contact">{uiText("연락처 (선택)")}<input name="contactPhone" type="text" inputMode="tel" autoComplete="tel" maxLength={50} placeholder="010-1234-5678" defaultValue={editing === 'create' ? '' : editing.contactPhone || ''} /></label>)
   const data = current?.data
+  function closeEditor() {
+    if (pending) setPending(null)
+    else requestNavigation(() => { setEditing(null); setError('') })
+  }
   return (
     <>
       <PageHeading
-        title="사용자 관리"
+        title={uiText("사용자 관리")}
         actions={<>           {canCreate && (
             <button
               className="primary"
               disabled={busy || !options}
               onClick={() => openEditor('create')}
-            >
-              사용자 등록
-            </button>
-          )} {isMaster && <button className="secondary" disabled={busy} onClick={() => setTransferring(true)}>마스터 위임</button>}</>}
+            > {uiText("사용자 등록")} </button>
+          )} {isMaster && <button className="secondary" disabled={busy} onClick={() => setTransferring(true)}>{uiText("마스터 위임")}</button>}</>}
       />
       {transferring && isMaster && <MasterTransferDialog tenantId={tenantId} onClose={() => setTransferring(false)} onTransferred={async () => { setNotice('마스터 위임이 완료되었습니다.'); setRevision(x => x + 1); await onAccessChanged() }} />}
       <section className="wms-card organization-card mobile-management-list">
         {!editing && error && (
           <div className="alert error" role="alert">
-            {error}
+            {uiText(error)}
           </div>
         )}
         {notice && (
           <div className="alert success" role="status">
-            {notice}
+            {uiText(notice)}
           </div>
         )}
         <div className="organization-toolbar">
@@ -271,131 +275,118 @@ export default function UserManagement({
             onSearch={() => { setFilters({ ...filterDraft, search:filterDraft.search.trim(), page:1 }); setRevision(n=>n+1) }}
             onReset={() => { const next={ search:'', role:'', accountType:'', status:'all', page:1, pageSize:20 }; setFilterDraft(next); setFilters(next); setRevision(n=>n+1) }}>
 
-            <label>계정 유형 필터<select aria-label="계정 유형 필터" value={filterDraft.accountType} onChange={e=>setFilterDraft(f=>({...f,accountType:e.target.value,page:1}))}><option value="">전체 사용자</option><option value="Internal">내부 직원</option><option value="External">외부 협력사</option></select></label>
-            <label>
-              권한 필터
-              <select
-                aria-label="권한 필터"
+            <label>{uiText("계정 유형 필터")}<select aria-label={uiText("계정 유형 필터")} value={filterDraft.accountType} onChange={e=>setFilterDraft(f=>({...f,accountType:e.target.value,page:1}))}><option value="">{uiText("전체 사용자")}</option><option value="Internal">{uiText("내부 직원")}</option><option value="External">{uiText("외부 협력사")}</option></select></label>
+            <label> {uiText("권한 필터")} <select
+                aria-label={uiText("권한 필터")}
                 value={filterDraft.role}
                 onChange={(e) =>
                   setFilterDraft((f) => ({ ...f, role: e.target.value, page: 1 }))
                 }
               >
-                <option value="">전체 권한</option>
+                <option value="">{uiText("전체 권한")}</option>
                 {Object.entries(roles).map(([value, label]) => (
                   <option key={value} value={value}>
-                    {label}
+                    {uiText(label)}
                   </option>
                 ))}
               </select>
             </label>
-            <label>
-              계정 활성화 필터
-              <select
-                aria-label="계정 활성화 필터"
+            <label> {uiText("계정 활성화 필터")} <select
+                aria-label={uiText("계정 활성화 필터")}
                 value={filterDraft.status}
                 onChange={(e) =>
                   setFilterDraft((f) => ({ ...f, status: e.target.value, page: 1 }))
                 }
               >
-                <option value="all">전체 상태</option>
-                <option value="active">활성</option>
-                <option value="inactive">비활성</option>
+                <option value="all">{uiText("전체 상태")}</option>
+                <option value="active">{uiText("활성")}</option>
+                <option value="inactive">{uiText("비활성")}</option>
               </select>
             </label>
 
-          <label>
-              사용자 검색
-              <input
+          <label> {uiText("사용자 검색")} <input
                 name="search"
                 value={filterDraft.search}
                 onChange={e => setFilterDraft(f => ({ ...f, search: e.target.value }))}
                 maxLength={100}
-                placeholder="이름, 아이디, 이메일, 연락처, 소속 업체"
+                placeholder={uiText("이름, 아이디, 이메일, 연락처, 소속 업체")}
               />
             </label>
 </SearchFilters>
 
         </div>
-        {!current ? (
-          <p role="status">사용자 목록을 불러오는 중입니다.</p>
-        ) : current.error ? (
-          <div className="alert error" role="alert">
-            {current.error}
-          </div>
-        ) : (
-          data && (
+        {!current ? (<p role="status">{uiText("사용자 목록을 불러오는 중입니다.")}</p>) : current.error ? (<div className="alert error" role="alert">
+            {uiText(current.error)}
+          </div>) : (data && (
             <>
-              <p aria-live="polite">검색 결과 {data.total}명</p>
+              <p aria-live="polite">{uiText("검색 결과")} {data.total}{uiText("명")}</p>
               <div className="wms-table-scroll">
                 <table className="wms-table organization-user-table mobile-record-table mobile-management-table">
                   <thead>
                     <tr>
-                      <th>이름</th><th>계정 유형 / 소속 업체</th>
-                      <th>로그인 아이디 / 이메일</th>
-                      <th>부서</th>
-                      <th>직급</th>
-                      <th>연락처</th>
-                      <th>권한 등급</th>
-                      <th>계정 활성화</th>
-                      <th>등록일</th>
-                      <th>관리</th>
+                      <th>{uiText("이름")}</th><th>{uiText("계정 유형 / 소속 업체")}</th>
+                      <th>{uiText("로그인 아이디 / 이메일")}</th>
+                      <th>{uiText("부서")}</th>
+                      <th>{uiText("직급")}</th>
+                      <th>{uiText("연락처")}</th>
+                      <th>{uiText("권한 등급")}</th>
+                      <th>{uiText("계정 활성화")}</th>
+                      <th>{uiText("등록일")}</th>
+                      <th>{uiText("관리")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.items.length === 0 ? (
                       <tr>
-                        <td colSpan={10}>조건에 맞는 사용자가 없습니다.</td>
+                        <td colSpan={10}>{uiText("조건에 맞는 사용자가 없습니다.")}</td>
                       </tr>
                     ) : (
                       data.items.map((user) => (
                         <tr key={user.userId}>
-                          <td data-label="이름">
+                          <td data-label={uiText("이름")}>
                             <div className="user-card-heading"><span className="user-card-name">{user.name}</span>
                               <div className="user-card-mobile-badges">
-                                <span className="badge account-type-tag" data-account-type={user.accountType}>{user.accountType === 'External' ? '외부 협력사' : '내부 직원'}</span>
-                                <span className={`badge ${user.isActive ? 'active' : ''}`}>{user.isActive ? '활성' : '비활성'}</span>
+                                <span className="badge account-type-tag" data-account-type={user.accountType}>{user.accountType === 'External' ? uiText("외부 협력사") : uiText("내부 직원")}</span>
+                                <span className={`badge ${user.isActive ? 'active' : ''}`}>{user.isActive ? uiText("활성") : uiText("비활성")}</span>
                               </div>
                             </div>
                             <div className="user-card-mobile-meta">
-                              {user.accountType === 'External' && <small>소속 업체 · {user.companyName || '—'}</small>}
-                              {user.mustChangePassword && <small className="organization-password-required">비밀번호 변경 필요</small>}
+                              {user.accountType === 'External' && <small>{uiText("소속 업체 ·")} {user.companyName || '—'}</small>}
+                              {user.mustChangePassword && <small className="organization-password-required">{uiText("비밀번호 변경 필요")}</small>}
                             </div>
                           </td>
-                          <td data-label="계정 유형 / 소속 업체">
+                          <td data-label={uiText("계정 유형 / 소속 업체")}>
                             <div className="organization-account-company">
-                              <span className="badge account-type-tag" data-account-type={user.accountType}>{user.accountType === 'External' ? '외부 협력사' : '내부 직원'}</span>
+                              <span className="badge account-type-tag" data-account-type={user.accountType}>{user.accountType === 'External' ? uiText("외부 협력사") : uiText("내부 직원")}</span>
                               {user.accountType === 'External' && <span>{user.companyName || '—'}</span>}
                             </div>
                           </td>
-                          <td data-label="로그인 아이디 / 이메일">
+                          <td data-label={uiText("로그인 아이디 / 이메일")}>
                             {user.loginId}
                             <br />
                             <small>{user.email}</small>
                           </td>
-                          <td data-label="부서">{user.departmentName || '미지정'}</td>
-                          <td data-label="직급">{user.positionName || '미지정'}</td>
-                          <td data-label="연락처"><ContactLink value={user.contactPhone} /></td>
-                          <td data-label="권한 등급">{user.accountType === 'External' ? '협력사 업무 권한' : gradeLabel(user.permissionGradeId || user.role)}</td>
-                          <td data-label="계정 활성화">
+                          <td data-label={uiText("부서")}>{user.departmentName || uiText("미지정")}</td>
+                          <td data-label={uiText("직급")}>{user.positionName || uiText("미지정")}</td>
+                          <td data-label={uiText("연락처")}><ContactLink value={user.contactPhone} /></td>
+                          <td data-label={uiText("권한 등급")}>{user.accountType === 'External' ? uiText("협력사 업무 권한") : gradeLabel(user.permissionGradeId || user.role)}</td>
+                          <td data-label={uiText("계정 활성화")}>
                             <span
                               className={`badge ${user.isActive ? 'active' : ''}`}
                             >
-                              {user.isActive ? '활성' : '비활성'}
+                              {user.isActive ? uiText("활성") : uiText("비활성")}
                             </span>
                             {user.mustChangePassword && (
-                              <small className="organization-password-required">
-                                비밀번호 변경 필요
-                              </small>
+                              <small className="organization-password-required"> {uiText("비밀번호 변경 필요")} </small>
                             )}
                           </td>
-                          <td data-label="등록일">
+                          <td data-label={uiText("등록일")}>
                             {new Date(user.registeredAt).toLocaleDateString(
-                              'ko-KR',
+                              getLocale(),
                             )}
                           </td>
 
-                          <td data-label="관리">
+                          <td data-label={uiText("관리")}>
                             {user.role === 'Master' ? (
                               <>
                                 {user.userId === currentUserId && canUpdate && (
@@ -403,9 +394,7 @@ export default function UserManagement({
                                     className="secondary"
                                     disabled={busy || !options}
                                     onClick={() => openEditor(user)}
-                                  >
-                                    수정
-                                  </button>
+                                  > {uiText("수정")} </button>
                                 )}
                               </>
                             ) : canUpdate ? (
@@ -414,20 +403,16 @@ export default function UserManagement({
                                   className="secondary"
                                   disabled={busy || !options}
                                   onClick={() => openEditor(user)}
-                                  aria-label={`${user.name} 수정`}
-                                >
-                                  수정
-                                </button>
+                                  aria-label={uiText("{v0} 수정", { v0: user.name })}
+                                > {uiText("수정")} </button>
                                 {user.accountType !== 'External' && user.userId !== currentUserId &&
                                   user.isActive && (
                                     <button
                                       className="text-button"
                                       disabled={busy}
                                       onClick={() => resetPassword(user)}
-                                      aria-label={`${user.name} 비밀번호 초기화`}
-                                    >
-                                      비밀번호 초기화
-                                    </button>
+                                      aria-label={uiText("{v0} 비밀번호 초기화", { v0: user.name })}
+                                    > {uiText("비밀번호 초기화")} </button>
                                   )}
                               </div>
                             ) : (
@@ -441,7 +426,7 @@ export default function UserManagement({
                 </table>
               </div>
               <Pagination pageSizeControl={<PageSizeSelect value={filters.pageSize} onChange={pageSize => { setFilters(v => ({ ...v, pageSize, page: 1 })); setFilterDraft(v => ({ ...v, pageSize, page: 1 }));  }} />}
-                label="사용자 목록 페이지"
+                label={uiText("사용자 목록 페이지")}
                 page={filters.page}
                 pageSize={data.pageSize}
                 total={data.total}
@@ -450,38 +435,29 @@ export default function UserManagement({
               />
 
             </>
-          )
-        )}
+          ))}
         {data && (
-              <p className="organization-help">
-                사용자당 월 {data.monthlyPerUserKrw.toLocaleString('ko-KR')}원 ·
-                기업 마스터 포함. 사용자 등록 월은 무료이며 다음 달부터 도래하는 기업 정기결제일부터 과금
-                대상입니다. 비활성화에 따른 과금 종료 규칙은 미정이며 실제
-                결제·청구는 실행하지 않습니다.
-              </p>
+              <p className="organization-help"> {uiText("사용자당 월")} {data.monthlyPerUserKrw.toLocaleString(getLocale())}{uiText("원 · 기업 마스터 포함. 사용자 등록 월은 무료이며 다음 달부터 도래하는 기업 정기결제일부터 과금 대상입니다. 비활성화에 따른 과금 종료 규칙은 미정이며 실제 결제·청구는 실행하지 않습니다.")} </p>
         )}
       </section>
       {editing && (
         <OrganizationDialog
-          title={editing === 'create' ? '사용자 등록' : '사용자 정보 수정'}
-          detailHeader={{code:editing === 'create' ? undefined : editing.loginId,status:editing !== 'create' && <span className="status-badge">{editing.isActive ? '사용' : '사용 중지'}</span>,actions:<button className="primary" form="user-account-editor" disabled={busy || (editing === 'create' && !loginAvailable)} type="submit">{busy ? '저장 중…' : editing === 'create' ? '계정 생성' : '사용자 정보 저장'}</button>}}
+          title={editing === 'create' ? uiText("사용자 등록") : uiText("사용자 정보 수정")}
+          detailHeader={{hideBack:editing !== 'create',actionsInFooter:editing !== 'create',code:editing === 'create' ? undefined : editing.loginId,status:editing !== 'create' && <span className="status-badge">{editing.isActive ? uiText("사용") : uiText("사용 중지")}</span>,actions:<>{editing !== 'create' && <button type="button" className="secondary" disabled={busy} onClick={closeEditor}>{uiText("닫기")}</button>}<button className="primary" form="user-account-editor" disabled={busy || (editing === 'create' && !loginAvailable)} type="submit">{busy ? uiText("저장 중…") : editing === 'create' ? uiText("계정 생성") : uiText("사용자 정보 저장")}</button></>}}
           className="user-account-dialog"
           confirmation={!!pending}
           busy={busy}
-          onClose={() => {
-            if (pending) setPending(null)
-            else requestNavigation(() => { setEditing(null); setError('') })
-          }}
+          onClose={closeEditor}
         >
           {error && (
             <div className="alert error" role="alert">
-              {error}
+              {uiText(error)}
             </div>
           )}
-          {pending && <section role="alertdialog" aria-label="사용자 변경 확인"><p>{pending.confirmation}</p><button type="button" className="secondary" disabled={busy} onClick={() => setPending(null)}>취소</button>{' '}<button type="button" className="primary" disabled={busy} onClick={commitSave}>확인</button></section>}
+          {pending && <section role="alertdialog" aria-label={uiText("사용자 변경 확인")}><p>{pending.confirmation}</p><button type="button" className="secondary" disabled={busy} onClick={() => setPending(null)}>{uiText("취소")}</button>{' '}<button type="button" className="primary" disabled={busy} onClick={commitSave}>{uiText("확인")}</button></section>}
           <GuardedForm id="user-account-editor" className="dialog-form" busy={busy} onSubmit={save} hidden={!!pending}>
-<div className="dialog-form-scroll"><fieldset disabled={busy}><DialogSection title="계정 정보" description="로그인 및 사용자 식별">
-              <label><FormLabel required={editing === 'create' || isMaster && editing.userId !== currentUserId && editing.role !== 'Master'}>계정 유형</FormLabel><select aria-required="true" name="accountType" aria-label="계정 유형" value={accountType} disabled={editing !== 'create' && (!isMaster || editing.userId === currentUserId || editing.role === 'Master')} onChange={e=>setAccountType(e.target.value)}><option value="Internal">내부 직원</option><option value="External">외부 협력사</option></select></label>              <label><FormLabel required={editing === 'create' || editing.role !== 'Master'}>{accountType === 'External' ? '담당자명' : '사용자 이름'}</FormLabel><input aria-label={String(accountType === 'External' ? '담당자명' : '사용자 이름')}
+<div className="dialog-form-scroll"><fieldset disabled={busy}><DialogSection title={uiText("계정 정보")} description={uiText("로그인 및 사용자 식별")}>
+              <label><FormLabel required={editing === 'create' || isMaster && editing.userId !== currentUserId && editing.role !== 'Master'}>{uiText("계정 유형")}</FormLabel><select aria-required="true" name="accountType" aria-label={uiText("계정 유형")} value={accountType} disabled={editing !== 'create' && (!isMaster || editing.userId === currentUserId || editing.role === 'Master')} onChange={e=>setAccountType(e.target.value)}><option value="Internal">{uiText("내부 직원")}</option><option value="External">{uiText("외부 협력사")}</option></select></label>              <label><FormLabel required={editing === 'create' || editing.role !== 'Master'}>{accountType === 'External' ? uiText("담당자명") : uiText("사용자 이름")}</FormLabel><input aria-label={uiText(accountType === 'External' ? '담당자명' : '사용자 이름')}
                   name="name"
                   required
                   maxLength={200}
@@ -491,31 +467,25 @@ export default function UserManagement({
                 />
               </label>
               <div className="dialog-span member-credentials">
-              {editing === 'create' ? <LoginIdField endpoint={endpoint} onAvailable={setLoginAvailable} /> : <label>로그인 아이디<input value={editing.loginId} readOnly autoComplete="off" /></label>}
+              {editing === 'create' ? <LoginIdField endpoint={endpoint} onAvailable={setLoginAvailable} /> : <label><span>{uiText("로그인 아이디")}<small className="readonly-field-note">{uiText("수정 불가")}</small></span><ReadOnlyInput aria-label={uiText("로그인 아이디")} title={uiText("로그인 아이디는 변경할 수 없습니다.")} value={editing.loginId} readOnly autoComplete="off" /></label>}
               <div className="member-password">
-                <label>
-                  비밀번호
-                  <input type="text" value="자동 생성 · 직접 입력 불가" readOnly autoComplete="off" aria-describedby="employee-password-help" />
+                <label> {uiText("비밀번호")} <ReadOnlyInput type="text" value={uiText("자동 생성 · 직접 입력 불가")} readOnly autoComplete="off" aria-describedby="employee-password-help" />
                 </label>
                 <p id="employee-password-help" className="organization-help member-password-help" style={editing === 'create' ? { fontSize: 13, margin: '6px 0 0' } : undefined}>
-                  {editing === 'create'
-                    ? '초기 비밀번호는 로그인 아이디와 동일하게 생성됩니다. 구성원에게 로그인 정보를 안내하고, 첫 로그인 후 반드시 비밀번호를 변경하도록 안내해 주세요.'
-                    : editing.role === 'Master' ? '비밀번호는 본인 계정에서 변경할 수 있습니다.' : '초기 비밀번호는 로그인 아이디와 동일하며, 첫 로그인 후 변경해야 합니다.'}
+                  {editing === 'create' ? uiText("초기 비밀번호는 로그인 아이디와 동일하게 생성됩니다. 구성원에게 로그인 정보를 안내하고, 첫 로그인 후 반드시 비밀번호를 변경하도록 안내해 주세요.") : editing.role === 'Master' ? uiText("비밀번호는 본인 계정에서 변경할 수 있습니다.") : uiText("초기 비밀번호는 로그인 아이디와 동일하며, 첫 로그인 후 변경해야 합니다.")}
                 </p>
               </div>
               </div>
-              <label><FormLabel required={editing === 'create' || editing.role === 'Master'}>이메일</FormLabel><input aria-label={"이메일"} name={editing === 'create' || editing.role === 'Master' ? 'email' : undefined} type="email" required readOnly={editing !== 'create' && editing.role !== 'Master'} defaultValue={editing === 'create' ? '' : editing.email || ''} maxLength={256} autoComplete="off" /></label>
+              <label><FormLabel required={editing === 'create' || editing.role === 'Master'}>{uiText("이메일")}</FormLabel><ReadOnlyInput aria-label={uiText("이메일")} name={editing === 'create' || editing.role === 'Master' ? 'email' : undefined} type="email" required readOnly={editing !== 'create' && editing.role !== 'Master'} defaultValue={editing === 'create' ? '' : editing.email || ''} maxLength={256} autoComplete="off" /></label>
 {contactField}
-</DialogSection>{accountType === 'External' ? <ExternalCompanyFields tenantId={tenantId} user={editing === 'create' ? undefined : editing} /> : <DialogSection title="조직 정보" description="부서와 직급">              <label>
-                부서
-                <select
+</DialogSection>{accountType === 'External' ? <ExternalCompanyFields tenantId={tenantId} user={editing === 'create' ? undefined : editing} /> : <DialogSection title={uiText("조직 정보")} description={uiText("부서와 직급")}>              <label> {uiText("부서")} <select
                   name="departmentId"
-                  aria-label="부서"
+                  aria-label={uiText("부서")}
                   defaultValue={
                     editing === 'create' ? '' : editing.departmentId || ''
                   }
                 >
-                  <option value="">부서 미지정</option>
+                  <option value="">{uiText("부서 미지정")}</option>
                   {options?.departments
                     .filter(
                       (x) =>
@@ -525,21 +495,19 @@ export default function UserManagement({
                     .map((x) => (
                       <option key={x.id} value={x.id}>
                         {x.name}
-                        {x.isActive ? '' : ' (사용 중지)'}
+                        {x.isActive ? '' : uiText("(사용 중지)")}
                       </option>
                     ))}
                 </select>
               </label>
-              <label>
-                직급
-                <select
+              <label> {uiText("직급")} <select
                   name="positionId"
-                  aria-label="직급"
+                  aria-label={uiText("직급")}
                   defaultValue={
                     editing === 'create' ? '' : editing.positionId || ''
                   }
                 >
-                  <option value="">직급 미지정</option>
+                  <option value="">{uiText("직급 미지정")}</option>
                   {options?.positions
                     .filter(
                       (x) =>
@@ -549,31 +517,27 @@ export default function UserManagement({
                     .map((x) => (
                       <option key={x.id} value={x.id}>
                         {x.name}
-                        {x.isActive ? '' : ' (사용 중지)'}
+                        {x.isActive ? '' : uiText("(사용 중지)")}
                       </option>
                     ))}
                 </select>
               </label>
-</DialogSection>}<DialogSection title="접근 권한" description={accountType === 'External' ? '협력사 공통 권한과 개인별 추가 제한' : '직급과 별도로 관리'}>{accountType === 'External' ? <p className="organization-help">신규 협력사는 업무 권한 없이 생성됩니다. 기존 업체에 연결된 계정은 해당 업체의 공통 권한이 적용됩니다. 기업 마스터는 권한 설정의 외부 협력사 탭에서 권한을 지정하고 사용자별로 추가 제한할 수 있습니다. 관리자·결제·사용자 관리 권한은 부여할 수 없습니다.</p> : <PermissionGradeChoice name="permissionGrade" label="권한 등급" grades={gradeKey === 'Master' ? [{ id: 'Master', name: '기업 마스터', isActive: true, isBuiltIn: true, memberCount: 1, version: '' }] : grades.filter(x => x.isActive || x.id === gradeKey)} value={gradeKey} onChange={setGradeKey} disabled={!isMaster || (editing !== 'create' && editing.userId === currentUserId)} />}
-              {accountType === 'Internal' && <p className="organization-help">직급은 조직 내 직함이며 시스템 접근 권한과 별개입니다.</p>}
+</DialogSection>}<DialogSection title={uiText("접근 권한")} description={accountType === 'External' ? uiText("협력사 공통 권한과 개인별 추가 제한") : uiText("직급과 별도로 관리")}>{accountType === 'External' ? <p className="organization-help">{uiText("신규 협력사는 업무 권한 없이 생성됩니다. 기존 업체에 연결된 계정은 해당 업체의 공통 권한이 적용됩니다. 기업 마스터는 권한 설정의 외부 협력사 탭에서 권한을 지정하고 사용자별로 추가 제한할 수 있습니다. 관리자·결제·사용자 관리 권한은 부여할 수 없습니다.")}</p> : <PermissionGradeChoice name="permissionGrade" label={uiText("권한 등급")} grades={gradeKey === 'Master' ? [{ id: 'Master', name: '기업 마스터', isActive: true, isBuiltIn: true, memberCount: 1, version: '' }] : grades.filter(x => x.isActive || x.id === gradeKey)} value={gradeKey} onChange={setGradeKey} disabled={!isMaster || (editing !== 'create' && editing.userId === currentUserId)} />}
+              {accountType === 'Internal' && <p className="organization-help">{uiText("직급은 조직 내 직함이며 시스템 접근 권한과 별개입니다.")}</p>}
               {<label className="organization-checkbox">
                   <input
                     type="checkbox"
                     name="isActive"
                     defaultChecked={editing === 'create' || editing.membershipIsActive}
                     disabled={editing !== 'create' && editing.userId === currentUserId}
-                  />
-                  계정 활성화
-                </label>}
-              <p className="organization-help">
-                비활성화하면 해당 기업 접근이 차단됩니다. 과거 이력과 다른 기업 소속은 유지합니다.
-              </p>
+                  /> {uiText("계정 활성화")} </label>}
+              <p className="organization-help"> {uiText("비활성화하면 해당 기업 접근이 차단됩니다. 과거 이력과 다른 기업 소속은 유지합니다.")} </p>
 </DialogSection></fieldset></div>          </GuardedForm>
         </OrganizationDialog>
       )}
       {registrationResult && (
         <OrganizationDialog
-          title="초기 비밀번호 설정 완료"
+          title={uiText("초기 비밀번호 설정 완료")}
           className="user-credential-dialog"
           actions={<button
             className="primary"
@@ -583,9 +547,7 @@ export default function UserManagement({
                 '계정 설정을 완료했습니다. 초기 비밀번호는 로그인 아이디와 동일하며 첫 로그인 때 변경해야 합니다.',
               )
             }}
-          >
-            확인하고 닫기
-          </button>}
+          > {uiText("확인하고 닫기")} </button>}
           onClose={() => {
             setRegistrationResult(null)
             setNotice(
@@ -593,15 +555,11 @@ export default function UserManagement({
             )
           }}
         >
-          <dl className="user-credential-details" aria-label="계정 정보">
-            <div><dt>사용자 이름</dt><dd>{registrationResult.user.name}</dd></div>
-            <div><dt>로그인 아이디</dt><dd>{registrationResult.user.loginId}</dd></div>
+          <dl className="user-credential-details" aria-label={uiText("계정 정보")}>
+            <div><dt>{uiText("사용자 이름")}</dt><dd>{registrationResult.user.name}</dd></div>
+            <div><dt>{uiText("로그인 아이디")}</dt><dd>{registrationResult.user.loginId}</dd></div>
           </dl>
-          <p>
-            초기 비밀번호는 위 로그인 아이디와 동일합니다(대소문자 구분). 직원은
-            첫 로그인 때 개인 비밀번호로 반드시 변경해야 하며, 변경 전에는
-            업무를 이용할 수 없습니다.
-          </p>
+          <p> {uiText("초기 비밀번호는 위 로그인 아이디와 동일합니다(대소문자 구분). 직원은 첫 로그인 때 개인 비밀번호로 반드시 변경해야 하며, 변경 전에는 업무를 이용할 수 없습니다.")} </p>
 
         </OrganizationDialog>
       )}

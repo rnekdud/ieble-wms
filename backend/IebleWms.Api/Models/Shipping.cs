@@ -15,6 +15,9 @@ public sealed class OutboundShipment : AuditableEntity
     public string WarehouseName { get; set; } = "";
     public Guid? ContactUserId { get; set; }
     public string ContactName { get; set; } = "";
+    public string? ShippingPostalCode { get; set; }
+    public string? ShippingAddress { get; set; }
+    public string? ShippingAddressDetail { get; set; }
     public string? Notes { get; set; }
     public string Status { get; set; } = "Requested";
     public Guid? PickedByUserId { get; set; }

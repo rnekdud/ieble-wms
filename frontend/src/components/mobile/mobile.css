@@ -108,19 +108,6 @@
     border-bottom:1px solid var(--ui-line,#dfe5ec); background:#fff;
   }
   :root body .mobile-all-menu .organization-dialog-heading h2 { margin:0; font-size:20px; line-height:1.4; }
-  :root body .mobile-all-menu .organization-dialog-heading .dialog-close-icon {
-    position:relative; display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px;
-    box-sizing:border-box; width:44px; min-width:44px; max-width:44px;
-    height:44px; min-height:44px; max-height:44px; padding:0;
-    border:0; border-radius:8px; background:transparent; color:#16345f; font-size:0; line-height:1;
-  }
-  :root body .mobile-all-menu .dialog-close-icon::before,
-  :root body .mobile-all-menu .dialog-close-icon::after {
-    content:''; position:absolute; left:50%; top:50%; width:18px; height:2px;
-    border-radius:1px; background:currentColor; transform:translate(-50%,-50%) rotate(45deg);
-    pointer-events:none;
-  }
-  :root body .mobile-all-menu .dialog-close-icon::after { transform:translate(-50%,-50%) rotate(-45deg); }
   :root body .mobile-all-menu > .dialog-body {
     flex:1 1 auto; min-height:0; width:100%; box-sizing:border-box;
     padding:16px 16px calc(16px + env(safe-area-inset-bottom));
@@ -141,9 +128,9 @@
   :root body .mobile-all-menu .mobile-menu-item > svg { flex:none; }
   :root body .mobile-all-menu .mobile-menu-item > span { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
   :root body .mobile-all-menu .mobile-menu-chevron { margin-left:auto; color:#8290a1; }
-  :root body .mobile-all-menu :is(.mobile-menu-item,.dialog-close-icon):active { background:#edf2f7; }
+  :root body .mobile-all-menu .mobile-menu-item:active { background:#edf2f7; }
   :root body .mobile-all-menu .mobile-menu-item[aria-current=page] { background:#fff7d9; font-weight:600; }
-  :root body .mobile-all-menu .mobile-menu-group { margin-top:4px; }
+  :root body .mobile-all-menu :is(.mobile-menu-group,.mobile-menu-section.is-continuation) { margin-top:4px; }
   :root body .mobile-all-menu .mobile-menu-list[hidden] { display:none; }
   :root body .mobile-all-menu .mobile-menu-sublist { margin-top:4px; }
   :root body .mobile-all-menu .mobile-menu-sublist .mobile-menu-item { padding-left:46px; }
@@ -153,7 +140,7 @@
   :root body .mobile-all-menu .mobile-install { margin-top:20px; padding-top:12px; border:0; }
 }
 @media(max-width:1024px) and (hover:hover) {
-  :root body .mobile-all-menu :is(.mobile-menu-item,.dialog-close-icon):hover { background:#f1f5f9; }
+  :root body .mobile-all-menu .mobile-menu-item:hover { background:#f1f5f9; }
   :root body .mobile-all-menu .mobile-menu-item[aria-current=page]:hover { background:#fff2bd; }
 }
 
@@ -274,8 +261,8 @@
 @media(max-width:1024px) {
   :root body .products-card .inventory-search-filters > .products-toolbar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 8px; width:100%; min-width:0; flex:1 0 100%; }
   :root body .products-card .inventory-search-filters > .products-toolbar > .searchable-choice { grid-column:1/-1; grid-row:1; width:100%; min-width:0; }
-  :root body .products-card .inventory-search-filters > .products-toolbar > label:has(> select[aria-label="재고 상태"]) { grid-column:1; grid-row:2; }
-  :root body .products-card .inventory-search-filters > .products-toolbar > label:has(> select[aria-label="재고 사용 여부"]) { grid-column:2; grid-row:2; }
+  :root body .products-card .inventory-search-filters > .products-toolbar > label:has(> select:is([aria-label="재고 상태"], [aria-label="Stock Status"])) { grid-column:1; grid-row:2; }
+  :root body .products-card .inventory-search-filters > .products-toolbar > label:has(> select:is([aria-label="재고 사용 여부"], [aria-label="Stock Active Status"])) { grid-column:2; grid-row:2; }
   :root body .products-card .inventory-search-filters > .products-toolbar > label { min-width:0; max-width:100%; width:100%; margin:0; }
   :root body .inventory-search-filters select { display:block; width:100%; min-width:0; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 }

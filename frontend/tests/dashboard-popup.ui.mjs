@@ -35,7 +35,7 @@ try{
  })
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message))
  for(const width of [1920,1440,1280,768,390]){
-  await page.setViewportSize({width,height:1000});await page.goto(origin+(fullApp?'/app':'/__dashboard-ui'));const canvas=page.getByLabel('창고 2D 도면 캔버스',{exact:true});await canvas.waitFor({timeout:10000}).catch(async e=>{console.log('PAGE',await page.locator('body').innerText(),'ERRORS',errors);throw e})
+  await page.setViewportSize({width,height:1000});await page.goto(origin+(fullApp?'/app':'/__dashboard-ui'));await page.getByRole('combobox',{name:'창고 도면 보기',exact:true}).selectOption('2d');const canvas=page.getByLabel('창고 2D 도면 캔버스',{exact:true});await canvas.waitFor({timeout:10000}).catch(async e=>{console.log('PAGE',await page.locator('body').innerText(),'ERRORS',errors);throw e})
   const top=await page.getByRole('button',{name:'오늘 입고 예정 3건',exact:true}).boundingBox(),title=await page.locator('.dashboard-warehouse-title').boundingBox(),map=await canvas.boundingBox();assert.ok(title.y<top.y&&top.y<map.y);assert.equal(await page.locator(".dashboard-warehouse-title").count(),1)
   assert.equal(await page.locator('.warehouse-live-map .risk-today-work').count(),0);assert.ok(await page.locator('.dashboard-warehouse-title strong').evaluate(e=>parseInt(getComputedStyle(e).fontSize)>=20))
   const heading=page.locator('.dashboard-summary-heading'),pageTitle=heading.locator('h1'),refresh=page.getByRole('button',{name:'관제 새로고침',exact:true})
@@ -68,7 +68,7 @@ try{
   await page.mouse.click(before.x+before.width/2+(0.3-.5)*1200*Number(scale),before.y+before.height/2)
   const dialog=page.getByRole('dialog',{name:'RACK-A01 재고 현황',exact:true});await dialog.waitFor();await dialog.getByText('안전 상품',{exact:true}).first().waitFor();assert.equal(await dialog.locator('tbody tr').count(),20);assert.equal(await page.locator('.warehouse-live-detail').count(),0)
   assert.match(await dialog.locator('tbody tr').first().innerText(),/100 EA.*20 EA.*80 EA/s)
-  await dialog.getByRole('button',{name:'2페이지',exact:true}).click();await dialog.getByText('위험 상품',{exact:true}).first().waitFor();assert.equal(await dialog.locator('tbody tr').count(),1);await dialog.locator('summary').click();await dialog.getByText('안전재고 20 kg / 현재고 15 kg · 예약 10 kg / 출고 후 예상 5 kg · 15 kg 부족 예상',{exact:true}).last().waitFor()
+  await dialog.getByRole('button',{name:'2페이지',exact:true}).click();await dialog.getByText('위험 상품',{exact:true}).first().waitFor();assert.equal(await dialog.locator('tbody tr').count(),1);assert.equal(await dialog.locator('details,summary,.risk-product').count(),0);assert.match(await dialog.locator('tbody tr').innerText(),/A-20.*15 kg.*10 kg.*5 kg.*20 kg/s);assert(await dialog.locator('.risk-reason-lines').count()>0);assert.equal(await page.locator('.risk-rack-index > summary').count(),1)
   const bounds=await dialog.boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+1);assert.ok(bounds.height<=1000)
   await dialog.getByRole('button',{name:'닫기',exact:true}).click();await dialog.waitFor({state:'hidden'});assert.equal(await canvas.getAttribute('data-view-scale'),scale);assert.equal(Math.round((await canvas.boundingBox()).width),Math.round(before.width));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.ok(width<=768 || await page.evaluate(()=>window.rackTexts.some(t=>t.includes('위험 · 2종 · 119 EA'))))
   assert.ok(await page.evaluate(()=>window.rackTextSizes.every(size=>Math.abs(size)<=12.1)))

@@ -1,3 +1,4 @@
+import { getLocale } from './i18n.ts'
 import type { ReceiptLine, TrackingAllocation } from './receipt-model'
 
 export type ReceiptProductGroup = { productId: string; lines: ReceiptLine[]; productName: string; productCode: string; unit: string; expectedQuantity: number; inspectedQuantity: number | null }
@@ -41,7 +42,7 @@ export function allocationIssue(group: ReceiptProductGroup, entries: GroupAlloca
     expiries.set(entry.lotNumber, entry.expiryDate)
   }
   const extra = sum(entries.map(a => a.quantity)) - (group.inspectedQuantity ?? 0)
-  return extra > 0 ? `LOT·시리얼 할당 수량이 검수수량보다 ${extra.toLocaleString('ko-KR')}개 초과합니다.` : null
+  return extra > 0 ? `LOT·시리얼 할당 수량이 검수수량보다 ${extra.toLocaleString(getLocale())}개 초과합니다.` : null
 }
 /** Split tracking across preserved source rows; never replace a ReceiptLineId or count it twice. */
 export function distributeTracking(group: ReceiptProductGroup, entries: GroupAllocation[]) {

@@ -3,6 +3,7 @@ export const partnerTextFields = [
   ['code', '거래처코드', 64], ['name', '거래처명', 200],
   ['businessRegistrationNumber', '사업자등록번호', 64], ['representativeName', '대표자명', 100],
   ['postalCode', '우편번호', 20], ['address', '주소', 500], ['addressDetail', '상세주소', 500],
+  ['defaultShippingPostalCode', '기본 출고지 우편번호', 20], ['defaultShippingAddress', '기본 출고지 기본주소', 500], ['defaultShippingAddressDetail', '기본 출고지 상세주소', 500],
   ['phone', '대표 전화번호', 50], ['email', '이메일', 254], ['contactName', '담당자명', 100],
   ['contactPhone', '담당자 연락처', 50], ['paymentTerms', '결제조건', 500], ['notes', '비고', 2000],
 ] as const
@@ -40,7 +41,7 @@ export function partnerError(d: PartnerDraft) {
 }
 export function partnerRequest(d: PartnerDraft, requestId: string, p?: Partner) {
   const text = Object.fromEntries(partnerTextFields.map(([key]) => [key, d[key].trim() || null]))
-  return { ...d, ...text, requestId, version: p?.version || '00000000-0000-0000-0000-000000000000' }
+  return { ...d, ...text, defaultShippingPostalCode: d.defaultShippingPostalCode.trim() || (p?.defaultShippingPostalCode ? '' : undefined), defaultShippingAddress: d.defaultShippingAddress.trim() || (p?.defaultShippingAddress ? '' : undefined), defaultShippingAddressDetail: d.defaultShippingAddressDetail.trim() || (p?.defaultShippingAddressDetail ? '' : undefined), requestId, version: p?.version || '00000000-0000-0000-0000-000000000000' }
 }
 export function partnerDirty(d: PartnerDraft, initial: PartnerDraft) {
   return JSON.stringify(partnerRequest(d, '')) !== JSON.stringify(partnerRequest(initial, ''))

@@ -148,3 +148,8 @@ body:has(dialog[open]) { overflow:hidden; }
 
 :root .dialog-layout .dialog-actions > button { width:auto; min-width:0; flex:0 1 auto; min-height:40px; padding:8px 18px; display:inline-flex; align-items:center; justify-content:center; }
 :root .dialog-layout .dialog-actions { gap:8px; }
+
+/* Fallback close actions remain touchable when the shared button rule fixes height to 40px. */
+@media(max-width:1024px) {
+ :root body dialog.dialog-layout .dialog-actions > .dialog-close { height:44px!important; min-height:44px!important; }
+}

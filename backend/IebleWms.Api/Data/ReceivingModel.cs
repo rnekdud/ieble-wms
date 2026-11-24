@@ -13,6 +13,10 @@ internal static class ReceivingModel
         r.HasOne<Warehouse>().WithMany().HasForeignKey(x=>new{x.TenantId,x.WarehouseId}).OnDelete(DeleteBehavior.Restrict);
         r.HasOne<ApplicationUser>().WithMany().HasForeignKey(x=>x.InspectedByUserId).OnDelete(DeleteBehavior.Restrict);r.HasOne<ApplicationUser>().WithMany().HasForeignKey(x=>x.ConfirmedByUserId).OnDelete(DeleteBehavior.Restrict);
         r.ToTable("InboundReceipts",t=>t.HasCheckConstraint("CK_Receipt_Status","\"Status\" IN ('Planned','Inspecting','Confirmed','Cancelled')"));Audit<InboundReceipt>(b);
+        var photo=b.Entity<ReceiptPhoto>();photo.HasKey(x=>x.Id);
+        photo.Property(x=>x.FileName).HasMaxLength(160);photo.Property(x=>x.ContentType).HasMaxLength(40);
+        photo.HasIndex(x=>new{x.TenantId,x.ReceiptId,x.Position});
+        photo.HasOne<InboundReceipt>().WithMany().HasForeignKey(x=>new{x.TenantId,x.ReceiptId}).HasPrincipalKey(x=>new{x.TenantId,x.Id}).OnDelete(DeleteBehavior.Restrict);
         var l=b.Entity<InboundReceiptLine>();l.HasKey(x=>x.Id);l.HasAlternateKey(x=>new{x.TenantId,x.Id});
         l.HasOne<InboundReceipt>().WithMany().HasForeignKey(x=>new{x.TenantId,x.ReceiptId}).HasPrincipalKey(x=>new{x.TenantId,x.Id}).OnDelete(DeleteBehavior.Restrict);
         l.HasOne<Product>().WithMany().HasForeignKey(x=>new{x.TenantId,x.ProductId}).HasPrincipalKey(x=>new{x.TenantId,x.Id}).OnDelete(DeleteBehavior.Restrict);

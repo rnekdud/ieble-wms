@@ -22,10 +22,26 @@ public sealed class ReceiptsController(ReceiptService service,IebleWms.Api.Produ
     public Task<FileContentResult> PasteTemplate(CancellationToken ct)=>IebleWms.Api.Reports.DocumentPasteTemplate.Download(false,ct);
     [HttpGet("{id:guid}"),Authorize(Policy="Permission:receipts:read")]
     public Task<object> Detail(Guid tenantId,Guid id,CancellationToken ct)=>service.Detail(tenantId,id,ct);
+    [HttpGet("photo-options"),Authorize(Policy="Permission:receipts:read")]
+    public Task<object> PhotoOptions(Guid tenantId,CancellationToken ct)=>service.PhotoOptions(tenantId,ct);
+    [HttpGet("{id:guid}/photos"),Authorize(Policy="Permission:receipts:read")]
+    public Task<object> Photos(Guid tenantId,Guid id,CancellationToken ct)=>service.Photos(tenantId,id,ct);
+    [HttpGet("{id:guid}/photos/{photoId:guid}"),Authorize(Policy="Permission:receipts:read")]
+    public async Task<IActionResult> Photo(Guid tenantId,Guid id,Guid photoId,CancellationToken ct,bool thumbnail=false)
+    {
+        var photo=await service.Photo(tenantId,id,photoId,thumbnail,ct);
+        Response.Headers["X-Content-Type-Options"]="nosniff";
+        return File(photo.Content,photo.ContentType);
+    }
+    [RequestSizeLimit(80 * 1024 * 1024)]
+    [HttpPost("{id:guid}/photos"),Authorize(Policy="Permission:receipts:update")]
+    public Task<object> SavePhotos(Guid tenantId,Guid id,ReceiptPhotosRequest r,CancellationToken ct)=>service.UpdatePhotos(tenantId,Actor,id,r,ct);
     [HttpGet("{id:guid}/stock"),Authorize(Policy="Permission:receipts:read")]
     public Task<object> Stock(Guid tenantId,Guid id,CancellationToken ct)=>service.Stock(tenantId,id,ct);
+    [RequestSizeLimit(80 * 1024 * 1024)]
     [HttpPost,Authorize(Policy="Permission:receipts:create")]
     public async Task<IActionResult> Create(Guid tenantId,ReceiptRequest r,CancellationToken ct)=>StatusCode(201,await service.SaveReceipt(tenantId,Actor,null,r,ct));
+    [RequestSizeLimit(80 * 1024 * 1024)]
     [HttpPost("{id:guid}"),Authorize(Policy="Permission:receipts:update")]
     public Task<object> Update(Guid tenantId,Guid id,ReceiptRequest r,CancellationToken ct)=>service.SaveReceipt(tenantId,Actor,id,r,ct);
     [HttpPost("{id:guid}/start-inspection"),Authorize(Policy="Permission:receipts:update")]

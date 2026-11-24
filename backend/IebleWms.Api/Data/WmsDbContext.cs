@@ -23,6 +23,7 @@ public sealed partial class WmsDbContext(
     public DbSet<OutboundShipmentLine> OutboundShipmentLines => Set<OutboundShipmentLine>();
     public DbSet<ShipmentAllocation> ShipmentAllocations => Set<ShipmentAllocation>();
     public DbSet<ShipmentChange> ShipmentChanges => Set<ShipmentChange>();
+    public DbSet<ReceiptPhoto> ReceiptPhotos => Set<ReceiptPhoto>();
     public DbSet<InboundReceipt> InboundReceipts => Set<InboundReceipt>();
     public DbSet<InboundReceiptLine> InboundReceiptLines => Set<InboundReceiptLine>();
     public DbSet<StockBalance> StockBalances => Set<StockBalance>();
@@ -44,6 +45,7 @@ public sealed partial class WmsDbContext(
     public DbSet<StorageBarcode> StorageBarcodes => Set<StorageBarcode>();
     public DbSet<WarehouseSaveReceipt> WarehouseSaveReceipts => Set<WarehouseSaveReceipt>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<LabelDesign> LabelDesigns => Set<LabelDesign>();
     public DbSet<WarehouseTemplate> WarehouseTemplates => Set<WarehouseTemplate>();
     public DbSet<WarehousePlan> WarehousePlans => Set<WarehousePlan>();
     public DbSet<WarehousePlanObject> WarehousePlanObjects => Set<WarehousePlanObject>();
@@ -97,6 +99,7 @@ public sealed partial class WmsDbContext(
         StorageBarcodeModel.Configure(builder, Database.IsNpgsql());
         WarehousePlanModel.Configure(builder);
         WarehouseTemplateModel.Configure(builder);
+        LabelDesignModel.Configure(builder);
         BillingModel.Configure(builder);
         var user = builder.Entity<ApplicationUser>();
         user.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();

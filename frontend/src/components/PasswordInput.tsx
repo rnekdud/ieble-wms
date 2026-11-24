@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n.ts'
 import FormLabel from './FormLabel'
 import { useId, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
@@ -25,7 +26,7 @@ export default function PasswordInput({
   const message = `비밀번호는 최소 ${minLength}자 이상 입력해 주세요.`
   return (
     <div className="password-field">
-      <label htmlFor={inputId}><FormLabel required={props.required && !props.readOnly}>{label}</FormLabel></label>
+      <label htmlFor={inputId}><FormLabel required={props.required && !props.readOnly}>{uiText(label)}</FormLabel></label>
       <div className="password-input-wrap">
         <input
           {...props}
@@ -59,7 +60,7 @@ export default function PasswordInput({
             const short =
               !!minLength && event.currentTarget.value.length < minLength
             setTooShort(short)
-            event.currentTarget.setCustomValidity(short ? message : '')
+            event.currentTarget.setCustomValidity(short ? uiText(message) : '')
             onInvalid?.(event)
           }}
         />
@@ -67,16 +68,12 @@ export default function PasswordInput({
           type="button"
           className="password-visibility"
           disabled={props.disabled}
-          aria-label={`${label} ${visible ? '숨기기' : '표시'}`}
+          aria-label={uiText("{v0} {v1}", { v0: uiText(label), v1: visible ? uiText('숨기기') : uiText('표시') })}
           aria-pressed={visible}
           aria-controls={inputId}
           onClick={() => setVisible((value) => !value)}
         >
-          {visible ? (
-            <EyeOff size={18} aria-hidden="true" />
-          ) : (
-            <Eye size={18} aria-hidden="true" />
-          )}
+          {visible ? (<EyeOff size={18} aria-hidden="true" />) : (<Eye size={18} aria-hidden="true" />)}
         </button>
       </div>
       {tooShort && (
@@ -85,7 +82,7 @@ export default function PasswordInput({
           id={`${inputId}-error`}
           role="alert"
         >
-          {message}
+          {uiText(message)}
         </small>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { touchViewport, touchFrame } from '../../touch-viewport'
 import type { TouchFrame } from '../../touch-viewport'
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
@@ -72,7 +73,7 @@ const PlanCanvas = forwardRef<PlanCanvasHandle, Props>(function PlanCanvas({ rou
     const d = drag.current, node = nodes.current.get(id); if (!d || !node) return
     onChange(movePlanObjects(d.doc, d.ids, (node.x() - d.x) / width, (node.y() - d.y) / height, snap)); drag.current = null
   }
-  return <div className={`warehouse-plan-canvas ${pan ? 'is-panning' : ''}`} ref={host} style={{ aspectRatio: doc.aspectRatio, touchAction: editing ? undefined : 'none' }} data-view-x={view.x} data-view-y={view.y} data-plan-ratio={doc.aspectRatio} data-route-entrance={route?.entranceId} data-route-points={route ? JSON.stringify(route.points) : undefined} data-view-scale={view.scale} tabIndex={0} aria-label="창고 2D 도면 캔버스"
+  return <div className={`warehouse-plan-canvas ${pan ? 'is-panning' : ''}`} ref={host} style={{ aspectRatio: doc.aspectRatio, touchAction: editing ? undefined : 'none' }} data-view-x={view.x} data-view-y={view.y} data-plan-ratio={doc.aspectRatio} data-route-entrance={route?.entranceId} data-route-points={route ? JSON.stringify(route.points) : undefined} data-view-scale={view.scale} tabIndex={0} aria-label={uiText("창고 2D 도면 캔버스")}
     onPointerDown={() => host.current?.focus({ preventScroll: true })}
     onTouchStartCapture={e => {
       if (editing || !host.current) return
@@ -136,7 +137,7 @@ const PlanCanvas = forwardRef<PlanCanvasHandle, Props>(function PlanCanvas({ rou
           {appearance ? <Group listening={false}>
             {rackLabelFont(appearance.label, w, h, view.scale) > 0 && <Text x={-w / 2 + 4} y={appearance.summary ? -h / 2 + 4 : -h / 2} width={Math.max(1, w - 8)} height={appearance.summary ? h / 2 - 4 : h} text={appearance.label} fontFamily="Noto Sans KR, sans-serif" fontSize={rackLabelFont(appearance.label, w, h, view.scale)} fill="#16345F" align="center" verticalAlign={appearance.summary ? 'bottom' : 'middle'} wrap="none" />}
             {appearance.summary && rackLabelFont(appearance.label, w, h, view.scale) > 0 && rackLabelFont(appearance.summary, w, h, view.scale, 11) > 0 && <Text x={-w / 2 + 4} y={2 / view.scale} width={Math.max(1, w - 8)} height={Math.max(1, h / 2 - 4)} text={appearance.summary} fontFamily="Noto Sans KR, sans-serif" fontSize={Math.min(rackLabelFont(appearance.label, w, h, view.scale), rackLabelFont(appearance.summary, w, h, view.scale, 11))} fill="#24483e" align="center" verticalAlign="top" wrap="none" />}
-          </Group>  : editorRack ? <Group listening={false} rotation={Math.abs(rotation(o.rotation))>90?180:0} clipX={-w/2} clipY={-h/2} clipWidth={w} clipHeight={h}>
+          </Group> : editorRack ? <Group listening={false} rotation={Math.abs(rotation(o.rotation))>90?180:0} clipX={-w/2} clipY={-h/2} clipWidth={w} clipHeight={h}>
             <Text x={-w/2+4} y={-h/2+4} width={Math.max(1,w-8)} height={Math.max(1,(editorRack.name && editorRack.name !== editorRack.code ? h/2 : h)-8)} text={editorRack.name || editorRack.code} fontSize={Math.max(1,Math.min(16, w/Math.max(1,(editorRack.name||editorRack.code).length),h/3))} fill="#16345F" align="center" verticalAlign="middle" wrap="none" ellipsis/>
             {editorRack.name && editorRack.name !== editorRack.code && <Text x={-w/2+4} y={0} width={Math.max(1,w-8)} height={Math.max(1,h/2-4)} text={editorRack.code} fontSize={Math.max(1,Math.min(12,w/Math.max(1,editorRack.code.length),h/4))} fill="#64748b" align="center" verticalAlign="middle" wrap="none" ellipsis/>}
           </Group> : <Text listening={false} x={-w / 2 + 4} y={-h / 2 + 4} width={Math.max(1, w - 8)} height={Math.max(1, h - 8)} text={o.label} fontFamily="Noto Sans KR, sans-serif" fontSize={o.type === 'text' ? 24 : 16} fill={o.type === 'text' ? o.fill : o.type === 'wall' ? '#ffffff' : '#24483e'} align={structureView && o.type === 'zone' ? 'left' : 'center'} verticalAlign={structureView && o.type === 'zone' ? 'top' : 'middle'} lineHeight={1} ellipsis /> }
@@ -146,13 +147,13 @@ const PlanCanvas = forwardRef<PlanCanvasHandle, Props>(function PlanCanvas({ rou
       </Layer>
       {!editing && route && <PlanRouteOverlay route={route} document={doc} scale={view.scale} />}
     </Stage>
-    {selectedRackInfo && <div ref={label} className={`rack-floating-label ${onRackDimensionsChange?'rack-floating-editor':''}`} role={onRackDimensionsChange?'group':'status'} aria-label={onRackDimensionsChange?'랙 빠른 편집':undefined} data-object-id={selectedRackInfo.objectId}
+    {selectedRackInfo && <div ref={label} className={`rack-floating-label ${onRackDimensionsChange?'rack-floating-editor':''}`} role={onRackDimensionsChange?'group':'status'} aria-label={onRackDimensionsChange ? uiText("랙 빠른 편집") : undefined} data-object-id={selectedRackInfo.objectId}
       onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()} onWheel={e=>e.stopPropagation()} onKeyDown={e=>{e.stopPropagation();if(e.key==='Enter')e.preventDefault()}}>
-      <strong>{selectedRackInfo.code || '코드 미입력'}</strong>
-      {onRackDimensionsChange?<><div className="rack-floating-inputs"><RackDimensionFields key={selectedRackInfo.objectId} value={selectedRackInfo} prefix="플로팅 랙" disabled={!editing} onChange={onRackDimensionsChange}/></div><small className="rack-floating-count">{selectedRackInfo.levels&&selectedRackInfo.bays?`보관 위치 ${selectedRackInfo.levels*selectedRackInfo.bays}개 · 최종 저장 시 반영`:'단수·칸수 확인 필요'}</small></>:<><span aria-hidden="true"> · </span><span>{selectedRackInfo.levels || '—'}단 × {selectedRackInfo.bays || '—'}칸</span></>}
+      <strong>{selectedRackInfo.code || uiText("코드 미입력")}</strong>
+      {onRackDimensionsChange ? <><div className="rack-floating-inputs"><RackDimensionFields key={selectedRackInfo.objectId} value={selectedRackInfo} prefix="플로팅 랙" disabled={!editing} onChange={onRackDimensionsChange}/></div><small className="rack-floating-count">{selectedRackInfo.levels&&selectedRackInfo.bays ? uiText("보관 위치 {v0}개 · 최종 저장 시 반영", { v0: selectedRackInfo.levels*selectedRackInfo.bays }) : uiText("단수·칸수 확인 필요")}</small></> : <><span aria-hidden="true"> · </span><span>{selectedRackInfo.levels || '—'}{uiText("단 ×")} {selectedRackInfo.bays || '—'}{uiText("칸")}</span></>}
     </div>}
-    {editing && !pan && selected.length===1 && <span className="plan-rotation-hint">원형 핸들을 끌어 회전</span>}
-    <span className="warehouse-plan-scale">{Math.round(view.scale * 100)}% · {pan ? '화면 이동' : editing ? '객체 선택' : '조회'}</span>
+    {editing && !pan && selected.length===1 && <span className="plan-rotation-hint">{uiText("원형 핸들을 끌어 회전")}</span>}
+    <span className="warehouse-plan-scale">{Math.round(view.scale * 100)}% · {pan ? uiText("화면 이동") : editing ? uiText("객체 선택") : uiText("조회")}</span>
   </div>
 })
 export default PlanCanvas

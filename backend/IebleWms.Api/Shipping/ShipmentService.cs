@@ -32,7 +32,7 @@ public sealed partial class ShipmentService(WmsDbContext db, ProductUsagePolicy 
         var term=search?.Trim().ToLowerInvariant()??"";
         IQueryable<Choice> q=kind switch {
             "products"=>db.Products.Where(x=>x.TenantId==tenant&&x.IsActive).Select(x=>new Choice { Id=x.Id,Code=x.Code,Name=x.Name,ModelNumber=x.ModelNumber,RetailPrice=x.RetailPrice,Currency=x.Currency,Unit=x.Unit,LotManaged=x.LotManaged,ExpiryManaged=x.ExpiryManaged,SerialManaged=x.SerialManaged }),
-            "partners"=>db.Partners.Where(x=>x.TenantId==tenant&&x.IsActive&&(x.Type=="CUSTOMER"||x.Type=="BOTH")).Select(x=>new Choice { Id=x.Id,Code=x.Code,Name=x.Name }),
+            "partners"=>db.Partners.Where(x=>x.TenantId==tenant&&x.IsActive&&(x.Type=="CUSTOMER"||x.Type=="BOTH")).Select(x=>new Choice { Id=x.Id,Code=x.Code,Name=x.Name,DefaultShippingPostalCode=x.DefaultShippingPostalCode,DefaultShippingAddress=x.DefaultShippingAddress,DefaultShippingAddressDetail=x.DefaultShippingAddressDetail }),
             "warehouses"=>db.Warehouses.Where(x=>x.TenantId==tenant&&x.IsActive).Select(x=>new Choice { Id=x.Id,Code=x.Code,Name=x.Name,CustomCode=x.CustomCode }),
             "locations"=>ActiveLocations(tenant,warehouseId??Guid.Empty).Select(x=>new Choice { Id=x.Id,Code=x.Code,Name=x.Name }),
             _=>throw Error("조회 항목을 확인해 주세요.")
@@ -42,7 +42,7 @@ public sealed partial class ShipmentService(WmsDbContext db, ProductUsagePolicy 
         if(exactUnit!=null)q=q.Where(x=>x.Unit==exactUnit);
         var total=await q.CountAsync(ct);var ordered=q.OrderBy(x=>x.Code).ThenBy(x=>x.Id);return new {items=await ordered.Skip((page-1)*30).Take(30).ToListAsync(ct),total,page,pageSize=30};
     }
-    public sealed class Choice { public string? CustomCode { get; set; } public bool HasStock { get; set; } public decimal? RetailPrice { get; set; } public string? Currency { get; set; } public string? ModelNumber { get; set; } public Guid Id { get; set; } public string Code { get; set; } = ""; public string Name { get; set; } = ""; public string? Unit { get; set; } public bool LotManaged { get; set; } public bool ExpiryManaged { get; set; } public bool SerialManaged { get; set; } }
+    public sealed class Choice { public string? DefaultShippingPostalCode { get; set; } public string? DefaultShippingAddress { get; set; } public string? DefaultShippingAddressDetail { get; set; } public string? CustomCode { get; set; } public bool HasStock { get; set; } public decimal? RetailPrice { get; set; } public string? Currency { get; set; } public string? ModelNumber { get; set; } public Guid Id { get; set; } public string Code { get; set; } = ""; public string Name { get; set; } = ""; public string? Unit { get; set; } public bool LotManaged { get; set; } public bool ExpiryManaged { get; set; } public bool SerialManaged { get; set; } }
     public async Task<object> Detail(Guid tenant,Guid id,CancellationToken ct)
     {
         var shipment=await Find(tenant,id,ct);var lines=await Lines(tenant,id,ct);var allocations=await Allocations(tenant,lines,ct);
@@ -94,6 +94,12 @@ public sealed partial class ShipmentService(WmsDbContext db, ProductUsagePolicy 
         var warehouse=await db.Warehouses.SingleOrDefaultAsync(x=>x.TenantId==tenant&&x.Id==r.WarehouseId&&x.IsActive,ct)??throw Error("사용 가능한 창고를 선택해 주세요.");
         var partner=await db.Partners.SingleOrDefaultAsync(x=>x.TenantId==tenant&&x.Id==r.PartnerId&&x.IsActive&&(x.Type=="CUSTOMER"||x.Type=="BOTH"),ct)??throw Error("사용 가능한 매출처를 선택해 주세요.");
         doc.RequestDate=r.RequestDate;doc.ExpectedDate=r.ExpectedDate;doc.WarehouseId=warehouse.Id;doc.WarehouseName=warehouse.Name;doc.PartnerId=partner.Id;doc.PartnerName=partner.Name;doc.ContactName=assignee.Name.Trim();doc.Notes=r.Notes?.Trim();
+        // Store this document’s editable snapshot, never the partner’s current default.
+        if(r.ShippingPostalCode?.Length > 20) throw Error("출고지 우편번호는 20자 이내로 입력해 주세요.");
+        if(r.ShippingPostalCode != null) doc.ShippingPostalCode = string.IsNullOrWhiteSpace(r.ShippingPostalCode) ? null : r.ShippingPostalCode.Trim();
+        if(r.ShippingAddress?.Length > 500 || r.ShippingAddressDetail?.Length > 500) throw Error("출고지는 각 500자 이내로 입력해 주세요.");
+        if(r.ShippingAddress != null) doc.ShippingAddress = string.IsNullOrWhiteSpace(r.ShippingAddress) ? null : r.ShippingAddress.Trim();
+        if(r.ShippingAddressDetail != null) doc.ShippingAddressDetail = string.IsNullOrWhiteSpace(r.ShippingAddressDetail) ? null : r.ShippingAddressDetail.Trim();
         // The whole release/reallocation is one transaction. Failed edits retain prior reservations.
         await Release(tenant,oldAlloc,false,ct);
         db.ShipmentAllocations.RemoveRange(oldAlloc);db.OutboundShipmentLines.RemoveRange(old);

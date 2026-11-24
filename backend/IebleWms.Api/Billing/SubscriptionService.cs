@@ -36,6 +36,7 @@ public sealed class SubscriptionService(WmsDbContext db, BillingAccessService bi
             daysUntilFirstCharge = Math.Max(0, days), currentUsers, estimatedMonthlyKrw = Amount(currentUsers), firstChargeUsers = billable, firstChargeEstimateKrw = Amount(billable),
             reminderVisible = access.DevelopmentTest == null && t.IsActive && t.ServiceStatus == TenantServiceStatus.Active && !access.HasRegisteredCard && !t.AutoBillingCanceledAt.HasValue && days <= billing.Policy.ReminderDays && !dismissed,
             providerConfigured = false, access,
+            pricingPreview = BillingPricingPreview.Create(currentUsers, now),
             invoices = await db.BillingInvoices.AsNoTracking().Where(x => x.TenantId == tenantId).OrderByDescending(x => x.CycleStart).Take(24).Select(x => new { x.Id, x.CycleStart, x.CycleEnd, x.UserCount, x.AmountKrw, x.State }).ToListAsync(ct) };
     }
     private long Amount(int count) => (long)billing.Policy.MonthlyBaseKrw + (long)Math.Max(0, count - billing.Policy.IncludedUsers) * billing.Policy.MonthlyPerUserKrw;

@@ -193,7 +193,7 @@
 :root .report-period-tabs button { min-height:32px; padding:5px 12px; }
 :root .org-chart-toolbar { justify-content:flex-end; }
 :root .org-chart-toolbar .organization-row-actions { border-top:0; padding-top:0; margin-top:0; gap:8px; }
-:root .org-chart-toolbar button[aria-label^="조직도"] { display:inline-flex; align-items:center; justify-content:center; width:36px; min-width:36px; height:36px; min-height:36px; padding:0; }
+:root .org-chart-toolbar button:is([aria-label^="조직도"], [aria-label^="Organization Chart"]) { display:inline-flex; align-items:center; justify-content:center; width:36px; min-width:36px; height:36px; min-height:36px; padding:0; }
 :root .inventory-map-title-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
 :root .warehouse-dashboard .inventory-map-title-row .dashboard-warehouse-title.is-title-picker { margin:0; min-width:0; max-width:100%; }
 :root .warehouse-dashboard-heading:empty { display:none; }
@@ -245,6 +245,11 @@
 :root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]):not(:disabled):hover { border-color:#64748b!important; }
 :root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]):focus-visible { outline:2px solid var(--choice-ink); outline-offset:2px; box-shadow:none; }
 :root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=hidden]):disabled { background-color:#f1f5f9!important; opacity:.6; cursor:not-allowed; }
+/* Fixed values retain their geometry without focus, text caret or active styling. */
+:root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.auth-shell,.password-gate-dialog) :is(input,textarea)[readonly] {
+ background-color:#f1f5f9!important; color:#526175!important; border-color:#cbd5e1!important; cursor:default!important; caret-color:transparent; opacity:1;
+}
+.readonly-field-note { color:#64748b; font-size:12px; font-weight:400; margin-inline-start:6px; }
 :root body :is(input,select,.searchable-choice-trigger)[aria-invalid=true] { border-color:#b42318!important; }
 :root body .searchable-choice { align-content:start; justify-content:stretch; gap:5px; }
 :root body .searchable-choice > label:not(.sr-only) { display:block; flex:none; width:auto; min-width:0; min-height:0; margin:0; padding:0; align-self:start; }
@@ -325,12 +330,12 @@
 
 /* Icon-only controls identified by their existing roles/classes, not by SVG presence alone. */
 :root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content) button:is(
- .wms-icon-button,.registration-back,.dialog-close-icon,
- [aria-label="도면 확대"],[aria-label="도면 축소"],[aria-label="도면 화면 맞춤"],
- [aria-label="3D 확대"],[aria-label="3D 축소"],[aria-label="조직도 확대"],[aria-label="조직도 축소"],
- [aria-label="이미지 확대"],[aria-label="이미지 축소"],
- [aria-label="객체 선택"],[aria-label="화면 이동"],[aria-label="도면 실행 취소"],[aria-label="도면 다시 실행"]
-):not(:where(.studio-tool-rail button)), :root body .product-gallery-order > button, :root body .wms-pagination-buttons button:has(>svg), :root body button[aria-label="삭제"]:has(>svg:only-child) {
+ .wms-icon-button,.registration-back,
+ :is([aria-label="도면 확대"], [aria-label="Zoom in layout"]),:is([aria-label="도면 축소"], [aria-label="Zoom out layout"]),:is([aria-label="도면 화면 맞춤"], [aria-label="Fit layout to view"]),
+ :is([aria-label="3D 확대"], [aria-label="Zoom In 3D"]),:is([aria-label="3D 축소"], [aria-label="Zoom Out 3D"]),:is([aria-label="조직도 확대"], [aria-label="Zoom in chart"]),:is([aria-label="조직도 축소"], [aria-label="Zoom out chart"]),
+ :is([aria-label="이미지 확대"], [aria-label="Zoom in image"]),:is([aria-label="이미지 축소"], [aria-label="Zoom out image"]),
+ :is([aria-label="객체 선택"], [aria-label="Select Object"]),:is([aria-label="화면 이동"], [aria-label="Pan View"]),:is([aria-label="도면 실행 취소"], [aria-label="Undo layout change"]),:is([aria-label="도면 다시 실행"], [aria-label="Redo layout change"])
+):not(:where(.studio-tool-rail button)), :root body .product-gallery-order > button, :root body .wms-pagination-buttons button:has(>svg), :root body button:is([aria-label="삭제"], [aria-label="Delete"]):has(>svg:only-child) {
  --ui-icon-min-height:36px;
  width:36px; min-width:36px; max-width:36px; height:36px; min-height:36px; max-height:36px;
  padding:0; flex:0 0 36px; display:inline-flex; align-items:center; justify-content:center;
@@ -347,12 +352,12 @@
 /* Text actions use content width. Navigation, pickers, tabs and icon tools keep
    their own geometry; auth buttons are outside these business surfaces. */
 :root body :is(.wms-layout,.organization-dialog,.admin-workspace,.workspace-content,.admin-panel) :is(button,a[href]):is(.primary,.secondary,.text-button):not(
- .wms-icon-button,.registration-back,.dialog-close-icon,[hidden],
- [aria-label="도면 확대"],[aria-label="도면 축소"],[aria-label="도면 화면 맞춤"],
- [aria-label="3D 확대"],[aria-label="3D 축소"],[aria-label="조직도 확대"],[aria-label="조직도 축소"],
- [aria-label="이미지 확대"],[aria-label="이미지 축소"],
- [aria-label="객체 선택"],[aria-label="화면 이동"],[aria-label="도면 실행 취소"],[aria-label="도면 다시 실행"],
- [aria-label="삭제"]:has(> svg:only-child)
+ .wms-icon-button,.registration-back,[hidden],
+ :is([aria-label="도면 확대"], [aria-label="Zoom in layout"]),:is([aria-label="도면 축소"], [aria-label="Zoom out layout"]),:is([aria-label="도면 화면 맞춤"], [aria-label="Fit layout to view"]),
+ :is([aria-label="3D 확대"], [aria-label="Zoom In 3D"]),:is([aria-label="3D 축소"], [aria-label="Zoom Out 3D"]),:is([aria-label="조직도 확대"], [aria-label="Zoom in chart"]),:is([aria-label="조직도 축소"], [aria-label="Zoom out chart"]),
+ :is([aria-label="이미지 확대"], [aria-label="Zoom in image"]),:is([aria-label="이미지 축소"], [aria-label="Zoom out image"]),
+ :is([aria-label="객체 선택"], [aria-label="Select Object"]),:is([aria-label="화면 이동"], [aria-label="Pan View"]),:is([aria-label="도면 실행 취소"], [aria-label="Undo layout change"]),:is([aria-label="도면 다시 실행"], [aria-label="Redo layout change"]),
+ :is([aria-label="삭제"], [aria-label="Delete"]):has(> svg:only-child)
 ):not(:where(
  [role=tab],[role=option],[role=tablist] button,.wms-segmented button,.wms-pagination button,
  .user-profile-panel button,.tenant-select button,.document-paste-candidates button,

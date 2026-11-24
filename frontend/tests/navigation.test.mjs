@@ -3,6 +3,10 @@ import assert from 'node:assert/strict'
 import { workspaceMenus, workspacePages, canViewPage, findWorkspacePage, canOpenRegistration } from '../src/components/workspace/navigation.ts'
 test('workspace menu matches the agreed hierarchy and links have unique routes', () => {
   assert.deepEqual(workspaceMenus.map(menu => menu.label), ['대시보드','창고관리','상품관리','바코드 조회','입고관리','출고관리','재고관리','거래처관리','통계 및 보고서','조직관리','마스터 관리','이용 가이드','문의하기'])
+  const products = workspaceMenus.find(menu => menu.label === '상품관리')
+  assert.equal(products.page, undefined)
+  assert.equal(products.icon, 'products')
+  assert.deepEqual(products.children.map(({label,path}) => ({label,path})), [{label:'상품관리',path:'/app/products'},{label:'라벨링 출력',path:'/app/label-editor'}])
   assert.deepEqual(workspaceMenus.find(menu => menu.label === '재고관리').children.map(page => page.label), ['재고 이동 및 조정','재고 실사/조사'])
   assert.deepEqual(workspaceMenus.find(menu => menu.label === '통계 및 보고서').children.map(page => page.label), ['재고 현황','입출고 통계','재고 변동 이력'])
   assert.deepEqual(workspaceMenus.find(menu => menu.label === '조직관리').children.map(page => page.label), ['조직도','사용자 관리','항목 관리'])
@@ -20,7 +24,7 @@ test('employee cannot see management pages but managers can', () => {
 })
 
 test('registration deep links use the existing menu and require a separate create grant', () => {
-  assert.equal(workspacePages.length, 21)
+  assert.equal(workspacePages.length, 22)
   for (const feature of ['products', 'receipts', 'shipments']) {
     const path = `/app/${feature}/new`
     assert.equal(findWorkspacePage(path), findWorkspacePage(`/app/${feature}`))
@@ -57,7 +61,7 @@ test('product and document detail deep links inherit menu read permissions witho
     assert.equal(findWorkspacePage(path + '/unexpected'), undefined)
     assert.equal(findWorkspacePage(`/app/${feature}/not-an-id`), undefined)
   }
-  assert.equal(workspacePages.length, 21)
+  assert.equal(workspacePages.length, 22)
 })
 
 test('barcode page reuses product OR warehouse read permissions without creating a new grant', () => {
@@ -77,3 +81,11 @@ test('activity logs are visible only to the current tenant master', () => {
  assert.equal(canViewPage(page, 'Administrator', { 'activity-log': ['menu','read'] }), false)
  assert.equal(canViewPage(page, 'Employee'), false)
 })
+
+ test('label designer shares product read/menu permissions and keeps barcode printing separate', () => {
+  const editor=findWorkspacePage('/app/label-editor');assert.equal(editor.key,'label-editor');
+  assert.equal(canViewPage(editor,'Employee',{products:['menu','read']}),true);
+  assert.equal(canViewPage(editor,'Employee',{products:['menu']}),false);
+  assert.equal(canViewPage(editor,'Employee',{products:['read']}),false);
+  assert.equal(canViewPage(editor,'Employee',{warehouses:['menu','read']}),false);
+ })

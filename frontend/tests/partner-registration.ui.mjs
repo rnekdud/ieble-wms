@@ -3,7 +3,7 @@ import {chromium} from 'playwright'
 const origin=process.env.UI_ORIGIN||'http://localhost:5176',root='/api/tenants/fixture',endpoint=root+'/partners'
 const baselineOrigin=process.env.BASELINE_ORIGIN
 const rows=[],writes=[],errors=[],unexpected=[]
-let sequence=0
+let sequence=0,canUpdate=true
 const browser=await chromium.launch({channel:'chrome',headless:true})
 try{
  const context=await browser.newContext({serviceWorkers:'block'})
@@ -15,7 +15,7 @@ try{
   if(p==='/api/auth/me')return json({user:{id:'qa',displayName:'QA',email:'qa@example.test',userName:'qa',systemRole:'None',mustChangePassword:false},memberships:[{tenantId:'fixture',name:'격리 QA 기업',role:'Master',serviceStatus:'Active'}],tenantResolution:'resolved',selectedTenantId:'fixture'})
   if(p==='/api/auth/csrf')return json({token:'fixture'})
   if(p==='/api/health/db')return json({status:'connected'})
-  if(p===root+'/workspace')return json({id:'fixture',name:'격리 QA 기업',role:'Master',accountType:'Internal',serviceStatus:'Active',canManageBilling:false,billingAccess:{canAccessWms:true},permissions:{partners:['menu','read','create','update']}})
+  if(p===root+'/workspace')return json({id:'fixture',name:'격리 QA 기업',role:'Master',accountType:'Internal',serviceStatus:'Active',canManageBilling:false,billingAccess:{canAccessWms:true},permissions:{partners:canUpdate?['menu','read','create','update']:['menu','read']}})
   if(p===root+'/pages/partners')return json({})
   if(req.method()==='GET'){
    if(p===endpoint+'/business-number-check')return json({matches:[]})
@@ -46,9 +46,9 @@ try{
    })),postalButton:rect(d.querySelector('.address-postal-row button'))}
  })
  const checkLayout=async(dialog,width,baseline)=>{
-  const m=await metrics(dialog);assert(!m.overflow);assert(m.dialog.x>=0&&m.dialog.x+m.dialog.w<=width+1)
+  await dialog.locator('#partner-editor').waitFor();const m=await metrics(dialog);assert(!m.overflow);assert(m.dialog.x>=0&&m.dialog.x+m.dialog.w<=width+1)
   for(const c of m.controls){
-   if(c.name!=='거래처코드')assert(Math.abs(c.rect.w-c.parent.w)<1,JSON.stringify(c))
+   if(!['거래처코드','기본 출고지 우편번호'].includes(c.name))assert(Math.abs(c.rect.w-c.parent.w)<1,JSON.stringify(c))
    assert.equal(c.rect.x,c.parent.x);assert(c.rect.x+c.rect.w<=m.dialog.x+m.dialog.w)
    if(c.name!=='비고')assert.equal(c.rect.h,40);else assert.equal(c.resize,'vertical')
   }
@@ -77,23 +77,30 @@ try{
   await dialog.getByRole('button',{name:'거래처 저장',exact:true}).click();await dialog.getByRole('alert').filter({hasText:'숫자 10자리'}).waitFor()
   await dialog.getByRole('textbox',{name:'사업자등록번호',exact:true}).fill('123-45-67890')
   const bounds=await dialog.boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=width+1);assert(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1))
-  await save(dialog);dialog=page.getByRole('dialog',{name:'거래처 상세',exact:true});await dialog.waitFor()
-  const saved=rows.at(-1);assert.equal(writes.at(-1).code,null);assert.equal(saved.type,'BOTH');assert.match(await dialog.innerText(),new RegExp(saved.code))
-  await dialog.getByRole('button',{name:'거래처 수정',exact:true}).click();dialog=page.getByRole('dialog',{name:'거래처 수정',exact:true})
+  await save(dialog);await dialog.waitFor({state:'detached'})
+  const saved=rows.at(-1);await page.getByRole('button',{name:saved.name+' 수정',exact:true}).waitFor();assert.equal(writes.at(-1).code,null);assert.equal(saved.type,'BOTH');assert.match(await page.locator('body').innerText(),new RegExp(saved.code))
+  await page.getByRole('button',{name:saved.name+' 수정',exact:true}).click();dialog=page.getByRole('dialog',{name:'거래처 수정',exact:true})
   await checkLayout(dialog,width)
+  assert.equal(await dialog.locator('.registration-back').count(),0)
+  const close=dialog.locator('.dialog-actions').getByRole('button',{name:'닫기',exact:true}),submit=dialog.locator('.dialog-actions').getByRole('button',{name:'거래처 저장',exact:true})
+  await close.waitFor();assert.equal(await dialog.getByRole('button',{name:'닫기',exact:true}).count(),1)
+  const a=await close.boundingBox(),b=await submit.boundingBox();assert(a.x+a.width<=b.x+1);assert(Math.abs(a.y-b.y)<2)
+  await close.click();await dialog.waitFor({state:'detached'});await page.getByRole('button',{name:saved.name+' 수정',exact:true}).click();await dialog.waitFor()
+  await dialog.getByRole('textbox',{name:'거래처명',exact:true}).fill('저장하지 않은 변경');await dialog.getByRole('button',{name:'닫기',exact:true}).click();await page.getByRole('button',{name:'계속 편집',exact:true}).click();assert.equal(await dialog.getByRole('textbox',{name:'거래처명',exact:true}).inputValue(),'저장하지 않은 변경')
   assert.equal(await dialog.getByRole('textbox',{name:'거래처코드',exact:true}).inputValue(),saved.code)
   assert.equal(await dialog.getByRole('combobox',{name:'사업자번호 구분'}).count(),0)
   await dialog.getByRole('textbox',{name:'거래처명',exact:true}).fill('수정 '+width);await save(dialog)
-  await page.getByRole('dialog',{name:'거래처 상세',exact:true}).waitFor();assert.equal(writes.at(-1).code,saved.code)
-  console.log(`PASS ${width}px blank code registration, number validation, generated code detail and editing`)
+  await page.locator('dialog').waitFor({state:'detached'});assert.equal(writes.at(-1).code,saved.code)
+  console.log(`PASS ${width}px blank code registration, number validation, direct edit, no back icon, close/save order and unsaved changes`)
  }
- let dialog=await open();await dialog.getByRole('textbox',{name:'거래처코드',exact:true}).fill('ABC-001');await dialog.getByRole('textbox',{name:'거래처명',exact:true}).fill('수동 거래처');await save(dialog);await page.getByRole('dialog',{name:'거래처 상세',exact:true}).waitFor();assert.equal(rows.at(-1).code,'ABC-001')
+ let dialog=await open();await dialog.getByRole('textbox',{name:'거래처코드',exact:true}).fill('ABC-001');await dialog.getByRole('textbox',{name:'거래처명',exact:true}).fill('수동 거래처');await save(dialog);await page.locator('dialog').waitFor({state:'detached'});assert.equal(rows.at(-1).code,'ABC-001')
  dialog=await open();await dialog.getByRole('textbox',{name:'거래처코드',exact:true}).fill('ABC-001');await dialog.getByRole('textbox',{name:'거래처명',exact:true}).fill('중복 거래처');await save(dialog);await page.getByRole('alert').filter({hasText:'이미 사용 중인 거래처 코드입니다.'}).waitFor()
  assert.equal(await dialog.getByRole('textbox',{name:'거래처명',exact:true}).inputValue(),'중복 거래처');assert.equal(await dialog.getByRole('textbox',{name:'거래처코드',exact:true}).inputValue(),'ABC-001')
  const overseas={...rows.at(-1),id:crypto.randomUUID(),name:'해외 기존 거래처',code:'OLD-FOREIGN',registrationCountry:'OTHER',businessRegistrationNumber:'GB-123'};rows.push(overseas)
- await page.goto(origin+'/app/partners');await page.getByRole('button',{name:'해외 기존 거래처 상세'}).click();await page.getByRole('button',{name:'거래처 수정',exact:true}).click()
- dialog=page.getByRole('dialog',{name:'거래처 수정',exact:true});await dialog.getByRole('textbox',{name:'담당자명',exact:true}).fill('새 담당자');await save(dialog);await page.getByRole('dialog',{name:'거래처 상세',exact:true}).waitFor()
+ await page.goto(origin+'/app/partners');await page.getByRole('button',{name:'해외 기존 거래처 수정'}).click()
+ dialog=page.getByRole('dialog',{name:'거래처 수정',exact:true});await dialog.getByRole('textbox',{name:'담당자명',exact:true}).fill('새 담당자');await save(dialog);await page.locator('dialog').waitFor({state:'detached'})
  assert.equal(writes.at(-1).registrationCountry,'OTHER');assert.equal(writes.at(-1).businessRegistrationNumber,'GB-123');assert.equal(writes.at(-1).code,'OLD-FOREIGN')
+ canUpdate=false;await page.goto(origin+'/app/partners');await page.getByRole('button',{name:'해외 기존 거래처 상세',exact:true}).click();dialog=page.getByRole('dialog');await dialog.getByText('OLD-FOREIGN',{exact:true}).first().waitFor();assert.equal(await dialog.locator('.registration-back').count(),0);assert.equal(await dialog.getByRole('button',{name:'거래처 저장',exact:true}).count(),0);assert.equal(await dialog.getByRole('textbox').count(),0);await dialog.getByRole('button',{name:'닫기',exact:true}).click()
  assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[])
  console.log('PASS manual/duplicate codes and existing overseas number compatibility; no real API writes')
 }finally{await browser.close()}

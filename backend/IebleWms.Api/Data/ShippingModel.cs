@@ -6,8 +6,10 @@ internal static class ShippingModel
     public static void Configure(ModelBuilder b)
     {
         var d=b.Entity<OutboundShipment>();d.HasKey(x=>x.Id);d.HasAlternateKey(x=>new{x.TenantId,x.Id});d.Property(x=>x.Version).IsConcurrencyToken();
+        d.Property(x => x.ShippingPostalCode).HasMaxLength(20);
         d.Property(x=>x.Number).HasMaxLength(64);d.Property(x=>x.Status).HasMaxLength(16);d.Property(x=>x.RequestHash).HasMaxLength(64);
         d.Property(x=>x.ContactName).HasMaxLength(200);d.Property(x=>x.Notes).HasMaxLength(2000);d.Property(x=>x.PartnerName).HasMaxLength(200);d.Property(x=>x.WarehouseName).HasMaxLength(200);
+        d.Property(x=>x.ShippingAddress).HasMaxLength(500);d.Property(x=>x.ShippingAddressDetail).HasMaxLength(500);
         d.HasIndex(x=>new{x.TenantId,x.Number}).IsUnique();d.HasIndex(x=>new{x.TenantId,x.RequestId}).IsUnique();d.HasIndex(x=>new{x.TenantId,x.ExpectedDate,x.Status});
         d.HasOne<Partner>().WithMany().HasForeignKey(x=>new{x.TenantId,x.PartnerId}).HasPrincipalKey(x=>new{x.TenantId,x.Id}).OnDelete(DeleteBehavior.Restrict);
         d.HasOne<Warehouse>().WithMany().HasForeignKey(x=>new{x.TenantId,x.WarehouseId}).OnDelete(DeleteBehavior.Restrict);

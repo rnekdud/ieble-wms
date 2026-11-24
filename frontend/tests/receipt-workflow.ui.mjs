@@ -23,6 +23,7 @@ try{
   const json=value=>route.fulfill({json:value})
   if(path==='/api/auth/csrf')return json({token:'fixture'})
   if(req.method()==='GET'){
+   if(path===endpoint+'/photo-options')return json({maxCount:10,maxBytes:5242880,formats:['image/jpeg','image/png','image/webp']})
    if(path===endpoint+'/choices'){
     const kind=q.get('kind'),search=(q.get('search')||'').toLowerCase(),ids=q.getAll('ids')
     if(kind==='product-options')return json({categories:[],productTypes:[]})
@@ -32,6 +33,7 @@ try{
     return json({items,total:items.length,page:1,pageSize:30})
    }
    if(path===endpoint+'/r')return json(data)
+   if(path===endpoint+'/r/photos')return json({photos:[],version:data.receipt.version,photosVersion:'empty'})
    if(path.endsWith('/business-assignees'))return json({items:[{id:'qa-user',name:'QA 담당자',code:'QA',isActive:true}],total:1,page:1,pageSize:20})
    if(path.endsWith('/inspection-history'))return json({items:[],page:1,pageSize:30,total:0})
    if(path.endsWith('/stock'))return json({balances:data.lines.map(l=>({id:l.id,quantity:l.inspectedQuantity,unit:l.unit})),movements:[{}]})

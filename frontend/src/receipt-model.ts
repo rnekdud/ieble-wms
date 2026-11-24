@@ -1,6 +1,7 @@
+import { getLocale, t as uiText } from './i18n.ts'
 import { eachQuantityError } from './quantity-input.ts'
 export const receiptStatuses = { Planned: '입고 예정', Inspecting: '검수 중', Confirmed: '입고 확정', Cancelled: '취소' } as const
-export type Choice = { email?: string | null; rackPhysical?: number | null; rackAvailable?: number | null; rackRequestable?: number | null; ownReserved?: number | null; retailPrice?: number | null; currency?: string | null; rackId?: string | null; rackName?: string | null; rackCode?: string | null; customCode?: string | null; barcode?: string | null; level?: number | null; bay?: number | null; expiryDate?: string | null; quantity?: number | null; reservedQuantity?: number | null; availableQuantity?: number | null; modelNumber?: string | null; id: string; code: string; name: string; unit: string | null; lotManaged: boolean; expiryManaged: boolean; serialManaged: boolean }
+export type Choice = { defaultShippingPostalCode?: string | null; defaultShippingAddress?: string | null; defaultShippingAddressDetail?: string | null; email?: string | null; rackPhysical?: number | null; rackAvailable?: number | null; rackRequestable?: number | null; ownReserved?: number | null; retailPrice?: number | null; currency?: string | null; rackId?: string | null; rackName?: string | null; rackCode?: string | null; customCode?: string | null; barcode?: string | null; level?: number | null; bay?: number | null; expiryDate?: string | null; quantity?: number | null; reservedQuantity?: number | null; availableQuantity?: number | null; modelNumber?: string | null; id: string; code: string; name: string; unit: string | null; lotManaged: boolean; expiryManaged: boolean; serialManaged: boolean }
 export type TrackingAllocation = { id: string; lotNumber: string | null; expiryDate: string | null; quantity: number; serials: string[] }
 export type Placement = { trackingId?: string | null; locationCode?: string; locationId: string; quantity: number; serials: string[] }
 export type ReceiptLine = { trackingAllocations?: TrackingAllocation[] | null; placementTrackingId?: string | null; plannedRackId?: string | null; plannedRackName?: string | null; plannedRackCode?: string | null; retailPrice?: number | null; currency?: string | null; id: string; productId: string; productCode: string; productName: string; unit: string; lotManaged: boolean; expiryManaged: boolean; serialManaged: boolean; expectedQuantity: number; inspectedQuantity: number | null; lotNumber: string | null; expiryDate: string | null; serials: string[]; placements: Placement[] }
@@ -22,7 +23,7 @@ export function trackingError(_p: Pick<ReceiptLine, 'lotManaged' | 'expiryManage
 export function unitTotals(lines: { unit: string; quantity: number }[]) {
   const totals: Record<string, number> = {}
   for (const line of lines) totals[line.unit] = Math.round(((totals[line.unit] || 0) + line.quantity) * 1000) / 1000
-  return Object.entries(totals).map(([unit, quantity]) => `${quantity.toLocaleString('ko-KR')} ${unit}`).join(' · ')
+  return Object.entries(totals).map(([unit, quantity]) => `${quantity.toLocaleString(getLocale())} ${unit}`).join(' · ')
 }
 
 /** Integer thousandths avoid cancellation/rounding errors across split placements. */
@@ -30,7 +31,7 @@ export function placementComparison(inspected: number, quantities: string[], uni
   const valid = quantities.every(q => !quantityError(q) && !eachQuantityError(q, unit))
   const placed = quantities.reduce((sum, q) => sum + (quantityError(q) ? 0 : Math.round(Number(q) * 1000)), 0)
   const difference = (placed - Math.round(inspected * 1000)) / 1000
-  const amount = Math.abs(difference).toLocaleString('ko-KR', { maximumFractionDigits: 3 })
+  const amount = Math.abs(difference).toLocaleString(getLocale(), { maximumFractionDigits: 3 })
   return { placed: placed / 1000, difference, valid, status: !valid ? 'invalid' : difference > 0 ? 'over' : difference < 0 ? 'under' : 'matched',
     message: !valid && quantities.some(q => eachQuantityError(q, unit)) ? '개(EA) 배치 수량은 정수로 입력해 주세요.' : !valid ? '배치 수량은 0보다 큰 숫자, 소수점 3자리 이내로 입력해 주세요.' : difference > 0 ? `검수 수량보다 배치 수량이 ${amount} ${unit} 초과되었습니다.` : difference < 0 ? `검수 수량보다 배치 수량이 ${amount} ${unit} 부족합니다.` : '검수 수량과 배치 수량이 일치합니다.' }
 }
@@ -38,7 +39,7 @@ export function receiptPlacementReady(lines: ReceiptLine[]) {
   return lines.length > 0 && lines.some(l => (l.inspectedQuantity || 0) > 0) && lines.every(l => l.inspectedQuantity != null && placementComparison(l.inspectedQuantity, l.placements.map(p => String(p.quantity)), l.unit).status === 'matched' && l.placements.every(p => !!p.locationId))
 }
 export function retailAmount(price: number | null | undefined, currency = 'KRW') {
-  return price == null || !Number.isFinite(price) ? '—' : `${price.toLocaleString('ko-KR', { maximumFractionDigits: 2 })} ${currency === 'KRW' ? '원' : currency}`
+  return price == null || !Number.isFinite(price) ? '—' : `${price.toLocaleString(getLocale(), { maximumFractionDigits: 2 })} ${currency === 'KRW' ? uiText('원') : currency}`
 }
 export function receiptRetailTotals(lines: { product?: Choice; quantity: string }[]) {
   const totals = new Map<string, number>()

@@ -1,3 +1,6 @@
+import BusinessDocumentMenu from './BusinessDocumentMenu'
+import { t as uiText, getLocale } from '../../i18n.ts'
+import ReceiptPhotos from './ReceiptPhotos'
 import { useMobile } from '../../use-mobile'
 import type { ReactNode } from 'react'
 import { receiptStatuses } from '../../receipt-model'
@@ -36,6 +39,8 @@ export default function ReceiptBarcodeInspection({ initial, endpoint, onChange, 
   const [lastScan, setLastScan] = useState<{ requestId: string; lineId: string; groupByProduct: boolean } | null>(null)
 
   const [trackingModal, setTrackingModal] = useState<{ productId: string; tab: 'lot' | 'serial' } | null>(null), [serialDirty, setSerialDirty] = useState(false)
+  const [photoPending, setPhotoPending] = useState(false)
+  const [photoBusy, setPhotoBusy] = useState(false)
   const finishFlight=useRef(false)
   const navigation = useUnsavedNavigation(!!manual || serialDirty || pending.length > 0 || finishing || bulkFilling, pending.length > 0 || finishing || bulkFilling)
   const update = (d: ReceiptDetail) => { latest.current = d; setData(d); onChange(d) }
@@ -81,7 +86,7 @@ export default function ReceiptBarcodeInspection({ initial, endpoint, onChange, 
     queue.current.push(command); remember(); if (!paused && !candidates.length) void pump(); return true
   }
   function scan(event: BarcodeScanEvent) {
-    if(bulkFlight.current||manualDraft.current||latest.current.receipt.status!=='Inspecting'||latest.current.receipt.inspectedAt)return false
+    if(photoBusy||photoPending||bulkFlight.current||manualDraft.current||latest.current.receipt.status!=='Inspecting'||latest.current.receipt.inspectedAt)return false
     return enqueue({ kind: 'scan', ...event, lineId: null, groupByProduct: true })
   }
   function choose(lineId: string) {
@@ -105,7 +110,7 @@ export default function ReceiptBarcodeInspection({ initial, endpoint, onChange, 
   useEffect(() => {
     let live = true
     const refresh = () => {
-      if (document.hidden || bulkFlight.current || sending.current || queue.current.length || manualDraft.current || finishing || trackingModal) return
+      if (document.hidden || photoBusy || photoPending || bulkFlight.current || sending.current || queue.current.length || manualDraft.current || finishing || trackingModal) return
       const version = latest.current.receipt.version
       api<ReceiptDetail>(url).then(d => {
         // A poll started before typing/saving must not replace the draft or a newer response.
@@ -114,8 +119,8 @@ export default function ReceiptBarcodeInspection({ initial, endpoint, onChange, 
     }
     const timer = window.setInterval(refresh, 15000); document.addEventListener('visibilitychange', refresh)
     return () => { live = false; clearInterval(timer); document.removeEventListener('visibilitychange', refresh) }
-  }, [url, onChange, manual, finishing, trackingModal])
-  const progress = scanProgress(data.lines), canWork = data.receipt.status === 'Inspecting' && !data.receipt.inspectedAt, blocked = pending.length > 0 || finishing || bulkFilling
+  }, [url, onChange, manual, finishing, trackingModal, photoBusy, photoPending])
+  const progress = scanProgress(data.lines), canWork = data.receipt.status === 'Inspecting' && !data.receipt.inspectedAt, workBusy = pending.length > 0 || finishing || bulkFilling, blocked = workBusy || photoBusy || photoPending
 
   async function fillExpectedQuantities() {
     const current = latest.current
@@ -151,34 +156,35 @@ export default function ReceiptBarcodeInspection({ initial, endpoint, onChange, 
     enqueue({ kind: 'quantity', groupByProduct: true, requestId: crypto.randomUUID(), version: draft.version, lineId: draft.lineId, quantity, reason: '검수수량 직접 수정' })
   }
   const groups=receiptProductGroups(data.lines), modalGroup=groups.find(g=>g.productId===trackingModal?.productId)
-  return <DetailSurface hideListAction title="입고 상세 · 검수" code={data.receipt.number} status={<span className={`status-badge ${data.receipt.status}`}>{receiptStatuses[data.receipt.status]}</span>} busy={blocked} onClose={() => requestNavigation(onClose)} actions={<button className="primary" disabled={blocked || !!manual || !canWork || !!trackingModal} onClick={() => void finish()}>검수 확정</button>}>
+  return <DetailSurface hideListAction title={uiText("입고 상세 · 검수")} code={data.receipt.number} status={<span className={`status-badge ${data.receipt.status}`}>{uiText(receiptStatuses[data.receipt.status])}</span>} busy={workBusy || photoBusy} onClose={() => requestNavigation(onClose)} actions={<><BusinessDocumentMenu endpoint={url} type="receipts" disabled={workBusy || photoBusy} /><button className="primary" disabled={blocked || !!manual || !canWork || !!trackingModal} onClick={() => void finish()}>{uiText("검수 확정")}</button></>}>
     {modalGroup&&trackingModal&&<ReceiptTrackingDialog group={modalGroup} tab={trackingModal.tab} url={url} version={data.receipt.version} onDirtyChange={setSerialDirty} onClose={()=>{setTrackingModal(null);setSerialDirty(false)}} onSaved={saved=>{update(saved);setTrackingModal(null);setSerialDirty(false);setLastScan(null)}}/>}
     <UnsavedChangesDialog guard={navigation} />
-    <section className="receipt-scan-summary"><div><small>거래처 · 창고</small><strong>{data.receipt.partnerName} · {data.receipt.warehouseName}</strong></div><div><small>입고 예정 상품</small><strong>{progress.total}종</strong></div><div><small>검수 완료 상품</small><strong>{progress.complete}종</strong></div><div><small>상품 종류 기준 진행률</small><strong>{progress.percent}%</strong><progress max="100" value={progress.percent} aria-label="상품 종류 기준 검수 진행률" /></div></section>
+    <section className="receipt-scan-summary"><div><small>{uiText("거래처 · 창고")}</small><strong>{data.receipt.partnerName} · {data.receipt.warehouseName}</strong></div><div><small>{uiText("입고 예정 상품")}</small><strong>{progress.total}{uiText("종")}</strong></div><div><small>{uiText("검수 완료 상품")}</small><strong>{progress.complete}{uiText("종")}</strong></div><div><small>{uiText("상품 종류 기준 진행률")}</small><strong>{progress.percent}%</strong><progress max="100" value={progress.percent} aria-label={uiText("상품 종류 기준 검수 진행률")} /></div></section>
+    <ReceiptPhotos data={data} endpoint={endpoint} writable={canWork} busy={workBusy || !!manual || !!trackingModal} onPending={setPhotoPending} onBusy={setPhotoBusy} onChange={update} />
     <section className="receipt-scan-station">
-      <BarcodeScanInput actions={<button type="button" className="secondary" disabled={blocked || !!manual || !canWork || !!trackingModal || progress.complete === progress.total} onClick={() => void fillExpectedQuantities()}>{bulkFilling ? '수량 저장 중…' : '예정 수량 일괄 입력'}</button>} showHelp={false} inputRef={input} label="검수 바코드" onScan={scan} disabled={!canWork || finishing || bulkFilling || !!manual || paused || !!trackingModal} />
+      <BarcodeScanInput actions={<button type="button" className="secondary" disabled={blocked || !!manual || !canWork || !!trackingModal || progress.complete === progress.total} onClick={() => void fillExpectedQuantities()}>{bulkFilling ? uiText("수량 저장 중…") : uiText("예정 수량 일괄 입력")}</button>} showHelp={false} inputRef={input} label={uiText("검수 바코드")} onScan={scan} disabled={photoBusy || photoPending || !canWork || finishing || bulkFilling || !!manual || paused || !!trackingModal} />
       <div className="receipt-inspection-help">
-        <InspectionHelp title="스캔 안내"><p>USB·Bluetooth 스캐너 또는 직접 입력 후 Enter/Tab으로 처리합니다.<br />카메라는 한 번에 하나씩 인식합니다.</p></InspectionHelp>
-        <InspectionHelp title="수량 처리"><p>포장 바코드는 문서에 저장된 EA 환산 수량만큼 반영됩니다.<br />직접 입력한 수량은 Enter 또는 포커스 이동 시 저장됩니다.</p></InspectionHelp>
-        <InspectionHelp title="검수 상태"><p>대기 중에는 다른 담당자의 변경을 15초마다 확인합니다.<br />실제 재고는 보관 위치 배치 후 최종 입고 확정 시 증가합니다.</p></InspectionHelp>
+        <InspectionHelp title={uiText("스캔 안내")}><p>{uiText("USB·Bluetooth 스캐너 또는 직접 입력 후 Enter/Tab으로 처리합니다.")}<br />{uiText("카메라는 한 번에 하나씩 인식합니다.")}</p></InspectionHelp>
+        <InspectionHelp title={uiText("수량 처리")}><p>{uiText("포장 바코드는 문서에 저장된 EA 환산 수량만큼 반영됩니다.")}<br />{uiText("직접 입력한 수량은 Enter 또는 포커스 이동 시 저장됩니다.")}</p></InspectionHelp>
+        <InspectionHelp title={uiText("검수 상태")}><p>{uiText("대기 중에는 다른 담당자의 변경을 15초마다 확인합니다.")}<br />{uiText("실제 재고는 보관 위치 배치 후 최종 입고 확정 시 증가합니다.")}</p></InspectionHelp>
       </div>
-    {pending.length > 0 && <p role="status">{pending.length}건 처리 대기{paused ? ' · 확인 필요' : ' · 저장 중'}</p>}{message && <p role="status" className="alert">{message}</p>}{error && <p role="alert" className="alert error">{error}</p>}
-    {paused && !candidates.length && <button className="primary" type="button" onClick={() => void pump()}>같은 요청 재시도</button>}
-    {!!candidates.length && <div className="receipt-scan-candidates" aria-label="검수 대상 행 선택">{data.lines.filter(l => candidates.includes(l.id)).map(l => <button className="secondary" key={l.id} type="button" onClick={() => choose(l.id)}>{l.productName} · LOT {l.lotNumber || '없음'} · {l.expiryDate || '유통기한 없음'} · 시리얼 {l.serials.length}개 · {l.inspectedQuantity ?? 0}/{l.expectedQuantity} {l.unit} · 행 {data.lines.indexOf(l) + 1}</button>)}</div>}
-    {lastScan && <button className="secondary" disabled={blocked || !!manual || !canWork} onClick={() => { enqueue({ kind: 'quantity', groupByProduct: lastScan.groupByProduct, requestId: crypto.randomUUID(), version: latest.current.receipt.version, lineId: lastScan.lineId, undoScanRequestId: lastScan.requestId, reason: '담당자 요청: 최근 스캔 1회 되돌리기' }) }}>최근 스캔 1회 되돌리기</button>}
+    {pending.length > 0 && <p role="status">{pending.length}{uiText("건 처리 대기")}{paused ? uiText("· 확인 필요") : uiText("· 저장 중")}</p>}{message && <p role="status" className="alert">{uiText(message)}</p>}{error && <p role="alert" className="alert error">{uiText(error)}</p>}
+    {paused && !candidates.length && <button className="primary" type="button" onClick={() => void pump()}>{uiText("같은 요청 재시도")}</button>}
+    {!!candidates.length && <div className="receipt-scan-candidates" aria-label={uiText("검수 대상 행 선택")}>{data.lines.filter(l => candidates.includes(l.id)).map(l => <button className="secondary" key={l.id} type="button" onClick={() => choose(l.id)}>{l.productName} · LOT {l.lotNumber || uiText("없음")} · {l.expiryDate || uiText("유통기한 없음")} {uiText("· 시리얼")} {l.serials.length}{uiText("개 ·")} {l.inspectedQuantity ?? 0}/{l.expectedQuantity} {l.unit} {uiText("· 행")} {data.lines.indexOf(l) + 1}</button>)}</div>}
+    {lastScan && <button className="secondary" disabled={blocked || !!manual || !canWork} onClick={() => { enqueue({ kind: 'quantity', groupByProduct: lastScan.groupByProduct, requestId: crypto.randomUUID(), version: latest.current.receipt.version, lineId: lastScan.lineId, undoScanRequestId: lastScan.requestId, reason: '담당자 요청: 최근 스캔 1회 되돌리기' }) }}>{uiText("최근 스캔 1회 되돌리기")}</button>}
     </section>
-    <div className="table-scroll"><table className="organization-table receipt-scan-table receipt-product-table document-detail-products"><thead><tr>{['상품명','예정 수량','차이','검수 수량','LOT / 유통기한','시리얼','상태'].map(t=><th key={t}><FormLabel required={canWork && t === '검수 수량'}>{t}</FormLabel></th>)}</tr></thead><tbody>{groups.map((group,index)=>{
+    <div className="table-scroll"><table className="organization-table receipt-scan-table receipt-product-table document-detail-products"><thead><tr>{['상품명','예정 수량','차이','검수 수량','LOT / 유통기한','시리얼','상태'].map(t=><th key={t}><FormLabel required={canWork && t === '검수 수량'}>{uiText(t)}</FormLabel></th>)}</tr></thead><tbody>{groups.map((group,index)=>{
       const l=group.lines[0],editing=manual?.lineId===l.id,entries=groupAllocations(group),lots=entries.filter(a=>a.lotNumber||a.expiryDate),serialCount=entries.reduce((n,a)=>n+a.serials.length,0)
       const quantity=editing?Number(manual.quantity):group.inspectedQuantity??0,difference=Math.round((quantity-group.expectedQuantity)*1000)/1000
       return <tr key={group.productId} className={group.lines.some(row=>row.id===selected)?'is-scan-selected':''}>
-        <td data-label="상품명" className="document-detail-product"><strong>{group.productName}</strong><small>{group.productCode}</small></td><td data-label="예정 수량" className="receipt-number">{group.expectedQuantity.toLocaleString()} {group.unit}</td>
-        <td data-label="차이" className={`receipt-number ${difference!==0?'receipt-difference':''}`}>{difference>0?'+':''}{difference.toLocaleString()} {group.unit}</td>
-        <td data-label="검수 수량" className="receipt-inspection-quantity"><QuantityInput aria-required={canWork} unit={group.unit} aria-label={`검수 수량 ${index+1}`} data-testid={`scan-quantity-${l.id}`} type="number" min="0" max={group.expectedQuantity} step={group.unit==='EA'?'1':'0.001'} disabled={blocked||!canWork||!!manual&&!editing||!!trackingModal} value={editing?manual.quantity:group.inspectedQuantity??''} onChange={e=>setManual(editing?{...manual,quantity:e.target.value}:{lineId:l.id,quantity:e.target.value,version:latest.current.receipt.version})} onBlur={saveQuantity} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing){e.preventDefault();saveQuantity()}}}/>
+        <td data-label={uiText("상품명")} className="document-detail-product"><strong>{group.productName}</strong><small>{group.productCode}</small></td><td data-label={uiText("예정 수량")} className="receipt-number">{group.expectedQuantity.toLocaleString()} {group.unit}</td>
+        <td data-label={uiText("차이")} className={`receipt-number ${difference!==0?'receipt-difference':''}`}>{difference>0 ? '+' : ''}{difference.toLocaleString()} {group.unit}</td>
+        <td data-label={uiText("검수 수량")} className="receipt-inspection-quantity"><QuantityInput aria-required={canWork} unit={group.unit} aria-label={uiText("검수 수량 {v0}", { v0: index+1 })} data-testid={`scan-quantity-${l.id}`} type="number" min="0" max={group.expectedQuantity} step={group.unit==='EA'?'1':'0.001'} disabled={blocked||!canWork||!!manual&&!editing||!!trackingModal} value={editing?manual.quantity:group.inspectedQuantity??''} onChange={e=>setManual(editing?{...manual,quantity:e.target.value}:{lineId:l.id,quantity:e.target.value,version:latest.current.receipt.version})} onBlur={saveQuantity} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing){e.preventDefault();saveQuantity()}}}/>
 
         </td>
-        <td data-label="LOT / 유통기한" className="receipt-inspection-lots"><span>LOT {lots.length}개</span>{lots.length > 0 && <div className="receipt-inspection-lot-list">{lots.map((lot, i) => <div key={i}><span>{lot.lotNumber || 'LOT 미지정'}</span><small>{lot.expiryDate || '유통기한 없음'}</small></div>)}</div>}<button type="button" className="secondary" aria-label={`${group.productName} LOT 관리`} disabled={blocked||!canWork||!!manual} onClick={()=>setTrackingModal({productId:group.productId,tab:'lot'})}>+ 추가 / 관리</button></td>
-        <td data-label="시리얼"><span>시리얼 {serialCount}개</span><button type="button" className="secondary" aria-label={`${group.productName} 시리얼 관리`} disabled={blocked||!canWork||!!manual} onClick={()=>setTrackingModal({productId:group.productId,tab:'serial'})}>+ 추가 / 관리</button></td>
-        <td data-label="상태"><span className={`status-badge ${quantity===group.expectedQuantity?'Confirmed':''}`}>{exceeded===l.id?'수량 불일치':groupInspectionStatus({...group,inspectedQuantity:editing?quantity:group.inspectedQuantity},!!data.receipt.inspectedAt,editing)}</span></td>
+        <td data-label={uiText("LOT / 유통기한")} className="receipt-inspection-lots"><span>LOT {lots.length}{uiText("개")}</span>{lots.length > 0 && <div className="receipt-inspection-lot-list">{lots.map((lot, i) => <div key={i}><span>{lot.lotNumber || uiText("LOT 미지정")}</span><small>{lot.expiryDate || uiText("유통기한 없음")}</small></div>)}</div>}<button type="button" className="secondary" aria-label={uiText("{v0} LOT 관리", { v0: group.productName })} disabled={blocked||!canWork||!!manual} onClick={()=>setTrackingModal({productId:group.productId,tab:'lot'})}>{uiText("+ 추가 / 관리")}</button></td>
+        <td data-label={uiText("시리얼")}><span>{uiText("시리얼")} {serialCount}{uiText("개")}</span><button type="button" className="secondary" aria-label={uiText("{v0} 시리얼 관리", { v0: group.productName })} disabled={blocked||!canWork||!!manual} onClick={()=>setTrackingModal({productId:group.productId,tab:'serial'})}>{uiText("+ 추가 / 관리")}</button></td>
+        <td data-label={uiText("상태")}><span className={`status-badge ${quantity===group.expectedQuantity?'Confirmed':''}`}>{exceeded===l.id ? uiText("수량 불일치") : groupInspectionStatus({...group,inspectedQuantity:editing?quantity:group.inspectedQuantity},!!data.receipt.inspectedAt,editing)}</span></td>
       </tr>
     })}</tbody></table></div>
     <ReceiptInspectionHistory url={url} version={data.receipt.version} />
@@ -193,11 +199,11 @@ export function ReceiptInspectionHistory({ url, version }: { url: string; versio
     api<History>(url + '/inspection-history?page=' + historyPage).then(h => { if (live) { setHistory(h); setHistoryError('') } }).catch(() => { if (live) setHistoryError('검수 이력을 불러오지 못했습니다.') })
     return () => { live = false }
   }, [historyOpen, historyPage, url, version])
-  const actionNames: Record<string, string> = { TrackingUpdated: '추적 정보 저장', BarcodeScanned: '바코드 스캔', QuantityCorrected: '수량 수정', ScanUndone: '스캔 되돌리기', Inspected: '검수 완료', InspectionStarted: '검수 시작', Created: '입고 등록', Updated: '입고 수정', Placed: '위치 배치', Confirmed: '입고 확정', Cancelled: '입고 취소' }
-  return <details className="receipt-scan-history" open={historyOpen} onToggle={e => setHistoryOpen(e.currentTarget.open)}><summary>검수 변경 이력</summary>{historyError && <p role="alert">{historyError}</p>}{history && <><div className="table-scroll"><table className="organization-table"><thead><tr>{['일시','작업','바코드','수량 변경','사유','담당자'].map(t => <th key={t}>{t}</th>)}</tr></thead><tbody>{history.items.map(h => <tr key={h.id}><td>{new Date(h.createdAt).toLocaleString('ko-KR')}</td><td>{actionNames[h.action] || h.action}</td><td>{h.barcode || '—'}</td><td>{h.quantity == null ? '—' : `${h.previousQuantity} → ${h.quantity}`}</td><td>{h.reason || '—'}</td><td>{h.actor}</td></tr>)}</tbody></table></div><Pagination page={historyPage} total={history.total} pageSize={30} onChange={setHistoryPage} /></>}</details>
+  const actionNames: Record<string, string> = { PhotosChanged: '입고 사진 변경', TrackingUpdated: '추적 정보 저장', BarcodeScanned: '바코드 스캔', QuantityCorrected: '수량 수정', ScanUndone: '스캔 되돌리기', Inspected: '검수 완료', InspectionStarted: '검수 시작', Created: '입고 등록', Updated: '입고 수정', Placed: '위치 배치', Confirmed: '입고 확정', Cancelled: '입고 취소' }
+  return <details className="receipt-scan-history" open={historyOpen} onToggle={e => setHistoryOpen(e.currentTarget.open)}><summary>{uiText("검수 변경 이력")}</summary>{historyError && <p role="alert">{uiText(historyError)}</p>}{history && <><div className="table-scroll"><table className="organization-table"><thead><tr>{['일시','작업','바코드','수량 변경','사유','담당자'].map(t => <th key={t}>{uiText(t)}</th>)}</tr></thead><tbody>{history.items.map(h => <tr key={h.id}><td>{new Date(h.createdAt).toLocaleString(getLocale())}</td><td>{uiText(actionNames[h.action] || h.action)}</td><td>{h.barcode || '—'}</td><td>{h.quantity == null ? '—' : `${h.previousQuantity} → ${h.quantity}`}</td><td>{h.reason || '—'}</td><td>{h.actor}</td></tr>)}</tbody></table></div><Pagination page={historyPage} total={history.total} pageSize={30} onChange={setHistoryPage} /></>}</details>
 }
 
 function InspectionHelp({title,children}:{title:string;children:ReactNode}) {
  const mobile=useMobile()
- return mobile ? <details><summary><h3>{title}</h3></summary>{children}</details> : <div><h3>{title}</h3>{children}</div>
+ return mobile ? <details><summary><h3>{uiText(title)}</h3></summary>{children}</details> : <div><h3>{uiText(title)}</h3>{children}</div>
 }

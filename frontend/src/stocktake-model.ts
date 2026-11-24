@@ -1,3 +1,4 @@
+import { getLocale, t as uiText } from './i18n.ts'
 import { eachQuantityError } from './quantity-input.ts'
 export const stocktakeStates: Record<string, string> = { Prepared: '실사 준비', Counting: '실사 진행 중', Counted: '실사 완료', Reviewing: '차이 확인', Confirmed: '최종 확정', Cancelled: '취소' }
 export const stocktakeScopes: Record<string, string> = { Selected: '선택 상품 실사', Warehouse: '창고 전체', Zone: '특정 구역', Rack: '특정 랙', Location: '특정 보관 위치' }
@@ -31,10 +32,10 @@ export function selectedSummary(rows: SelectedCountRow[]) {
 }
 
 export function stocktakeDifferenceLabel(quantity: number | null, baseline: number, unit: string) {
-  if (quantity === null) return '미입력'
-  if (!Number.isFinite(quantity)) return '수량 확인 필요'
+  if (quantity === null) return uiText('미입력')
+  if (!Number.isFinite(quantity)) return uiText('수량 확인 필요')
   const delta = difference(quantity, baseline)
-  if (!delta) return '차이 없음'
-  const amount = Math.abs(delta).toLocaleString('ko-KR', { maximumFractionDigits: 3 })
-  return `${amount} ${unit} ${delta < 0 ? '부족' : '초과'} (${delta > 0 ? '+' : '-'}${amount})`
+  if (!delta) return uiText('차이 없음')
+  const amount = Math.abs(delta).toLocaleString(getLocale(), { maximumFractionDigits: 3 })
+  return `${amount} ${unit} ${delta < 0 ? uiText('부족') : uiText('초과')} (${delta > 0 ? '+' : '-'}${amount})`
 }

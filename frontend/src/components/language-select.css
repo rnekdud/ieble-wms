@@ -1,0 +1,13 @@
+.wms-language { display:inline-flex; flex:0 0 auto; align-items:center; gap:4px; min-width:0; color:#16345f; }
+.wms-language select { width:auto; min-width:0; max-width:112px; min-height:40px; padding:4px 20px 4px 6px; border:1px solid #d8e0ea; border-radius:8px; background:#fff; color:inherit; font:inherit; font-size:13px; }
+.auth-header .wms-language { margin-left:auto; }
+html[lang=en] .mobile-menu-item { white-space:normal; overflow-wrap:anywhere; }
+html[lang=en] .wms-business-nav button { white-space:normal; }
+html[lang=en] :is(.dialog-actions,.row-actions,.receipt-actions) { flex-wrap:wrap; }
+@media(max-width:600px) { .wms-header { gap:6px; } .wms-language > span { display:none; } .wms-language select { max-width:86px; font-size:12px; } }
+/* English labels can be longer; retain Korean layouts and allow action wrapping. */
+html[lang=en] .wms-page-heading { flex-wrap:wrap; }
+html[lang=en] .wms-page-actions { flex-wrap:wrap; max-width:100%; min-width:0; }
+html[lang=en] .wms-page-actions button { max-width:100%; white-space:normal; }
+html[lang=en] body .wms-content:has(> .products-card) > .wms-page-heading { flex-wrap:wrap; }
+html[lang=en] body .wms-content:has(> .products-card) > .wms-page-heading .wms-page-actions { flex:0 1 auto; flex-wrap:wrap; max-width:100%; }

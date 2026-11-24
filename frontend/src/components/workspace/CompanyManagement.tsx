@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import FormLabel from '../FormLabel'
 import { CompanyAddressField } from "../AddressSearchField"
 import CompanyLogoEditor from './CompanyLogoEditor'
@@ -93,7 +94,7 @@ export default function CompanyManagement({
     if (
       businessNumber &&
       !window.confirm(
-        '사업자등록번호를 변경하시겠습니까? 변경 전후 값과 사유가 이력에 기록됩니다.',
+        uiText('사업자등록번호를 변경하시겠습니까? 변경 전후 값과 사유가 이력에 기록됩니다.'),
       )
     )
       return
@@ -104,7 +105,7 @@ export default function CompanyManagement({
     if (
       !businessNumber &&
       !window.confirm(
-        '기업 정보를 저장하시겠습니까? 수정자와 변경 전후 값이 이력에 기록됩니다.',
+        uiText('기업 정보를 저장하시겠습니까? 수정자와 변경 전후 값이 이력에 기록됩니다.'),
       )
     )
       return
@@ -153,27 +154,22 @@ export default function CompanyManagement({
   return (
     <>
       <PageHeading
-        title="기업 관리"
+        title={uiText("기업 관리")}
       />
       <section className="wms-card organization-card">
         {error && (
           <div className="alert error" role="alert">
-            {error}
+            {uiText(error)}
           </div>
         )}
         {notice && (
           <div className="alert success" role="status">
-            {notice}
+            {uiText(notice)}
           </div>
         )}
-        {!data ? (
-          <p role="status">
-            {error
-              ? '기업 정보를 확인할 수 없습니다.'
-              : '기업 정보를 불러오는 중입니다.'}
-          </p>
-        ) : (
-          <>
+        {!data ? (<p role="status">
+            {error ? uiText("기업 정보를 확인할 수 없습니다.") : uiText("기업 정보를 불러오는 중입니다.")}
+          </p>) : (<>
             <form
               key={formRevision}
               onSubmit={(e) => save(e)}
@@ -185,7 +181,7 @@ export default function CompanyManagement({
             >
               <fieldset disabled={busy || logoReading || !canUpdate}>
                 <div className="organization-form-grid">
-                  <label><FormLabel required>기업명</FormLabel><input aria-label={"기업명"}
+                  <label><FormLabel required>{uiText("기업명")}</FormLabel><input aria-label={uiText("기업명")}
                       name="name"
                       required
                       maxLength={200}
@@ -193,25 +189,19 @@ export default function CompanyManagement({
                       autoComplete="organization"
                     />
                   </label>
-                  <label>
-                    대표자명
-                    <input
+                  <label> {uiText("대표자명")} <input
                       name="representativeName"
                       maxLength={200}
                       defaultValue={data.company.representativeName || ''}
                     />
                   </label>
-                  <label>
-                    담당자명
-                    <input
+                  <label> {uiText("담당자명")} <input
                       name="contactName"
                       maxLength={200}
                       defaultValue={data.company.contactName || ''}
                     />
                   </label>
-                  <label>
-                    연락처
-                    <input
+                  <label> {uiText("연락처")} <input
                       name="contactPhone"
                       type="tel"
                       maxLength={30}
@@ -224,32 +214,29 @@ export default function CompanyManagement({
                 <CompanyLogoEditor source={data.company.logoVersion ? `${endpoint}/logo?v=${data.company.logoVersion}` : undefined} draft={logo} onChange={canUpdate ? setLogo : undefined} busy={busy} onReading={setLogoReading} />
                 {canUpdate && (
                   <button className="primary" type="submit">
-                    {busy ? '저장 중…' : '기업 정보 저장'}
+                    {busy ? uiText("저장 중…") : uiText("기업 정보 저장")}
                   </button>
                 )}
               </fieldset>
             </form>
             {!canUpdate && (
-              <p className="organization-help">
-                기업 정보 조회 권한만 있습니다. 수정 권한은 기업 마스터에게
-                문의해 주세요.
-              </p>
+              <p className="organization-help"> {uiText("기업 정보 조회 권한만 있습니다. 수정 권한은 기업 마스터에게 문의해 주세요.")} </p>
             )}
             <section
               className="organization-section"
               aria-labelledby="business-number-heading"
             >
-              <h2 id="business-number-heading">사업자등록번호</h2>
+              <h2 id="business-number-heading">{uiText("사업자등록번호")}</h2>
               <p>
                 <strong>
-                  {data.company.businessRegistrationNumber || '미등록'}
+                  {data.company.businessRegistrationNumber || uiText("미등록")}
                 </strong>
               </p>
               {master ? (
                 <form onSubmit={(e) => save(e, true)}
                   onChange={e => setNumberDirty(Object.values(formValues(e.currentTarget)).some(value => value !== ''))}>
                   <fieldset disabled={busy}>
-                    <label><FormLabel required>새 사업자등록번호</FormLabel><input aria-label={"새 사업자등록번호"}
+                    <label><FormLabel required>{uiText("새 사업자등록번호")}</FormLabel><input aria-label={uiText("새 사업자등록번호")}
                         name="businessRegistrationNumber"
                         required
                         maxLength={64}
@@ -257,23 +244,17 @@ export default function CompanyManagement({
                         placeholder="000-00-00000"
                       />
                     </label>
-                    <label><FormLabel required>변경 사유</FormLabel><input aria-label={"변경 사유"} name="reason" required maxLength={500} />
+                    <label><FormLabel required>{uiText("변경 사유")}</FormLabel><input aria-label={uiText("변경 사유")} name="reason" required maxLength={500} />
                     </label>
-                    <button className="secondary" type="submit">
-                      사업자등록번호 변경
-                    </button>
+                    <button className="secondary" type="submit"> {uiText("사업자등록번호 변경")} </button>
                   </fieldset>
                 </form>
               ) : (
-                <p className="organization-help">
-                  기업 식별에 사용되는 번호로, 기업 마스터만 별도로 변경할 수
-                  있습니다.
-                </p>
+                <p className="organization-help"> {uiText("기업 식별에 사용되는 번호로, 기업 마스터만 별도로 변경할 수 있습니다.")} </p>
               )}
             </section>
 
-          </>
-        )}
+          </>)}
 
       </section>
       <UnsavedChangesDialog guard={navigation} />

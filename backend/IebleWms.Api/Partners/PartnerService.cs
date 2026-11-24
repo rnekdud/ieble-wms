@@ -81,6 +81,9 @@ public sealed class PartnerService(WmsDbContext db, TimeProvider clock)
         p.RegistrationCountry = r.RegistrationCountry; p.BusinessRegistrationNumber = Optional(r.BusinessRegistrationNumber, 64, "사업자등록번호");
         p.RepresentativeName = Optional(r.RepresentativeName, 100, "대표자명");
         p.PostalCode = Optional(r.PostalCode, 20, "우편번호");
+        if(r.DefaultShippingPostalCode != null) p.DefaultShippingPostalCode = Optional(r.DefaultShippingPostalCode, 20, "기본 출고지 우편번호");
+        if(r.DefaultShippingAddress != null) p.DefaultShippingAddress = Optional(r.DefaultShippingAddress, 500, "기본 출고지");
+        if(r.DefaultShippingAddressDetail != null) p.DefaultShippingAddressDetail = Optional(r.DefaultShippingAddressDetail, 500, "기본 출고지 상세주소");
         p.Address = Optional(r.Address, 500, "주소"); p.AddressDetail = Optional(r.AddressDetail, 500, "상세주소");
         p.Phone = Phone(r.Phone); p.ContactPhone = Phone(r.ContactPhone);
         p.Email = Optional(r.Email, 254, "이메일");

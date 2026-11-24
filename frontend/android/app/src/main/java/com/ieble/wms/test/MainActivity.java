@@ -15,6 +15,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(WmsApiPlugin.class);
         registerPlugin(WmsPrintPlugin.class);
+        registerPlugin(WmsDocumentsPlugin.class);
         super.onCreate(savedInstanceState);
         if (bridge == null) return;
         // Images keep their existing relative /api URLs and authenticated native cookie store.

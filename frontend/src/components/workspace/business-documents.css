@@ -1,0 +1,19 @@
+.business-document-control { min-width: 0; }
+.business-document-control > button { display: inline-flex; gap: 6px; align-items: center; white-space: normal; }
+.business-document-menu { position: fixed; z-index: 1200; width: min(304px, calc(100vw - 16px)); overflow-y: auto; overscroll-behavior: contain; background: #fff; color: #182b41; border: 1px solid #dce2e8; border-radius: 11px; box-shadow: 0 6px 24px #142b4520; padding: 12px; box-sizing: border-box; }
+.business-document-heading { display: flex; align-items: center; gap: 4px; min-height: 45px; margin: -4px 0 8px; border-bottom: 1px solid #e8edf2; font-size: 14px; font-weight: 600; }
+.business-document-heading > span { min-width: 0; overflow-wrap: anywhere; }
+.business-document-list { display: grid; gap: 2px; }
+.business-document-menu .business-document-kind, .business-document-menu .business-document-back { display: flex; align-items: center; min-height: 44px; padding: 8px; border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.business-document-menu .business-document-kind { gap: 8px; width: 100%; text-align: left; font-size: 14px; }
+.business-document-kind > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.business-document-kind > svg { flex-shrink: 0; }
+.business-document-menu .business-document-back { flex: 0 0 44px; justify-content: center; margin-left: -8px; }
+.business-document-menu .business-document-kind:hover, .business-document-menu .business-document-back:hover { background: #f2f5f8; }
+.business-document-menu button:focus-visible { outline: 2px solid #365e86; outline-offset: -2px; }
+.business-document-menu button:disabled { cursor: wait; opacity: .6; }
+.business-document-formats { display: grid; gap: 8px; padding: 4px 0; }
+.business-document-language { display: grid; grid-template-columns: 64px repeat(2, minmax(0, 1fr)); align-items: center; gap: 8px; font-size: 13px; }
+.business-document-menu .business-document-language > button { display: flex; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 44px; padding: 8px 4px; border-radius: 6px; white-space: nowrap; font-size: 13px; }
+.business-document-language > button > svg { flex-shrink: 0; }
+.business-document-menu p { margin: 8px 0 0; font-size: 12px; overflow-wrap: anywhere; }

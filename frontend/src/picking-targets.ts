@@ -1,3 +1,4 @@
+import { getLocale } from './i18n.ts'
 import type { ShipmentDetail, StockResult } from './shipment-model.ts'
 export type PickingLocation = { id: string; name: string; code: string; rackId?: string | null; level?: number | null; bay?: number | null }
 export type PickingRack = { rack: { id: string; code: string; name: string }; warehouseName?: string; zoneName?: string | null; locations: { location: PickingLocation; effectiveActive: boolean }[] }
@@ -27,7 +28,7 @@ export function pickingTargets(detail: ShipmentDetail, stocks: Record<string, St
   }
   for (const l of detail.lines) {
     const assigned = detail.allocations.filter(a => a.lineId === l.id && ['Active', 'Consumed'].includes(a.state)).reduce((sum, a) => sum + a.quantity, 0)
-    if (assigned < l.requestedQuantity) issues.push(`${l.productName}: 배정 수량이 요청보다 ${(l.requestedQuantity - assigned).toLocaleString('ko-KR')} ${l.unit} 부족합니다. 기존 출고 배정을 확인해 주세요.`)
+    if (assigned < l.requestedQuantity) issues.push(`${l.productName}: 배정 수량이 요청보다 ${(l.requestedQuantity - assigned).toLocaleString(getLocale())} ${l.unit} 부족합니다. 기존 출고 배정을 확인해 주세요.`)
   }
   return { items, issues }
 }

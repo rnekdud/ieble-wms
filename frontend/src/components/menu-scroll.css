@@ -1,0 +1,22 @@
+/* Only the two actual menu scrollports; other dialogs and tables stay unchanged. */
+:root body .wms-sidebar .wms-business-nav { --menu-scroll-thumb:rgba(255,255,255,.3); --menu-scroll-hover:rgba(255,255,255,.55); }
+:root body .mobile-all-menu > .dialog-body { --menu-scroll-thumb:rgba(100,116,139,.4); --menu-scroll-hover:rgba(100,116,139,.65); }
+:root body .wms-sidebar .wms-business-nav,
+:root body .mobile-all-menu > .dialog-body {
+  scrollbar-width:thin;
+  scrollbar-color:var(--menu-scroll-thumb) transparent;
+}
+/* Non-auto standard properties override WebKit pseudo-element styling.
+   Keep Firefox's thin fallback, but use the actual 3px rail in Chromium/WebKit. */
+@supports selector(::-webkit-scrollbar) {
+  :root body .wms-sidebar .wms-business-nav,
+  :root body .mobile-all-menu > .dialog-body { scrollbar-width:auto; scrollbar-color:auto; }
+}
+:root body .wms-sidebar .wms-business-nav::-webkit-scrollbar,
+:root body .mobile-all-menu > .dialog-body::-webkit-scrollbar { width:3px; }
+:root body .wms-sidebar .wms-business-nav::-webkit-scrollbar-track,
+:root body .mobile-all-menu > .dialog-body::-webkit-scrollbar-track { background:transparent; }
+:root body .wms-sidebar .wms-business-nav::-webkit-scrollbar-thumb,
+:root body .mobile-all-menu > .dialog-body::-webkit-scrollbar-thumb { background:var(--menu-scroll-thumb); border:0; border-radius:10px; }
+:root body .wms-sidebar .wms-business-nav::-webkit-scrollbar-thumb:hover,
+:root body .mobile-all-menu > .dialog-body::-webkit-scrollbar-thumb:hover { background:var(--menu-scroll-hover); }

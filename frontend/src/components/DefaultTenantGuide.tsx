@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n.ts'
 import FormLabel from './FormLabel'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
@@ -31,22 +32,22 @@ export default function DefaultTenantGuide({
   }
   return (
     <section className="panel">
-      <h2>접속할 기업 선택</h2>
-      <p>접근할 기업을 선택해 주세요. 기업별 업무 권한은 각각 적용됩니다.</p>
+      <h2>{uiText("접속할 기업 선택")}</h2>
+      <p>{uiText("접근할 기업을 선택해 주세요. 기업별 업무 권한은 각각 적용됩니다.")}</p>
       {error && (
         <div role="alert" className="alert error">
-          {error}
+          {uiText(error)}
         </div>
       )}
       <form onSubmit={submit}>
-        <label><FormLabel required>접속할 기업</FormLabel><select
-            aria-label="접속할 기업"
+        <label><FormLabel required>{uiText("접속할 기업")}</FormLabel><select
+            aria-label={uiText("접속할 기업")}
             required
             value={tenantId}
             onChange={(e) => setTenantId(e.target.value)}
             disabled={busy}
           >
-            <option value="">접속할 기업을 선택하세요</option>
+            <option value="">{uiText("접속할 기업을 선택하세요")}</option>
             {memberships.map((m) => (
               <option key={m.tenantId} value={m.tenantId}>
                 {m.name}
@@ -55,7 +56,7 @@ export default function DefaultTenantGuide({
           </select>
         </label>
         <button className="primary" disabled={busy || !tenantId}>
-          {busy ? '저장 중…' : '선택한 기업 접속'}
+          {busy ? uiText("저장 중…") : uiText("선택한 기업 접속")}
         </button>
       </form>
     </section>

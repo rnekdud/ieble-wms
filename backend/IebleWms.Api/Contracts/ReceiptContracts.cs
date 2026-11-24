@@ -5,6 +5,8 @@ namespace IebleWms.Api.Contracts;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class ReceiptRequest
 {
+    [StringLength(64),JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public string? PhotosVersion { get; set; }
+    [MaxLength(10),JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public ReceiptPhotoRequest[]? Photos { get; set; }
     public Guid RequestId { get; set; }
     public Guid Version { get; set; }
     public DateOnly ExpectedDate { get; set; }

@@ -1,3 +1,4 @@
+import { t as uiText, getLanguage } from '../../i18n.ts'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { barcodeError, barcodeFilename, barcodeGraphic, escapeXml } from '../../rack-barcode'
 import { barcodeImageBlob } from '../../rack-barcode-image'
@@ -33,12 +34,12 @@ export default function RackBarcodeLabel({ value, rackId, rackCode = '', product
     setError('')
     const width = size === 'auto' ? Math.ceil(graphic!.widthMm + 8) : Number(size), height = 50
     if (width < graphic!.widthMm + 8) { setError('선폭과 여백을 유지하려면 더 넓은 라벨을 선택해 주세요.'); return }
-    const caption = kind === 'product' ? productLabelIdentity(productName, productCode ?? rackCode) : `${label.replace(' 바코드', '')} · ${rackCode || rackId}`
+    const caption = kind === 'product' ? productLabelIdentity(productName, productCode ?? rackCode) : `${uiText(label.replace(' 바코드', ''))} · ${rackCode || rackId}`
     if (!caption) { setError('상품명 또는 상품코드를 확인한 뒤 인쇄해 주세요.'); return }
-    const title = kind === 'product' ? labelPrintTitle(caption) : `${label} 라벨`
+    const title = kind === 'product' ? labelPrintTitle(caption) : uiText("{v0} 라벨", {v0:uiText(label)})
     const captionStyle = kind === 'product' ? productCaptionLayout(caption, width, height) : ''
     const captionHtml = kind === 'product' ? `<span class="caption-text">${escapeXml(caption)}</span>` : escapeXml(caption)
-    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${escapeXml(title)}</title><style>@page{size:${width}mm ${height}mm;margin:0}body{margin:0;background:white;color:black;font-family:sans-serif}.label{width:${width}mm;height:${height}mm;box-sizing:border-box;padding:3mm;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid}.caption{font-size:9pt;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;margin-bottom:1mm}svg{display:block;width:${graphic!.widthMm}mm;height:32mm;max-width:none;flex-shrink:0}@media print{.controls{display:none}}.controls{margin:16px}${captionStyle}</style></head><body><div class="label"><div class="caption">${captionHtml}</div>${graphic!.svg}</div></body></html>`
+    const html = `<!doctype html><html lang="${getLanguage()}"><head><meta charset="utf-8"><title>${escapeXml(title)}</title><style>@page{size:${width}mm ${height}mm;margin:0}body{margin:0;background:white;color:black;font-family:sans-serif}.label{width:${width}mm;height:${height}mm;box-sizing:border-box;padding:3mm;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid}.caption{font-size:9pt;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;margin-bottom:1mm}svg{display:block;width:${graphic!.widthMm}mm;height:32mm;max-width:none;flex-shrink:0}@media print{.controls{display:none}}.controls{margin:16px}${captionStyle}</style></head><body><div class="label"><div class="caption">${captionHtml}</div>${graphic!.svg}</div></body></html>`
     if (isAndroidApp()) {
       setPrinting(true)
       try { await printNativeLabel({ html, title, width, height }) }
@@ -54,7 +55,7 @@ export default function RackBarcodeLabel({ value, rackId, rackCode = '', product
     const popup = window.open('', '_blank', 'width=900,height=500')
     if (!popup) { setError('인쇄 창을 열 수 없습니다. 팝업 허용 후 다시 시도해 주세요.'); return }
     popup.opener = null
-    popup.document.write(html.replace('<body>', `<body><div class="controls"><p>라벨 용지 ${width} × ${height} mm · 실제 크기(100%)로 인쇄하세요. 용지에 맞게 축소하지 마세요.</p><p>${escapeXml(value!)}</p><button type="button" id="back">WMS로 돌아가기</button> <button type="button" id="print">라벨 인쇄</button></div>`))
+    popup.document.write(html.replace('<body>', `<body><div class="controls"><p>${escapeXml(uiText("라벨 용지 {v0} × {v1} mm · 실제 크기(100%)로 인쇄하세요. 용지에 맞게 축소하지 마세요.", {v0:width,v1:height}))}</p><p>${escapeXml(value!)}</p><button type="button" id="back">${escapeXml(uiText("WMS로 돌아가기"))}</button> <button type="button" id="print">${escapeXml(uiText("라벨 인쇄"))}</button></div>`))
     popup.document.close()
     popup.document.getElementById('print')!.onclick = () => popup.print()
     popup.document.getElementById('back')!.onclick = () => popup.close()
@@ -62,14 +63,14 @@ export default function RackBarcodeLabel({ value, rackId, rackCode = '', product
     // The explicit button also permits reprinting after cancellation; no automatic popup dismissal.
     popup.setTimeout(() => popup.print(), 150)
   }
-  return <section className="rack-barcode-label" aria-label={`${label} 라벨`}>
-    {draft && <small className="organization-help">저장 전 미리보기</small>}
-    <img alt={`${label} ${value}`} src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(graphic.svg)}`} />
-    <p className="rack-barcode-value">{value}</p>{/^880\d{17}$/.test(value || '') && <small>WMS 내부 식별번호 · Code 128 · GS1/GTIN 아님</small>}
-    <p className="organization-help">Code 128 · {graphic.widthMm} × 32 mm · 100% 인쇄</p>
-    <label>라벨 크기<select aria-label="라벨 크기" value={size} onChange={e => setSize(e.target.value)}><option value="auto">바코드에 맞춤 (권장)</option><option value="60">60 × 50 mm</option><option value="80">80 × 50 mm</option><option value="100">100 × 50 mm</option></select></label>
-    <div className="organization-row-actions"><button type="button" className="secondary" aria-expanded={formats} disabled={downloading} onClick={() => setFormats(open => !open)}>{downloading ? '이미지 생성 중…' : '이미지 다운로드'}</button><button type="button" className="secondary" disabled={printing} onClick={() => void print()}>라벨 인쇄</button></div>
-    {formats && <div className="rack-barcode-downloads" role="group" aria-label="다운로드 형식">{(['png', 'jpg', 'svg'] as const).map(format => <button type="button" className="secondary" key={format} disabled={downloading} onClick={() => void download(format)}>{format.toUpperCase()} 다운로드</button>)}</div>}
-    {error && <p role="alert">{error}</p>}
+  return <section className="rack-barcode-label" aria-label={uiText("{v0} 라벨", { v0: uiText(label) })}>
+    {draft && <small className="organization-help">{uiText("저장 전 미리보기")}</small>}
+    <img alt={`${uiText(label)} ${value}`} src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(graphic.svg)}`} />
+    <p className="rack-barcode-value">{value}</p>{/^880\d{17}$/.test(value || '') && <small>{uiText("WMS 내부 식별번호 · Code 128 · GS1/GTIN 아님")}</small>}
+    <p className="organization-help">Code 128 · {graphic.widthMm} {uiText("× 32 mm · 100% 인쇄")}</p>
+    <label>{uiText("라벨 크기")}<select aria-label={uiText("라벨 크기")} value={size} onChange={e => setSize(e.target.value)}><option value="auto">{uiText("바코드에 맞춤 (권장)")}</option><option value="60">60 × 50 mm</option><option value="80">80 × 50 mm</option><option value="100">100 × 50 mm</option></select></label>
+    <div className="organization-row-actions"><button type="button" className="secondary" aria-expanded={formats} disabled={downloading} onClick={() => setFormats(open => !open)}>{downloading ? uiText("이미지 생성 중…") : uiText("이미지 다운로드")}</button><button type="button" className="secondary" disabled={printing} onClick={() => void print()}>{uiText("라벨 인쇄")}</button></div>
+    {formats && <div className="rack-barcode-downloads" role="group" aria-label={uiText("다운로드 형식")}>{(['png', 'jpg', 'svg'] as const).map(format => <button type="button" className="secondary" key={format} disabled={downloading} onClick={() => void download(format)}>{format.toUpperCase()} {uiText("다운로드")}</button>)}</div>}
+    {error && <p role="alert">{uiText(error)}</p>}
   </section>
 }

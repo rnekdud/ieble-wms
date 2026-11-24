@@ -1,3 +1,4 @@
+import { getLocale, t as uiText } from './i18n.ts'
 import type { OverviewRow } from './stock-overview-model'
 export type RiskState = 'safe' | 'warning' | 'danger' | 'review' | 'empty'
 export const riskStates: Record<RiskState, { label: string; fill: string }> = {
@@ -8,10 +9,10 @@ export type RiskProduct = { productId: string; productCode: string; productName:
 export type RiskRack = { id: string; status: RiskState; needsReview: boolean; issueCount: number; preview: RiskProduct[]; hoverGroups?: RiskHoverGroup[] }
 export type RiskExpiry = { productId: string; productCode: string; productName: string; locationId: string; locationCode: string; lotNumber: string | null; serialNumber: string | null; expiryDate: string; quantity: number; unit: string; remainingDays: number; status: RiskState }
 export type RiskSnapshot = { lowProducts: number; expiryProducts: number; today: string; access: { receipts: boolean; shipments: boolean }; todayReceipts: number | null; todayShipments: number | null; counts: Record<RiskState, number>; racks: RiskRack[]; detail: null | { rackId: string; stockProducts: RiskProduct[]; items: RiskProduct[]; total: number; page: number; pageSize: number; expiry: { items: RiskExpiry[]; total: number; page: number; pageSize: number } } }
-export const riskNumber = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 3 })
+export const riskNumber = (value: number) => value.toLocaleString(getLocale(), { maximumFractionDigits: 3 })
 export function reservationDay(date: string, today: string) {
   const days = Math.round((Date.parse(date + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000)
-  return days === 0 ? '오늘' : days === 1 ? '내일' : days < 0 ? `${date} (예정일 경과)` : date
+  return days === 0 ? uiText('오늘') : days === 1 ? uiText('내일') : days < 0 ? uiText('{v0} (예정일 경과)', {v0:date}) : date
 }
 export function popoverPosition(x: number, y: number, width: number, height: number, viewportWidth: number, viewportHeight: number) {
   const left = x + 16 + width <= viewportWidth - 8 ? x + 16 : x - width - 16
@@ -55,21 +56,21 @@ export function rackHoverGroups(rack: RiskRack): RiskHoverGroup[] {
 /** Presentation only: reasons and status still come from the existing risk policy. */
 export function conciseRiskReasons(p: RiskProduct, today: string): string[] {
   if (p.status === 'safe' || p.status === 'empty') return []
-  const unit = p.unit === 'EA' ? '개' : ` ${p.unit}`
+  const unit = p.unit === 'EA' ? uiText('개') : ` ${p.unit}`
   const quantity = (value: number) => `${riskNumber(value)}${unit}`
   return [...new Set(p.reasons.map(reason => {
     if (reason.includes('유통기한') && p.earliestExpiry) {
       const days = Math.round((Date.parse(p.earliestExpiry + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000)
-      if (Number.isFinite(days)) return `유통기한 ${p.earliestExpiry} · ${days < 0 ? `${-days}일 경과` : days === 0 ? '오늘 만료' : `${days}일 남음`}`
+      if (Number.isFinite(days)) return uiText('유통기한 {v0} · {v1}', {v0:p.earliestExpiry,v1:days < 0 ? uiText('{v0}일 경과',{v0:-days}) : days === 0 ? uiText('오늘 만료') : uiText('{v0}일 남음',{v0:days})})
     }
     if (reason.includes('안전재고') && p.safetyStock != null && !reason.includes('비교 제외')) {
-      const base = `안전재고 ${quantity(p.safetyStock)} / 현재고 ${quantity(p.currentQuantity)}`
-      const reserved = p.reservedQuantity > 0 ? ` · 예약 ${quantity(p.reservedQuantity)} / 출고 후 예상 ${quantity(p.expectedQuantity)}` : ''
-      const shortage = p.shortageQuantity != null && p.shortageQuantity > 0 ? ` · ${quantity(p.shortageQuantity)} ${p.reservedQuantity > 0 ? '부족 예상' : '부족'}` : ' · 안전재고 근접'
+      const base = uiText('안전재고 {v0} / 현재고 {v1}', {v0:quantity(p.safetyStock),v1:quantity(p.currentQuantity)})
+      const reserved = p.reservedQuantity > 0 ? uiText(' · 예약 {v0} / 출고 후 예상 {v1}', {v0:quantity(p.reservedQuantity),v1:quantity(p.expectedQuantity)}) : ''
+      const shortage = p.shortageQuantity != null && p.shortageQuantity > 0 ? ` · ${quantity(p.shortageQuantity)} ${p.reservedQuantity > 0 ? uiText('부족 예상') : uiText('부족')}` : uiText(' · 안전재고 근접')
       return base + reserved + shortage
     }
-    if (reason.includes('예약량과 활성 출고')) return '예약량·출고 배정량 불일치'
-    if (reason.includes('사용 중지')) return '사용 중지 상품'
-    return reason
+    if (reason.includes('예약량과 활성 출고')) return uiText('예약량·출고 배정량 불일치')
+    if (reason.includes('사용 중지')) return uiText('사용 중지 상품')
+    return uiText(reason)
   }))]
 }

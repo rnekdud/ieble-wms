@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n.ts'
 import CompanySwitchDialog from './CompanySwitchDialog'
 import { useEffect, useId, useRef, useState } from 'react'
 import { ChevronDown, KeyRound, LogOut, UserRound } from 'lucide-react'
@@ -54,7 +55,7 @@ export default function UserProfileMenu({
       <button
         className="user-profile-trigger"
         ref={trigger}
-        aria-label="사용자 프로필 메뉴"
+        aria-label={uiText("사용자 프로필 메뉴")}
         aria-expanded={open}
         aria-controls={panelId}
         disabled={busy}
@@ -63,22 +64,20 @@ export default function UserProfileMenu({
         <UserRound size={18} aria-hidden="true" />
         <span>
           <strong>{session.user.displayName}</strong>
-          <small>{roleLabel}</small>
+          <small>{uiText(roleLabel)}</small>
         </span>
         <ChevronDown size={15} aria-hidden="true" />
       </button>
       {open && (
         <div className="user-profile-panel" id={panelId}>
-          {session.memberships.length > 1 && onResolved && onSwitched && session.user.systemRole !== 'IebleAdministrator' && <button onClick={() => { setOpen(false); setCompanies(true) }}>기업 전환</button>}
+          {session.memberships.length > 1 && onResolved && onSwitched && session.user.systemRole !== 'IebleAdministrator' && <button onClick={() => { setOpen(false); setCompanies(true) }}>{uiText("기업 전환")}</button>}
           <button
             onClick={() => {
               setOpen(false)
               setChanging(true)
             }}
           >
-            <KeyRound size={16} aria-hidden="true" />
-            비밀번호 변경
-          </button>
+            <KeyRound size={16} aria-hidden="true" /> {uiText("비밀번호 변경")} </button>
           <button
             disabled={busy}
             onClick={() => {
@@ -86,9 +85,7 @@ export default function UserProfileMenu({
               onLogout()
             }}
           >
-            <LogOut size={16} aria-hidden="true" />
-            로그아웃
-          </button>
+            <LogOut size={16} aria-hidden="true" /> {uiText("로그아웃")} </button>
         </div>
       )}
       {companies && onResolved && onSwitched && <CompanySwitchDialog session={session} onClose={() => setCompanies(false)} onResolved={onResolved} onSwitched={onSwitched} />}

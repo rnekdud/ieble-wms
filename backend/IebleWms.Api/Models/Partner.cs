@@ -22,6 +22,9 @@ public sealed class Partner : AuditableEntity
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }
     public string? PaymentTerms { get; set; }
+    public string? DefaultShippingPostalCode { get; set; }
+    public string? DefaultShippingAddress { get; set; }
+    public string? DefaultShippingAddressDetail { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
     [JsonIgnore] public Guid CreationRequestId { get; set; }

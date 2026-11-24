@@ -1,3 +1,6 @@
+import SidebarLanguage from './components/SidebarLanguage'
+import { useLanguage } from './use-language'
+import { t as uiText } from './i18n.ts'
 import FormLabel from './components/FormLabel'
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -28,6 +31,7 @@ import { pageTitle } from './page-title'
 import { requestNavigation } from './navigation-guard'
 
 function App() {
+  const language = useLanguage()
   const [unavailableRegistrationLogin, setUnavailableRegistrationLogin] = useState<string>()
   const [registrationLoginAvailable, setRegistrationLoginAvailable] = useState(false)
   const [path, setPath] = useState(window.location.pathname)
@@ -71,7 +75,7 @@ function App() {
           ? '/app/master/billing'
           : path
 
-  useEffect(() => { document.title = pageTitle(route, session?.user.mustChangePassword) }, [route, session?.user.mustChangePassword])
+  useEffect(() => { document.title = pageTitle(route, session?.user.mustChangePassword) }, [route, session?.user.mustChangePassword, language])
 
   useEffect(() => {
     api<Session>('/api/auth/me')
@@ -213,7 +217,7 @@ function App() {
     session.user.systemRole !== 'IebleAdministrator'
   )
     return (
-      <Suspense fallback={<main className="app-recovery" role="status">업무 화면을 불러오는 중…</main>}><CompanyWorkspace
+      <Suspense fallback={<main className="app-recovery" role="status">{uiText("업무 화면을 불러오는 중…")}</main>}><CompanyWorkspace
         key={session.selectedTenantId || 'choose-company'}
         session={session}
         path={route}
@@ -243,23 +247,18 @@ function App() {
           }}
         >
           <img className="auth-service-logo" src="/wms_logo.svg" alt="" width={36} height={36} />
-          <span>아이블 WMS</span>
+          <span>{uiText("아이블 WMS")}</span>
         </a>
-        <span className="header-caption">기업을 연결하는 물류의 시작</span>
+        <span className="header-caption">{uiText("기업을 연결하는 물류의 시작")}</span>
         {session && (
-          <UserProfileMenu session={session} roleLabel={session.user.systemRole === 'IebleAdministrator' ? '아이블 관리자' : '기업 구성원'} busy={busy} onLogout={logout} />
+          <UserProfileMenu session={session} roleLabel={session.user.systemRole === 'IebleAdministrator' ? uiText("아이블 관리자") : uiText("기업 구성원")} busy={busy} onLogout={logout} />
         )}
       </header>}
-      {loading ? (
-        <main className="loading" aria-live="polite">
-          로그인 상태를 확인하고 있습니다…
-        </main>
-      ) : !session ? (
-        <>
+      {loading ? (<main className="loading" aria-live="polite"> {uiText("로그인 상태를 확인하고 있습니다…")} </main>) : !session ? (<>
           <AuthLayout register={register}>
             {error && (
               <div className="alert error" role="alert">
-                {error}
+                {uiText(error)}
                 {duplicateCompany && register && (
                   <p>
                     <a
@@ -268,52 +267,48 @@ function App() {
                         e.preventDefault()
                         navigate('/login')
                       }}
-                    >
-                      기존 기업 계정으로 로그인
-                    </a>
+                    > {uiText("기존 기업 계정으로 로그인")} </a>
                   </p>
                 )}
               </div>
             )}
             {notice && (
               <div className="alert success" role="status">
-                {notice}
+                {uiText(notice)}
               </div>
             )}
             <form key={route} onSubmit={submit}>
               <fieldset disabled={busy}>
                 {register && (
                   <>
-                    <label><FormLabel required>기업명</FormLabel><input aria-label={"기업명"}
+                    <label><FormLabel required>{uiText("기업명")}</FormLabel><input aria-label={uiText("기업명")}
                         name="companyName"
                         required
                         maxLength={200}
                         autoComplete="organization"
-                        placeholder="주식회사 아이블"
+                        placeholder={uiText("주식회사 아이블")}
                       />
                     </label>
-                    <label><FormLabel required>사업자등록번호</FormLabel><input aria-label={"사업자등록번호"}
+                    <label><FormLabel required>{uiText("사업자등록번호")}</FormLabel><input aria-label={uiText("사업자등록번호")}
                         name="businessRegistrationNumber"
                         required
                         maxLength={64}
                         inputMode="numeric"
                         placeholder="000-00-00000"
-                        title="하이픈과 공백을 제외한 숫자 10자리"
+                        title={uiText("하이픈과 공백을 제외한 숫자 10자리")}
                       />
-                      <small>
-                        하이픈과 공백을 제외한 숫자 10자리를 입력해 주세요.
-                      </small>
+                      <small> {uiText("하이픈과 공백을 제외한 숫자 10자리를 입력해 주세요.")} </small>
                     </label>
                     <div className="form-grid">
-                      <label><FormLabel required>담당자 이름</FormLabel><input aria-label={"담당자 이름"}
+                      <label><FormLabel required>{uiText("담당자 이름")}</FormLabel><input aria-label={uiText("담당자 이름")}
                           name="contactName"
                           required
                           maxLength={200}
                           autoComplete="name"
-                          placeholder="홍길동"
+                          placeholder={uiText("홍길동")}
                         />
                       </label>
-                      <label><FormLabel required>연락처</FormLabel><input aria-label={"연락처"}
+                      <label><FormLabel required>{uiText("연락처")}</FormLabel><input aria-label={uiText("연락처")}
                           name="contactPhone"
                           type="tel"
                           required
@@ -326,7 +321,7 @@ function App() {
                     </div>
                   </>
                 )}
-                <label><FormLabel required>{register ? '이메일' : '아이디'}</FormLabel><input aria-label={String(register ? '이메일' : '아이디')}
+                <label><FormLabel required>{register ? uiText("이메일") : uiText("아이디")}</FormLabel><input aria-label={uiText(register ? '이메일' : '아이디')}
                     name="email"
                     value={register ? undefined : loginEmail}
                     onChange={
@@ -338,12 +333,12 @@ function App() {
                     required
                     maxLength={256}
                     autoComplete="username"
-                    placeholder={register ? "name@company.com" : "아이디 또는 이메일"}
+                    placeholder={register ? "name@company.com" : uiText("아이디 또는 이메일")}
                   />
                 </label>
                 {register && <LoginIdField unavailableValue={unavailableRegistrationLogin} endpoint="/api/auth" onAvailable={setRegistrationLoginAvailable} />}
                 <div className={register ? 'password-with-help' : undefined}>
-                  <PasswordInput label="비밀번호" key={register ? 'register-password' : 'login-password'}
+                  <PasswordInput label={uiText("비밀번호")} key={register ? 'register-password' : 'login-password'}
                     name="password"
                     pattern={
                       register
@@ -357,32 +352,25 @@ function App() {
                       register ? 'new-password' : 'current-password'
                     }
                     placeholder={
-                      register ? '8자 이상 입력' : '비밀번호를 입력하세요'
+                      register ? uiText("8자 이상 입력") : uiText("비밀번호를 입력하세요")
                     }
                   />
                   {register && (
-                    <small>
-                      8~128자, 영문 소문자, 숫자, 특수문자 (대문자 선택)를
-                      포함해 주세요.
-                    </small>
+                    <small> {uiText("8~128자, 영문 소문자, 숫자, 특수문자 (대문자 선택)를 포함해 주세요.")} </small>
                   )}
                 </div>
                 {register && (
-                  <PasswordInput label="비밀번호 확인"
+                  <PasswordInput label={uiText("비밀번호 확인")}
                       name="passwordConfirm"
                       required
                       minLength={8}
                       maxLength={128}
                       autoComplete="new-password"
-                      placeholder="비밀번호를 다시 입력하세요"
+                      placeholder={uiText("비밀번호를 다시 입력하세요")}
                     />
                 )}
                 {register && (
-                  <p className="signup-note">
-                    가입한 담당자가 기업 마스터가 됩니다. 가입 후 카드 등록
-                    안내와 적용되는 이용 요금을 확인해 주세요. 현재 카드
-                    등록·결제 연동은 준비 중입니다.
-                  </p>
+                  <p className="signup-note"> {uiText("가입한 담당자가 기업 마스터가 됩니다. 가입 후 카드 등록 안내와 적용되는 이용 요금을 확인해 주세요. 현재 카드 등록·결제 연동은 준비 중입니다.")} </p>
                 )}
                 {register && <RegistrationAgreements />}
                 {!register && (
@@ -396,31 +384,25 @@ function App() {
                           setRememberId(e.target.checked)
                           if (!e.target.checked) clearRememberedEmail()
                         }}
-                      />
-                      아이디 저장
-                    </label>
+                      /> {uiText("아이디 저장")} </label>
                     <label>
                       <input
                         type="checkbox"
                         checked={autoLogin}
                         onChange={(e) => setAutoLogin(e.target.checked)}
-                      />
-                      자동 로그인
-                    </label>
+                      /> {uiText("자동 로그인")} </label>
                    </div>
-                   <button className="login-password-help" type="button" onClick={() => setPasswordHelp(true)}>비밀번호를 잊으셨나요?</button>
+                   <button className="login-password-help" type="button" onClick={() => setPasswordHelp(true)}>{uiText("비밀번호를 잊으셨나요?")}</button>
                   </div>
                 )}
                 <button className="primary full" type="submit" disabled={busy || (register && !registrationLoginAvailable)}>
-                  {busy ? '처리 중…' : register ? '기업 계정 만들기' : '로그인'}
+                  {busy ? uiText("처리 중…") : register ? uiText("기업 계정 만들기") : uiText("로그인")}
                 </button>
 
               </fieldset>
             </form>
             <p className="switch-auth">
-              {register
-                ? '이미 계정이 있으신가요?'
-                : '아이블 WMS가 처음이신가요?'}{' '}
+              {register ? uiText("이미 계정이 있으신가요?") : uiText("아이블 WMS가 처음이신가요?")}{' '}
               <a
                 href={register ? '/login' : '/register'}
                 onClick={(e) => {
@@ -429,17 +411,15 @@ function App() {
                   navigate(register ? '/login' : '/register')
                 }}
               >
-                {register ? '로그인' : '회원가입'}
+                {register ? uiText("로그인") : uiText("회원가입")}
               </a>
             </p>
           </AuthLayout>
-          {!register && passwordHelp && <OrganizationDialog title="비밀번호 찾기" size="small" onClose={() => setPasswordHelp(false)}>
-            <p>구성원 계정은 기업 마스터 또는 권한 있는 관리자에게 비밀번호 초기화를 요청해 주세요.</p>
-            <p>기업 마스터 계정은 이 화면에서 직접 초기화할 수 없습니다.</p>
+          {!register && passwordHelp && <OrganizationDialog title={uiText("비밀번호 찾기")} size="small" onClose={() => setPasswordHelp(false)}>
+            <p>{uiText("구성원 계정은 기업 마스터 또는 권한 있는 관리자에게 비밀번호 초기화를 요청해 주세요.")}</p>
+            <p>{uiText("기업 마스터 계정은 이 화면에서 직접 초기화할 수 없습니다.")}</p>
           </OrganizationDialog>}
-        </>
-      ) : (
-        <main className="workspace-layout">
+        </>) : (<main className="workspace-layout">
           <aside>
             <span className="eyebrow">WORKSPACE</span>
             <strong>
@@ -454,61 +434,51 @@ function App() {
                 <button
                   className={route === '/admin' ? 'nav-active' : ''}
                   onClick={() => navigate('/admin')}
-                >
-                  아이블 관리
-                </button>
+                > {uiText("아이블 관리")} </button>
               )}
               <button
                 className={route === '/app' ? 'nav-active' : ''}
                 onClick={() => navigate('/app')}
-              >
-                기업 워크스페이스
-              </button>
+              > {uiText("기업 워크스페이스")} </button>
             </nav>
             <div className="sidebar-foot">
               {session.user.email}
               <br />
               <small>
-                {session.user.systemRole === 'IebleAdministrator'
-                  ? '아이블 관리자'
-                  : '기업 구성원'}
+                {session.user.systemRole === 'IebleAdministrator' ? uiText("아이블 관리자") : uiText("기업 구성원")}
               </small>
             </div>
+            <SidebarLanguage />
           </aside>
           <section className="workspace-content">
             {error && (
               <div className="alert error" role="alert">
-                {error}
+                {uiText(error)}
               </div>
             )}
             {route === '/admin' ? (
               session.user.systemRole !== 'IebleAdministrator' ? (
                 <div className="panel">
-                  <h1>접근 권한이 없습니다</h1>
-                  <p>아이블 관리자 전용 화면입니다.</p>
-                  <button className="primary" onClick={() => navigate('/app')}>
-                    기업 화면으로 이동
-                  </button>
+                  <h1>{uiText("접근 권한이 없습니다")}</h1>
+                  <p>{uiText("아이블 관리자 전용 화면입니다.")}</p>
+                  <button className="primary" onClick={() => navigate('/app')}> {uiText("기업 화면으로 이동")} </button>
                 </div>
               ) : (
-                <Suspense fallback={<p role="status">관리자 화면을 불러오는 중…</p>}><AdminWorkspace /></Suspense>
+                <Suspense fallback={<p role="status">{uiText("관리자 화면을 불러오는 중…")}</p>}><AdminWorkspace /></Suspense>
               )
             ) : (
               <div className="panel">
-                <h1>페이지를 찾을 수 없습니다</h1>
+                <h1>{uiText("페이지를 찾을 수 없습니다")}</h1>
                 <button
                   className="primary"
                   onClick={() => navigate(home(session))}
-                >
-                  홈으로 이동
-                </button>
+                > {uiText("홈으로 이동")} </button>
               </div>
             )}
           </section>
-        </main>
-      )}
+        </main>)}
       {session && <footer>
-        <span>© {new Date().getFullYear()} 아이블소프트(주)</span>
+        <span>© {new Date().getFullYear()} {uiText("아이블소프트(주)")}</span>
       </footer>}
     </div>
   )

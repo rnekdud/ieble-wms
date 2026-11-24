@@ -5,6 +5,13 @@ namespace IebleWms.Api.Contracts;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class ShipmentRequest
 {
+    // Omitted fields preserve older clients and idempotency hashes; empty strings clear the address.
+    [StringLength(500), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ShippingAddress { get; set; }
+    [StringLength(500), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ShippingAddressDetail { get; set; }
+    [StringLength(20), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ShippingPostalCode { get; set; }
     public Guid RequestId { get; set; }
     public Guid Version { get; set; }
     public DateOnly RequestDate { get; set; }
@@ -48,6 +55,8 @@ public sealed class ShipmentWorkLine
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class ShipmentScanRequest
 {
+    [StringLength(20), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ShippingPostalCode { get; set; }
     public Guid RequestId { get; set; }
     [Required,StringLength(64,MinimumLength=1)] public string Barcode { get; set; } = "";
     public Guid? AllocationId { get; set; }

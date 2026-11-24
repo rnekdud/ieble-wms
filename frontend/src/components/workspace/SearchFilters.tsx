@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { Children, isValidElement, useState, type ReactNode } from 'react'
 import { useMobile } from '../../use-mobile'
 import ReportPeriodFields from './ReportPeriodFields'
@@ -20,10 +21,10 @@ export default function SearchFilters({ id, children, onSearch, onReset, busy = 
   const mobile = useMobile(), fields = Children.toArray(children)
   const searchIndex = fields.reduce<number>((last, child, index) => isSearchField(child) ? index : last, -1)
   const groupSearch = !mobile && searchIndex >= 0 && hasPeriodFields(children)
-  const actions = <div className="list-search-actions"><button className="primary list-search-submit" type="submit" disabled={busy}><Search size={16} aria-hidden="true" />검색</button>
-    <button className="secondary list-search-reset" type="button" disabled={busy} onClick={() => setConfirm(true)}>초기화</button></div>
-  return <><form id={id} className={`list-search-filters select-first-filters ${className}`} aria-label={label} onSubmit={event => { event.preventDefault(); if (!busy) onSearch() }}>
+  const actions = <div className="list-search-actions"><button className="primary list-search-submit" type="submit" disabled={busy}><Search size={16} aria-hidden="true" />{uiText("검색")}</button>
+    <button className="secondary list-search-reset" type="button" disabled={busy} onClick={() => setConfirm(true)}>{uiText("초기화")}</button></div>
+  return <><form id={id} className={`list-search-filters select-first-filters ${className}`} aria-label={uiText(label)} onSubmit={event => { event.preventDefault(); if (!busy) onSearch() }}>
     {groupSearch ? fields.map((field, index) => index === searchIndex ? <div key="search-actions" className="list-search-query-actions">{field}{actions}</div> : field) : children}
     {!groupSearch && actions}
-  </form>{confirm && <OrganizationDialog title="필터 초기화" confirmation size="small" onClose={() => setConfirm(false)} actions={<><button type="button" className="secondary" onClick={() => setConfirm(false)}>취소</button><button type="button" className="primary" disabled={busy} onClick={() => { setConfirm(false); onReset() }}>초기화</button></>}><p>입력한 검색어와 선택한 필터 조건이 모두 초기화됩니다.</p><p>계속하시겠습니까?</p></OrganizationDialog>}</>
+  </form>{confirm && <OrganizationDialog title={uiText("필터 초기화")} confirmation size="small" onClose={() => setConfirm(false)} actions={<><button type="button" className="secondary" onClick={() => setConfirm(false)}>{uiText("취소")}</button><button type="button" className="primary" disabled={busy} onClick={() => { setConfirm(false); onReset() }}>{uiText("초기화")}</button></>}><p>{uiText("입력한 검색어와 선택한 필터 조건이 모두 초기화됩니다.")}</p><p>{uiText("계속하시겠습니까?")}</p></OrganizationDialog>}</>
 }

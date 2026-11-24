@@ -22,6 +22,7 @@ public sealed class SqliteTimestampModelCustomizer(ModelCustomizerDependencies d
         modelBuilder.Entity<ExternalAccountLink>().Property(x=>x.CreatedAt).HasConversion(utcTicks);
         modelBuilder.Entity<ExternalAccountLink>().Property(x=>x.ExpiresAt).HasConversion(utcTicks);
         modelBuilder.Entity<ExternalAccountLink>().Property(x=>x.OwnerApprovedAt).HasConversion(utcTicks);
+        modelBuilder.Entity<LabelDesign>().Property(x=>x.UpdatedAt).HasConversion(utcTicks);
         modelBuilder.Entity<WarehouseTemplate>().Property(x=>x.CreatedAt).HasConversion(utcTicks);
         modelBuilder.Entity<WarehouseTemplate>().Property(x=>x.UpdatedAt).HasConversion(utcTicks);
         modelBuilder.Entity<TenantMembership>().Property(x => x.BillingStartsAt).HasConversion(utcTicks);

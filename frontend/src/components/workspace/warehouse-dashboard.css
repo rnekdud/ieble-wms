@@ -206,3 +206,17 @@
 .dashboard-title-with-warehouse > span { flex:none; }
 .warehouse-dashboard .dashboard-title-with-warehouse .dashboard-warehouse-title { flex:0 1 auto; min-width:0; margin:0; }
 .warehouse-dashboard .dashboard-summary-heading + .dashboard-today-work { margin-bottom:16px; }
+
+/* Dashboard-only view preferences and controls; stock overview remains 2D. */
+.warehouse-dashboard .warehouse-live-map > .warehouse-map-toolbar {flex-wrap:wrap}
+.dashboard-map-select {position:relative;display:inline-flex;align-items:center;max-width:100%}
+:root body .warehouse-dashboard .dashboard-map-select select {appearance:none;display:block;width:auto;max-width:100%;min-height:44px!important;height:44px!important;max-height:44px;margin:0;padding:0 30px 0 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none;color:inherit!important;font:inherit!important;cursor:pointer}
+.dashboard-map-select .choice-title-arrow {position:absolute;right:0;top:calc(50% - 4.5px);width:18px;height:9px;pointer-events:none}
+:root .warehouse-dashboard .dashboard-map-select select:focus-visible {outline:2px solid var(--ui-navy,#16345F);outline-offset:3px;border-radius:3px}
+.warehouse-dashboard .dashboard-quantity-toggle {display:flex;flex-direction:row;align-items:center;gap:6px;margin:0;min-height:44px;white-space:nowrap;font-size:13px}
+.dashboard-quantity-toggle input {width:18px;height:18px;margin:0;flex:none}
+.dashboard-3d-map {min-width:0}
+.dashboard-3d-controls {display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px}
+.dashboard-3d-controls > span {font-size:12px;color:#657580}
+.dashboard-3d-map .warehouse-scene {height:clamp(350px,58vh,720px);min-height:300px;border:0;border-radius:0}
+@media(max-width:600px) {.warehouse-dashboard .warehouse-live-map > .warehouse-map-toolbar {padding:8px 12px;gap:6px 10px}.warehouse-dashboard .warehouse-map-toolbar h2 {font-size:16px}.dashboard-quantity-toggle {margin-left:auto!important}.dashboard-3d-controls > span {max-width:180px}}

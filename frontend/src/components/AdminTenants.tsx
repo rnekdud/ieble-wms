@@ -1,3 +1,4 @@
+import { t as uiText, getLocale } from '../i18n.ts'
 import PageSizeSelect from './PageSizeSelect'
 import FormLabel from './FormLabel'
 import ReportPeriodFields from './workspace/ReportPeriodFields'
@@ -53,7 +54,7 @@ const actions: Record<string, Action[]> = {
   Active: ['suspend'],
   Suspended: ['reactivate'],
 }
-const date = (value: string) => new Date(value).toLocaleString('ko-KR')
+const date = (value: string) => new Date(value).toLocaleString(getLocale())
 
 export default function AdminTenants({ billingOnly = false }: { billingOnly?: boolean }) {
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -152,66 +153,60 @@ export default function AdminTenants({ billingOnly = false }: { billingOnly?: bo
       {detailId && <AdminTenantDetail id={detailId} onClose={() => setDetailId(null)} />}
       {error && (
         <div className="alert error" role="alert">
-          {error}
+          {uiText(error)}
         </div>
       )}
       {notice && (
         <div className="alert success" role="status">
-          {notice}
+          {uiText(notice)}
         </div>
       )}
       <section className="panel admin-panel">
         <div className="panel-title">
-          <h2>{billingOnly ? '요금제 및 결제 현황' : '기업 관리'}</h2>
+          <h2>{billingOnly ? uiText("요금제 및 결제 현황") : uiText("기업 관리")}</h2>
 
         </div>
-        {billingOnly && <p className="alert">실제 저장된 결제 상태와 월 예상 요금 조회입니다. 결제·카드 등록·환불은 실행하지 않습니다.</p>}
+        {billingOnly && <p className="alert">{uiText("실제 저장된 결제 상태와 월 예상 요금 조회입니다. 결제·카드 등록·환불은 실행하지 않습니다.")}</p>}
         <SearchFilters className="admin-filters" busy={loading} onSearch={applyFilter} onReset={() => { const defaults={start:"",end:"",billingStatus:""}; setExtra(defaults); setAppliedExtra(defaults); setFilter(""); setSearch(""); setQuery({status:"",search:"",page:1,pageSize:20}); setHistory(null); setNotice(""); reload() }}>
-          <label>결제 상태<select value={extra.billingStatus} onChange={e => { setExtra(x => ({...x,billingStatus:e.target.value})) }}><option value="">전체</option>{Object.entries(billingStatuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+          <label>{uiText("결제 상태")}<select value={extra.billingStatus} onChange={e => { setExtra(x => ({...x,billingStatus:e.target.value})) }}><option value="">{uiText("전체")}</option>{Object.entries(billingStatuses).map(([v,l])=><option key={v} value={v}>{uiText(l)}</option>)}</select></label>
           <ReportPeriodFields prefix="가입일" start={extra.start} end={extra.end} onChange={range => setExtra(x => ({ ...x, ...range }))} />
-          <label>
-            기업 상태
-            <select
-              aria-label="기업 상태"
+          <label> {uiText("기업 상태")} <select
+              aria-label={uiText("기업 상태")}
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value)
               }}
             >
-              <option value="">전체 상태</option>
+              <option value="">{uiText("전체 상태")}</option>
               {Object.entries(tenantStatuses).map(([value, label]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {uiText(label)}
                 </option>
               ))}
             </select>
           </label>
-          <label>
-            기업 검색
-            <input
+          <label> {uiText("기업 검색")} <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               maxLength={100}
-              placeholder="기업명 또는 사업자등록번호"
+              placeholder={uiText("기업명 또는 사업자등록번호")}
             />
           </label>
 
         </SearchFilters>
         <p className="list-count" aria-live="polite">
-          {loading
-            ? '기업 목록을 불러오는 중…'
-            : `${data?.total ?? 0}개 기업 · 기업명순`}
+          {loading ? uiText("기업 목록을 불러오는 중…") : uiText("{v0}개 기업 · 기업명순", { v0: data?.total ?? 0 })}
         </p>
         <div className="table-scroll">
           <table className="tenant-table" aria-busy={loading}>
             <thead>
               <tr>
-                <th>기업 / 사업자등록번호</th>
-                <th>가입일</th>
-                <th>활성 사용자 / 예상 요금</th>
-                <th>담당자 (기업 마스터)</th>
-                <th>상태</th>
-                <th>관리</th>
+                <th>{uiText("기업 / 사업자등록번호")}</th>
+                <th>{uiText("가입일")}</th>
+                <th>{uiText("활성 사용자 / 예상 요금")}</th>
+                <th>{uiText("담당자 (기업 마스터)")}</th>
+                <th>{uiText("상태")}</th>
+                <th>{uiText("관리")}</th>
               </tr>
             </thead>
             <tbody>
@@ -220,40 +215,33 @@ export default function AdminTenants({ billingOnly = false }: { billingOnly?: bo
                   <td>
                     <strong>{tenant.name}</strong>
                     <small>
-                      {tenant.businessRegistrationNumber || '미등록'}
+                      {tenant.businessRegistrationNumber || uiText("미등록")}
                     </small>
                   </td>
-                  <td>{date(tenant.createdAt)}<small>최근 접속: 미기록</small></td>
-                  <td>{tenant.userCount}명<small>사용자당 월 요금제</small><small>{tenant.estimatedMonthlyKrw?.toLocaleString()}원 / 월 예상</small></td>
+                  <td>{date(tenant.createdAt)}<small>{uiText("최근 접속: 미기록")}</small></td>
+                  <td>{tenant.userCount}{uiText("명")}<small>{uiText("사용자당 월 요금제")}</small><small>{tenant.estimatedMonthlyKrw?.toLocaleString()}{uiText("원 / 월 예상")}</small></td>
                   <td>
-                    {tenant.contacts.length ? (
-                      tenant.contacts.map((contact) => (
+                    {tenant.contacts.length ? (tenant.contacts.map((contact) => (
                         <div className="contact" key={contact.email}>
                           <span>{contact.name}</span>
                           <small>{contact.email}</small>
-                          <small>{contact.phone || '연락처 미등록'}</small>
+                          <small>{contact.phone || uiText("연락처 미등록")}</small>
                         </div>
-                      ))
-                    ) : (
-                      <small>활성 마스터 없음</small>
-                    )}
+                      ))) : (<small>{uiText("활성 마스터 없음")}</small>)}
                   </td>
                   <td>
                     <span className={`badge status-${tenant.serviceStatus}`}>
-                      {tenantStatuses[tenant.serviceStatus]}
+                      {uiText(tenantStatuses[tenant.serviceStatus])}
                     </span>
                     <small>
-                      {tenant.billingAccess.state === 'RegistrationMonthFree'
-                        ? '가입 월 무료 이용'
-                        : billingStatuses[tenant.billingStatus]}
+                      {tenant.billingAccess.state === 'RegistrationMonthFree' ? uiText("가입 월 무료 이용") : uiText(billingStatuses[tenant.billingStatus])}
                     </small>
-                    {!tenant.isActive && <small>계정 비활성</small>}
+                    {!tenant.isActive && <small>{uiText("계정 비활성")}</small>}
                   </td>
                   <td>
                     <div className="row-actions">
-                      <button className="secondary" onClick={() => setDetailId(tenant.id)}>상세</button>
-                      {!billingOnly && tenant.isActive &&
-                        (actions[tenant.serviceStatus] || [])
+                      <button className="secondary" onClick={() => setDetailId(tenant.id)}>{uiText("상세")}</button>
+                      {!billingOnly && tenant.isActive && (actions[tenant.serviceStatus] || [])
                           .filter(
                             (action) =>
                               action !== 'reactivate' || tenant.canReactivate,
@@ -268,16 +256,14 @@ export default function AdminTenants({ billingOnly = false }: { billingOnly?: bo
                                 setSelection({ tenant, action })
                               }}
                             >
-                              {labels[action]}
+                              {uiText(labels[action])}
                             </button>
                           ))}
                       <button
                         className="text-button"
                         disabled={loading || historyLoading}
                         onClick={() => showHistory(tenant)}
-                      >
-                        변경 이력
-                      </button>
+                      > {uiText("변경 이력")} </button>
                     </div>
                   </td>
                 </tr>
@@ -286,10 +272,10 @@ export default function AdminTenants({ billingOnly = false }: { billingOnly?: bo
           </table>
         </div>
         {!loading && !data?.items.length && (
-          <p className="empty-state">조건에 맞는 기업이 없습니다.</p>
+          <p className="empty-state">{uiText("조건에 맞는 기업이 없습니다.")}</p>
         )}
         <Pagination pageSizeControl={<PageSizeSelect value={query.pageSize} onChange={pageSize => { setQuery(v => ({ ...v, pageSize, page: 1 })); setLoading(true); }} />}
-          label="기업 목록 페이지"
+          label={uiText("기업 목록 페이지")}
           page={query.page}
           pageSize={data?.pageSize ?? 20}
           total={data?.total ?? 0}
@@ -303,22 +289,17 @@ export default function AdminTenants({ billingOnly = false }: { billingOnly?: bo
       {history && (
         <section className="panel">
           <div className="panel-title">
-            <h2>{history.tenant.name} · 변경 이력</h2>
-            <button className="text-button" onClick={() => setHistory(null)}>
-              이력 닫기
-            </button>
+            <h2>{history.tenant.name} {uiText("· 변경 이력")}</h2>
+            <button className="text-button" onClick={() => setHistory(null)}> {uiText("이력 닫기")} </button>
           </div>
-          <p className="history-help">
-            최근 100건 · 변경 사유는 기업 구성원에게도 표시됩니다.
-          </p>
-          {history.items.length ? (
-            <ol className="history-list">
+          <p className="history-help"> {uiText("최근 100건 · 변경 사유는 기업 구성원에게도 표시됩니다.")} </p>
+          {history.items.length ? (<ol className="history-list">
               {history.items.map((item) => (
                 <li key={item.id}>
                   <div>
                     <strong>
-                      {historicalTenantStatuses[item.fromStatus]} →{' '}
-                      {historicalTenantStatuses[item.toStatus]}
+                      {uiText(historicalTenantStatuses[item.fromStatus])} →{' '}
+                      {uiText(historicalTenantStatuses[item.toStatus])}
                     </strong>
                     <small>
                       {date(item.changedAt)} · {item.administrator}
@@ -327,16 +308,10 @@ export default function AdminTenants({ billingOnly = false }: { billingOnly?: bo
                   <p>{item.reason}</p>
                 </li>
               ))}
-            </ol>
-          ) : (
-            <p className="empty-state">아직 상태 변경 이력이 없습니다.</p>
-          )}
+            </ol>) : (<p className="empty-state">{uiText("아직 상태 변경 이력이 없습니다.")}</p>)}
         </section>
       )}
-      <p className="scope-note">
-        기업 운영 상태만 관리합니다. 고객사의 WMS 업무 데이터 접근 권한은
-        부여되지 않습니다.
-      </p>
+      <p className="scope-note"> {uiText("기업 운영 상태만 관리합니다. 고객사의 WMS 업무 데이터 접근 권한은 부여되지 않습니다.")} </p>
       {selection && (
         <StatusDialog
           tenant={selection.tenant}
@@ -400,18 +375,13 @@ function StatusDialog({
     }
   }
   return (
-    <OrganizationDialog size="small" title={`기업 ${labels[action]}`} busy={busy} onClose={onClose}>
+    <OrganizationDialog size="small" title={uiText("기업 {v0}", { v0: labels[action] })} busy={busy} onClose={onClose}>
       <form className="dialog-form" onSubmit={submit}><div className="dialog-form-scroll"><fieldset disabled={busy}>
         <p>
-          <strong>{tenant.name}</strong> 기업을 {labels[action]}하시겠습니까?
-        </p>
+          <strong>{tenant.name}</strong> {uiText("기업을")} {uiText(labels[action])}{uiText("하시겠습니까?")} </p>
         <p className="dialog-help">
-          {action === 'suspend'
-            ? '처리 후 기업의 WMS 업무 접근이 제한됩니다.'
-            : '처리 후 소속 구성원이 WMS 업무에 접근할 수 있습니다.'}{' '}
-          변경 사유는 기업 구성원에게 표시됩니다.
-        </p>
-        <label><FormLabel required>변경 사유</FormLabel><textarea
+          {action === 'suspend' ? uiText("처리 후 기업의 WMS 업무 접근이 제한됩니다.") : uiText("처리 후 소속 구성원이 WMS 업무에 접근할 수 있습니다.")}{' '} {uiText("변경 사유는 기업 구성원에게 표시됩니다.")} </p>
+        <label><FormLabel required>{uiText("변경 사유")}</FormLabel><textarea
             autoFocus
             required
             maxLength={1000}
@@ -419,12 +389,12 @@ function StatusDialog({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             disabled={busy || conflicted}
-            placeholder="검토 결과와 변경 사유를 입력하세요"
+            placeholder={uiText("검토 결과와 변경 사유를 입력하세요")}
           />
         </label>
         {error && (
           <div className="alert error" role="alert">
-            {error}
+            {uiText(error)}
           </div>
         )}
         </fieldset></div><div className="dialog-actions">
@@ -434,10 +404,10 @@ function StatusDialog({
             onClick={onClose}
             disabled={busy}
           >
-            {conflicted ? '닫고 다시 선택' : '취소'}
+            {conflicted ? uiText("닫고 다시 선택") : uiText("취소")}
           </button>
           <button className="primary" disabled={busy || conflicted}>
-            {busy ? '처리 중…' : `${labels[action]} 확정`}
+            {busy ? uiText("처리 중…") : uiText("{v0} 확정", { v0: labels[action] })}
           </button>
         </div>
       </form>

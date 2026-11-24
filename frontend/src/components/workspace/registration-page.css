@@ -35,7 +35,7 @@
 .registration-form .dialog-work-basic { display:grid; grid-template-columns:160px minmax(0,1fr); gap:28px; padding:26px; background:white; border-radius:10px; }
 .registration-form .dialog-work-basic h3 { font-size:16px; margin:0; }
 .registration-form .dialog-work-basic .receipt-basic { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; align-items:start; }
-.registration-form .dialog-work-basic label:has([aria-label$="비고"]) { grid-column:1/-1; }
+.registration-form .dialog-work-basic label:has(:is([aria-label$="비고"], [aria-label$="Notes"])) { grid-column:1/-1; }
 .registration-form .receipt-section-heading { margin:32px 0 12px; }
 .registration-form .receipt-section-heading h3 { font-size:18px; margin:0; }
 .registration-line-list { background:white; border-radius:10px; padding:0 24px; }

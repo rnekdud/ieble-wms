@@ -1,3 +1,4 @@
+import { t as uiText } from './i18n.ts'
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { App } from '@capacitor/app'
 import { androidApiUrl } from './android-api-url'
@@ -26,5 +27,5 @@ async function start() {
 // Keep a usable error screen if native initialization fails, even without the API or Vite server.
 void start().catch(() => {
   const root = document.getElementById('root')
-  if (root) root.textContent = '앱을 시작하지 못했습니다. 앱을 종료한 뒤 다시 실행해 주세요.'
+  if (root) root.textContent = uiText('앱을 시작하지 못했습니다. 앱을 종료한 뒤 다시 실행해 주세요.')
 })

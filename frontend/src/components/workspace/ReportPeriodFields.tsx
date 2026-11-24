@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { useId, useState } from 'react'
 import { statsRange } from '../../movement-stats-model'
 type Range = { start: string; end: string }
@@ -7,15 +8,15 @@ export default function ReportPeriodFields({ start, end, today, preset, prefix, 
  const key = `${start}:${end}`
  const selected = preset ?? (selection?.key === key ? selection.preset : 'custom')
  function change(range: Range, value: string) { setSelection({ key: `${range.start}:${range.end}`, preset: value }); onPreset?.(value); onChange(range) }
- return <div className="report-period-fields" role="group" aria-label={`${prefix} 조회 기간`}>
+ return <div className="report-period-fields" role="group" aria-label={uiText("{v0} 조회 기간", { v0: uiText(prefix) })}>
   <div className="report-period-range">
-   <div className="report-period-labels"><label htmlFor={`${id}-start`}>{prefix} 시작일</label><span aria-hidden="true" /><label htmlFor={`${id}-end`}>{prefix} 종료일</label></div>
+   <div className="report-period-labels"><label htmlFor={`${id}-start`}>{uiText(prefix)} {uiText("시작일")}</label><span aria-hidden="true" /><label htmlFor={`${id}-end`}>{uiText(prefix)} {uiText("종료일")}</label></div>
    <div className="report-period-dates">
-    <input id={`${id}-start`} aria-label={`${prefix} 시작일`} type="date" value={start} max={end || undefined} onChange={e=>change({start:e.target.value,end},'custom')} />
+    <input id={`${id}-start`} aria-label={uiText("{v0} 시작일", { v0: uiText(prefix) })} type="date" value={start} max={end || undefined} onChange={e=>change({start:e.target.value,end},'custom')} />
     <span aria-hidden="true">~</span>
-    <input id={`${id}-end`} aria-label={`${prefix} 종료일`} type="date" value={end} min={start || undefined} onChange={e=>change({start,end:e.target.value},'custom')} />
+    <input id={`${id}-end`} aria-label={uiText("{v0} 종료일", { v0: uiText(prefix) })} type="date" value={end} min={start || undefined} onChange={e=>change({start,end:e.target.value},'custom')} />
    </div>
   </div>
-  <div className="wms-segmented report-period-tabs" role="group" aria-label="조회 기간">{[['today','오늘'],['7','7일'],['30','30일'],['custom','직접 설정']].map(([value,label]) => <button type="button" key={value} aria-pressed={selected===value} onClick={() => change(value==='custom' ? {start,end} : statsRange(value,today || new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul'}).format(new Date())),value)}>{label}</button>)}</div>
+  <div className="wms-segmented report-period-tabs" role="group" aria-label={uiText("조회 기간")}>{[['today','오늘'],['7','7일'],['30','30일'],['custom','직접 설정']].map(([value,label]) => <button type="button" key={value} aria-pressed={selected===value} onClick={() => change(value==='custom' ? {start,end} : statsRange(value,today || new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul'}).format(new Date())),value)}>{uiText(label)}</button>)}</div>
  </div>
 }

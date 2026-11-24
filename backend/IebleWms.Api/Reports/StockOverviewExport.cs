@@ -6,7 +6,7 @@ using IebleWms.Api.Contracts;
 namespace IebleWms.Api.Reports;
 
 // Sequential export to a private temporary file; bounded row count and concurrency are enforced by the endpoint.
-public static class StockOverviewExport
+public static partial class StockOverviewExport
 {
  static readonly string[] Headers=["상품코드","상품명","상품 분류","창고","구역","랙","보관 위치","LOT","유통기한","시리얼","기준 단위","현재 재고","출고 예정","출고 가능","안전재고 (상품 전체)","전체 창고 출고 가능","재고 상태"];
  public static FileStream CreateTemporaryStream()

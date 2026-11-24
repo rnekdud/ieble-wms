@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { useEffect, useState } from 'react'
 import { api } from '../../api'
 import type { Choice } from '../../receipt-model'
@@ -29,17 +30,17 @@ export default function ShipmentStockDialog({ endpoint, warehouseId, product, al
     const first = values[0]; if (!first) return
     onApply({ lot: values.every(s => s.lotNumber === first.lotNumber) ? first.lotNumber || '' : '', expiry: values.every(s => s.expiryDate === first.expiryDate) ? first.expiryDate || '' : '', serialText: values.flatMap(s => s.serialNumber ? [s.serialNumber] : []).join('\n') })
   }
-  return <OrganizationDialog title="출고 재고 선택" description={`${product.name} · ${product.unit}`} size="large" onClose={onClose}>
-    <p className="organization-help">LOT·유통기한·시리얼 조건을 선택합니다. 실제 위치는 최종 저장 시 자동 배정되며, 요청 수량은 상품 테이블에서 입력하세요.</p>
-    {error && <p role="alert" className="alert error">{error}<button type="button" onClick={() => setRevision(n => n + 1)}>다시 조회</button></p>}
-    <div className="table-scroll document-stock-scroll"><table className="organization-table document-stock-table"><thead><tr>{['선택', '보관 위치', 'LOT', '유통기한', '시리얼', '현재', '예약', '선택 가능'].map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>
-      {!data ? <tr><td colSpan={8}>재고 조회 중…</td></tr> : !data.items.length ? <tr><td colSpan={8}>조회된 재고가 없습니다.</td></tr> : data.items.map(s => {
+  return <OrganizationDialog title={uiText("출고 재고 선택")} description={`${product.name} · ${product.unit}`} size="large" onClose={onClose}>
+    <p className="organization-help">{uiText("LOT·유통기한·시리얼 조건을 선택합니다. 실제 위치는 최종 저장 시 자동 배정되며, 요청 수량은 상품 테이블에서 입력하세요.")}</p>
+    {error && <p role="alert" className="alert error">{uiText(error)}<button type="button" onClick={() => setRevision(n => n + 1)}>{uiText("다시 조회")}</button></p>}
+    <div className="table-scroll document-stock-scroll"><table className="organization-table document-stock-table"><thead><tr>{['선택', '보관 위치', 'LOT', '유통기한', '시리얼', '현재', '예약', '선택 가능'].map(h => <th key={h}>{uiText(h)}</th>)}</tr></thead><tbody>
+      {!data ? <tr><td colSpan={8}>{uiText("재고 조회 중…")}</td></tr> : !data.items.length ? <tr><td colSpan={8}>{uiText("조회된 재고가 없습니다.")}</td></tr> : data.items.map(s => {
         const available = Math.round((s.availableQuantity + own(s.id)) * 1000) / 1000, eligible = s.isActive && s.unit === product.unit && available > 0
-        return <tr key={s.id}><td><input type="checkbox" aria-label={`재고 ${s.locationCode} ${s.serialNumber || s.lotNumber || s.id}`} checked={!!selected[s.id]} disabled={!eligible} onChange={e => choose(s, e.target.checked)} /></td><td>{s.locationCode}{!s.isActive && <small>비활성 위치</small>}</td><td>{s.lotNumber || '—'}</td><td>{s.expiryDate || '—'}</td><td>{s.serialNumber || '—'}</td><td>{s.quantity} {s.unit}</td><td>{s.reservedQuantity}</td><td>{eligible ? available : '선택 불가'}{own(s.id) > 0 && <small>이 문서 예약 {own(s.id)} 포함</small>}</td></tr>
+        return <tr key={s.id}><td><input type="checkbox" aria-label={uiText("재고 {v0} {v1}", { v0: s.locationCode, v1: s.serialNumber || s.lotNumber || s.id })} checked={!!selected[s.id]} disabled={!eligible} onChange={e => choose(s, e.target.checked)} /></td><td>{s.locationCode}{!s.isActive && <small>{uiText("비활성 위치")}</small>}</td><td>{s.lotNumber || '—'}</td><td>{s.expiryDate || '—'}</td><td>{s.serialNumber || '—'}</td><td>{s.quantity} {s.unit}</td><td>{s.reservedQuantity}</td><td>{eligible ? available : uiText("선택 불가")}{own(s.id) > 0 && <small>{uiText("이 문서 예약")} {own(s.id)} {uiText("포함")}</small>}</td></tr>
       })}
     </tbody></table></div>
-    <Pagination page={page} pageSize={30} total={data?.total || 0} loading={!data} onChange={setPage} label="출고 재고 선택 페이지" />
-    <p className="organization-help">선택 {values.length}건 · 시리얼 재고는 여러 건 선택할 수 있습니다. 조건을 변경해도 문서는 저장되지 않습니다.</p>
-    <div className="dialog-actions"><button type="button" className="secondary" onClick={onClose}>취소</button><button type="button" className="secondary" onClick={() => onApply({ lot: '', expiry: '', serialText: '' })}>조건 해제 · 자동 배정</button><button type="button" className="primary" disabled={!values.length} onClick={apply}>선택 적용</button></div>
+    <Pagination page={page} pageSize={30} total={data?.total || 0} loading={!data} onChange={setPage} label={uiText("출고 재고 선택 페이지")} />
+    <p className="organization-help">{uiText("선택")} {values.length}{uiText("건 · 시리얼 재고는 여러 건 선택할 수 있습니다. 조건을 변경해도 문서는 저장되지 않습니다.")}</p>
+    <div className="dialog-actions"><button type="button" className="secondary" onClick={onClose}>{uiText("취소")}</button><button type="button" className="secondary" onClick={() => onApply({ lot: '', expiry: '', serialText: '' })}>{uiText("조건 해제 · 자동 배정")}</button><button type="button" className="primary" disabled={!values.length} onClick={apply}>{uiText("선택 적용")}</button></div>
   </OrganizationDialog>
 }

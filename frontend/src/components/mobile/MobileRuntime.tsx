@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { isAndroidApp, isNativeApp } from '../../native-environment'
 import './mobile.css'
 import { observeInstall } from '../../mobile-install'
@@ -41,5 +42,5 @@ export default function MobileRuntime() {
     if (!isNativeApp() && 'serviceWorker' in navigator && window.isSecureContext) void navigator.serviceWorker.register('/mobile-sw.js', { scope: '/' }).catch(() => { /* Online workflows do not depend on installation. */ })
     return () => { metadata.forEach(element => element.remove()); if (viewportMeta && previousViewport !== undefined) viewportMeta.content = previousViewport; viewport?.removeEventListener('resize', update); window.removeEventListener('resize', update); document.removeEventListener('focusin', update); document.removeEventListener('focusout', update); delete document.documentElement.dataset.mobileKeyboard; document.documentElement.style.removeProperty('--mobile-viewport-height') }
   }, [mobile])
-  return mobile && !online ? <div className="mobile-offline" role="alert">네트워크 연결이 끊겼습니다. 저장·확정 결과를 확인한 뒤 다시 시도하세요.</div> : null
+  return mobile && !online ? <div className="mobile-offline" role="alert">{uiText("네트워크 연결이 끊겼습니다. 저장·확정 결과를 확인한 뒤 다시 시도하세요.")}</div> : null
 }

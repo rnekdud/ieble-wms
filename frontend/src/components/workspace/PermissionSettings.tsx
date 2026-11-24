@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import './permission-settings-layout.css'
 import PermissionGradeChoice from './PermissionGradeChoice'
 import type { PermissionGrade } from './PermissionGradeChoice'
@@ -30,8 +31,8 @@ const actionLabels: Record<string, string> = {
 const actionLabel = (feature: string, action: string) => action === 'confirm' ? ({ receipts: '입고 확정', shipments: '출고 확정', stocktake: '실사 최종 확정' }[feature] || '최종 확정') : actionLabels[action]
 export default function PermissionSettings({ tenantId }: { tenantId: string }) {
   const [tab, setTab] = useState('existing')
-  const tabs = <div className="wms-segmented permission-tabs" role="tablist" aria-label="권한 설정 구분">{[['existing', '권한 설정'], ['collaborators', '외부 협력사']].map(([key, label]) => <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'primary' : 'secondary'} onClick={() => { if (key !== tab) requestNavigation(() => setTab(key)) }}>{label}</button>)}</div>
-  return <><PageHeading title="권한 설정" />
+  const tabs = <div className="wms-segmented permission-tabs" role="tablist" aria-label={uiText("권한 설정 구분")}>{[['existing', '권한 설정'], ['collaborators', '외부 협력사']].map(([key, label]) => <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'primary' : 'secondary'} onClick={() => { if (key !== tab) requestNavigation(() => setTab(key)) }}>{uiText(label)}</button>)}</div>
+  return <><PageHeading title={uiText("권한 설정")} />
     {tab === 'existing' ? <ExistingPermissionSettings tenantId={tenantId} tabs={tabs} /> : <><div className="permission-viewbar">{tabs}</div><div role="tabpanel"><CollaboratorPermissions tenantId={tenantId} /></div></>}
   </>
 }
@@ -94,42 +95,42 @@ function ExistingPermissionSettings({ tenantId, tabs }: { tenantId: string; tabs
     } finally { saving.current = false; setBusy(false) }
   }
   return <>
-    <div className="permission-viewbar">{tabs}<div className="permission-view-actions"><button className="primary" disabled={!settings || busy || stale || !changes.length} onClick={() => setReview(true)}>저장</button><button className="secondary" disabled={busy || !settings} onClick={() => setRestoreConfirm(true)}>안전한 기본값 복원</button></div></div>
+    <div className="permission-viewbar">{tabs}<div className="permission-view-actions"><button className="primary" disabled={!settings || busy || stale || !changes.length} onClick={() => setReview(true)}>{uiText("저장")}</button><button className="secondary" disabled={busy || !settings} onClick={() => setRestoreConfirm(true)}>{uiText("안전한 기본값 복원")}</button></div></div>
     <div role="tabpanel"><section className="wms-card permission-settings">
-      {error && <div className="alert error" role="alert">{error}</div>}
-      {notice && <div className="alert success" role="status">{notice}</div>}
-      {!settings ? <><p role="status">권한 설정을 불러오는 중입니다.</p>{error && <button className="secondary" onClick={() => setReload(x => x + 1)}>다시 불러오기</button>}</> : <>
+      {error && <div className="alert error" role="alert">{uiText(error)}</div>}
+      {notice && <div className="alert success" role="status">{uiText(notice)}</div>}
+      {!settings ? <><p role="status">{uiText("권한 설정을 불러오는 중입니다.")}</p>{error && <button className="secondary" onClick={() => setReload(x => x + 1)}>{uiText("다시 불러오기")}</button>}</> : <>
         <div className="permission-toolbar permission-role-toolbar">
-          <PermissionGradeChoice grades={settings.grades || Object.entries(defaultLabels).map(([id, name]) => ({ id, name, isActive: true, isBuiltIn: true, memberCount: 0, version: '' }))} value={role} onChange={setRole} label="설정할 권한" disabled={busy} />
-          <span className="permission-change-count" aria-live="polite">저장하지 않은 변경 {changes.length}건</span>
+          <PermissionGradeChoice grades={settings.grades || Object.entries(defaultLabels).map(([id, name]) => ({ id, name, isActive: true, isBuiltIn: true, memberCount: 0, version: '' }))} value={role} onChange={setRole} label={uiText("설정할 권한")} disabled={busy} />
+          <span className="permission-change-count" aria-live="polite">{uiText("저장하지 않은 변경")} {changes.length}{uiText("건")}</span>
         </div>
-        {stale && <div className="permission-toolbar"><button className="secondary" disabled={busy} onClick={() => { if (changes.length) setReloadConfirm(true); else setReload(x => x + 1) }}>최신 설정 다시 불러오기</button></div>}
-        <PermissionMatrix caption={`${roleLabels[role]} 기능별 권한`}
+        {stale && <div className="permission-toolbar"><button className="secondary" disabled={busy} onClick={() => { if (changes.length) setReloadConfirm(true); else setReload(x => x + 1) }}>{uiText("최신 설정 다시 불러오기")}</button></div>}
+        <PermissionMatrix caption={uiText("{v0} 기능별 권한", { v0: defaultLabels[role] ? uiText(roleLabels[role]) : roleLabels[role] })}
           features={settings.features.filter(f => f.roleActions[role]?.length > 0).map(f => ({ ...f, actions: f.roleActions[role].filter(a => f.implementedActions.includes(a)) }))}
-          labelPrefix={`${roleLabels[role]} `} checked={(key, action) => draft[role][key].includes(action)} disabled={() => busy || stale} onChange={toggle} />
-        <p className="permission-help">기능 권한을 켜면 메뉴·조회도 허용됩니다. 메뉴나 조회를 끄면 해당 기능의 모든 권한이 해제됩니다. 새 사용자 정의 권한은 업무 접근 없이 시작합니다. 조직도·항목 관리는 마스터가 별도로 허용하며, 일반 직원에게는 조직도 조회만 부여할 수 있습니다.</p>
-        {review && <OrganizationDialog confirmation size="small" title="권한 변경 확인" busy={busy} onClose={() => setReview(false)}>
-          <section className="permission-review" aria-label="저장 전 변경사항 확인">
-            <h3>변경사항 {changes.length}건</h3>
-            <ul>{changes.map(change => <li key={change.key}>{change.label}: {change.before ? '허용' : '차단'} → <strong>{change.after ? '허용' : '차단'}</strong></li>)}</ul>
-            <p>현재 기업에만 적용하며 변경자·일시·변경 전후 값이 감사 로그에 기록됩니다.</p>
+          labelPrefix={`${defaultLabels[role] ? uiText(roleLabels[role]) : roleLabels[role]} `} checked={(key, action) => draft[role][key].includes(action)} disabled={() => busy || stale} onChange={toggle} />
+        <p className="permission-help">{uiText("기능 권한을 켜면 메뉴·조회도 허용됩니다. 메뉴나 조회를 끄면 해당 기능의 모든 권한이 해제됩니다. 새 사용자 정의 권한은 업무 접근 없이 시작합니다. 조직도·항목 관리는 마스터가 별도로 허용하며, 일반 직원에게는 조직도 조회만 부여할 수 있습니다.")}</p>
+        {review && <OrganizationDialog confirmation size="small" title={uiText("권한 변경 확인")} busy={busy} onClose={() => setReview(false)}>
+          <section className="permission-review" aria-label={uiText("저장 전 변경사항 확인")}>
+            <h3>{uiText("변경사항")} {changes.length}{uiText("건")}</h3>
+            <ul>{changes.map(change => <li key={change.key}>{uiText(change.label)}: {change.before ? uiText("허용") : uiText("차단")} → <strong>{change.after ? uiText("허용") : uiText("차단")}</strong></li>)}</ul>
+            <p>{uiText("현재 기업에만 적용하며 변경자·일시·변경 전후 값이 감사 로그에 기록됩니다.")}</p>
           </section>
-          {error && <p role="alert" className="alert error">{error}</p>}
-          <button className="secondary" disabled={busy} onClick={() => setReview(false)}>계속 수정</button>{' '}
-          <button className="primary" disabled={busy || stale || !changes.length} onClick={save}>{busy ? '저장 중…' : '확인 후 저장'}</button>
+          {error && <p role="alert" className="alert error">{uiText(error)}</p>}
+          <button className="secondary" disabled={busy} onClick={() => setReview(false)}>{uiText("계속 수정")}</button>{' '}
+          <button className="primary" disabled={busy || stale || !changes.length} onClick={save}>{busy ? uiText("저장 중…") : uiText("확인 후 저장")}</button>
         </OrganizationDialog>}
-        {reloadConfirm && <OrganizationDialog confirmation size="small" title="최신 권한 다시 불러오기" onClose={() => setReloadConfirm(false)}>
-          <p>저장하지 않은 변경을 버리고 최신 설정을 불러오시겠습니까?</p>
-          <button className="secondary" onClick={() => setReloadConfirm(false)}>취소</button>{' '}
-          <button className="primary" onClick={() => { setReloadConfirm(false); setReload(x => x + 1) }}>확인</button>
+        {reloadConfirm && <OrganizationDialog confirmation size="small" title={uiText("최신 권한 다시 불러오기")} onClose={() => setReloadConfirm(false)}>
+          <p>{uiText("저장하지 않은 변경을 버리고 최신 설정을 불러오시겠습니까?")}</p>
+          <button className="secondary" onClick={() => setReloadConfirm(false)}>{uiText("취소")}</button>{' '}
+          <button className="primary" onClick={() => { setReloadConfirm(false); setReload(x => x + 1) }}>{uiText("확인")}</button>
         </OrganizationDialog>}
       </>}
     </section>
     <UserPermissionAccess tenantId={tenantId} />
     </div>
-    {restoreConfirm && settings && <OrganizationDialog confirmation size="small" title="안전한 기본값 복원" onClose={() => setRestoreConfirm(false)}>
-      <p>기본 권한은 안전한 기본값으로, 사용자 정의 권한은 업무 접근 없음으로 되돌리시겠습니까? 변경사항 확인 후 저장해야 적용됩니다.</p>
-      <div className="organization-row-actions"><button className="secondary" onClick={() => setRestoreConfirm(false)}>취소</button><button className="primary" onClick={() => { setDraft(settings.defaults); setReview(false); setRestoreConfirm(false); setNotice('변경사항을 확인한 뒤 저장해야 적용됩니다.') }}>복원</button></div>
+    {restoreConfirm && settings && <OrganizationDialog confirmation size="small" title={uiText("안전한 기본값 복원")} onClose={() => setRestoreConfirm(false)}>
+      <p>{uiText("기본 권한은 안전한 기본값으로, 사용자 정의 권한은 업무 접근 없음으로 되돌리시겠습니까? 변경사항 확인 후 저장해야 적용됩니다.")}</p>
+      <div className="organization-row-actions"><button className="secondary" onClick={() => setRestoreConfirm(false)}>{uiText("취소")}</button><button className="primary" onClick={() => { setDraft(settings.defaults); setReview(false); setRestoreConfirm(false); setNotice('변경사항을 확인한 뒤 저장해야 적용됩니다.') }}>{uiText("복원")}</button></div>
     </OrganizationDialog>}
     <UnsavedChangesDialog guard={navigation} />
   </>

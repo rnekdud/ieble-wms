@@ -10,7 +10,7 @@ const inquiry={id:'ticket',number:'QA01',title:'QA 문의',category:'Service',st
 const permissions=Object.fromEntries(workspacePages.map(p=>[p.key,['menu','read','readAll','create','update','delete','confirm','count','manageUsers']]))
 const workspace={id:'header-qa',name:'헤더 QA 기업',role:'Master',permissions,serviceStatus:'Active',billingStatus:'Active',billingAccess:{state:'Active',canAccessWms:true,hasRegisteredCard:true,freeUntil:'2027-01-01',firstChargeAt:'2027-01-01'},billingPolicy:{monthlyPerUserKrw:0,monthlyBaseKrw:0,includedUsers:1},canManageBilling:false,latestChange:null}
 let receiptStatus='Planned', inspectedAt=null
-const admin=false
+const admin=false,editorsOnly=process.env.WMS_DETAIL_SCOPE==='editors'
 const browser=await chromium.launch({channel:'chrome',headless:true})
 try{
  const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'})
@@ -61,22 +61,23 @@ try{
  })
  const page=await context.newPage();const navigate=path=>page.goto(origin+path,{waitUntil:'domcontentloaded'});page.setDefaultTimeout(12000);page.on('pageerror',e=>{errors.push(e.message);console.log('RENDER ERROR',e.message)})
 
- async function check(label,code){
+ async function check(label,code,footer=false){
   const header=page.locator('.work-detail-header').last();await header.waitFor()
   if(code)await header.locator('.work-detail-code').filter({hasText:code}).waitFor()
   const r=await header.evaluate(el=>{
    const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,cy:r.y+r.height/2}}
-   const title=el.querySelector('.work-detail-main > h1,.work-detail-main > h2'),actions=el.querySelector('.work-detail-actions'),meta=el.querySelector('.work-detail-meta')
+   const title=el.querySelector('.work-detail-main > h1,.work-detail-main > h2'),actions=el.querySelector('.work-detail-actions')||el.closest('dialog').querySelector('.dialog-actions'),meta=el.querySelector('.work-detail-meta')
    return {title:rect(title),actions:rect(actions),buttons:[...actions.querySelectorAll('button')].map(rect),meta:meta&&rect(meta),items:meta&&[...meta.children].map(rect),overflow:el.scrollWidth>el.clientWidth+1,viewport:innerWidth,rootOverflow:document.documentElement.scrollWidth>innerWidth+1}
   })
-  assert(Math.abs(r.title.cy-r.actions.cy)<1,label+' title/action centers');assert(r.title.w>10,label+' title visible');assert(r.title.right<=r.actions.x+1,label+' overlap');assert(!r.overflow&&!r.rootOverflow,label+' overflow')
-  for(const b of r.buttons){assert(Math.abs(b.cy-r.title.cy)<1,label+' button row');assert(b.x>=0&&b.right<=r.viewport+1,label+' clipped action')}
+  if(!footer){assert(Math.abs(r.title.cy-r.actions.cy)<1,label+' title/action centers');assert(r.title.right<=r.actions.x+1,label+' overlap')}assert(r.title.w>10,label+' title visible');assert(!r.overflow&&!r.rootOverflow,label+' overflow')
+  for(const b of r.buttons){if(!footer)assert(Math.abs(b.cy-r.title.cy)<1,label+' button row');assert(b.x>=0&&b.right<=r.viewport+1,label+' clipped action')}
   if(r.meta){assert(r.meta.y>=r.title.bottom,label+' separate metadata row');if(r.items.length===2){const[a,b]=r.items;assert(Math.abs(a.cy-b.cy)<1,label+' metadata centers');assert(Math.abs(b.x-a.right-8)<1,label+' metadata gap')}}
   for(const submit of await header.locator('button[type=submit]').all())assert(await submit.evaluate(el=>!!el.form),'header submit connected to form')
-  const back=await header.locator('.registration-back').boundingBox();assert.equal(back.width,36);assert.equal(back.height,36)
+  if(footer){assert.equal(await header.locator('.registration-back').count(),0);assert.equal(r.buttons.length,2);assert(r.buttons[0].right<=r.buttons[1].x+1)}else{const back=await header.locator('.registration-back').boundingBox();assert.equal(back.width,36);assert.equal(back.height,36)}
  }
  for(const width of (process.env.WMS_DETAIL_WIDTHS ? process.env.WMS_DETAIL_WIDTHS.split(',').map(Number) : [360,375,390,430,768,1440])){
   await page.setViewportSize({width,height:900});receiptStatus='Planned';inspectedAt=null
+  if(!editorsOnly){
   await navigate('/app/receipts/'+id);await check('입고 상세','IN01')
   receiptStatus='Inspecting';await navigate('/app/receipts/'+id);await check('입고 검수','IN01')
   if(width<=1024){const help=page.locator('.receipt-inspection-help details');assert.equal(await help.count(),3);for(const d of await help.all()){assert.equal(await d.getAttribute('open'),null);await d.locator('summary').click();assert(await d.locator('p').isVisible());await d.locator('summary').click();assert(!await d.locator('p').isVisible())}}
@@ -86,15 +87,20 @@ try{
   await page.getByRole('button',{name:'상품 삭제',exact:true}).click();await page.getByRole('dialog').last().waitFor();await page.getByRole('dialog').last().getByRole('button',{name:'취소',exact:true}).click()
   await navigate('/app/inventory/counts/'+id);await check('실사 상세','ST01')
   await navigate('/app/warehouses?warehouseId=w1');await check('창고 상세','WH01');await page.locator('.work-detail-header h2').evaluate(el=>el.textContent='길이가 아주 긴 창고 상세 제목으로 버튼 겹침과 말줄임을 확인합니다');await check('긴 제목','WH01')
-  await navigate('/app/partners');await page.getByRole('button',{name:'QA 거래처 상세',exact:true}).click();await check('거래처 상세','PT01');await page.getByRole('button',{name:'거래처 수정',exact:true}).click();await check('거래처 수정','PT01');assert.equal(await page.getByRole('button',{name:'거래처 저장',exact:true}).count(),1)
-  await page.getByRole('dialog').getByRole('button',{name:'뒤로가기',exact:true}).click()
-  await navigate('/app/settings/users');await page.getByRole('button',{name:'QA 구성원 수정',exact:true}).click();await check('사용자 수정','employee001');assert.equal(await page.getByRole('button',{name:'사용자 정보 저장',exact:true}).count(),1)
-  await page.getByRole('dialog').getByRole('button',{name:'뒤로가기',exact:true}).click()
+  }
+  await navigate('/app/partners');await page.getByRole('button',{name:'QA 거래처 수정',exact:true}).click();await check('거래처 수정','PT01',true);assert.equal(await page.getByRole('button',{name:'거래처 저장',exact:true}).count(),1)
+  await page.getByRole('dialog').getByRole('button',{name:'닫기',exact:true}).click()
+  await navigate('/app/settings/users');await page.getByRole('button',{name:'QA 구성원 수정',exact:true}).click();await check('사용자 수정','employee001',true);assert.equal(await page.getByRole('button',{name:'사용자 정보 저장',exact:true}).count(),1)
+  await page.getByRole('dialog').getByRole('button',{name:'닫기',exact:true}).click()
+  if(!editorsOnly){
   await navigate('/app/inventory/adjustments');await page.getByRole('button',{name:'이동·조정 내역',exact:true}).click();await page.getByRole('button',{name:'OP01 상세',exact:true}).click();await check('이동 조정 상세','OP01')
   await navigate('/app/support');await page.getByRole('button',{name:'상세',exact:true}).click();await check('문의 상세','QA01')
+  }
   console.log('PASS detail headers, metadata, actions and guides '+width+'px')
  }
+ if(!editorsOnly){
  await navigate('/app/products/'+id);await page.getByRole('button',{name:'변경사항 저장',exact:true}).click();await page.getByRole('alertdialog',{name:'상품 저장 확인',exact:true}).waitFor();await page.getByRole('button',{name:'계속 편집',exact:true}).click();assert.equal(await page.getByRole('alertdialog',{name:'상품 저장 확인',exact:true}).count(),0)
  permissions.products=['menu','read'];await navigate('/app/products/'+id);await check('읽기 전용 상품','PR01');assert.equal(await page.getByRole('button',{name:'변경사항 저장',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'상품 삭제',exact:true}).count(),0)
+ }
  assert.deepEqual(errors,[]);assert.deepEqual([...unknown],[])
 }finally{await browser.close()}

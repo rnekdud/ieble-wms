@@ -111,6 +111,13 @@
 .warehouse-inline-basics :is(input,select) { height:40px; }
 .warehouse-inline-basics .organization-checkbox { display:flex; flex-direction:row; align-items:center; gap:8px; }
 .warehouse-inline-basics input[type=checkbox] { width:16px; height:16px; }
-.warehouse-inline-basics > .organization-row-actions,.warehouse-inline-basics > .alert { grid-column:1/-1; }
+.warehouse-inline-basics > .alert { grid-column:1/-1; }
 @media(max-width:1100px) { .warehouse-inline-basics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .warehouse-inline-basics { grid-template-columns:minmax(0,1fr); } }
+
+/* Detail-only actions share the existing back-button row and original form. */
+.warehouse-detail-save-actions { display: contents; }
+:root body .warehouse-detail-header.has-basics-actions .work-detail-main { flex-wrap: wrap; }
+:root body .warehouse-detail-header.has-basics-actions .work-detail-main > h2 { flex-basis: 140px; }
+:root body .warehouse-detail-header.has-basics-actions .work-detail-actions { flex-wrap: wrap; max-width: 100%; gap: 8px; margin-left: auto; flex-shrink: 1; }
+:root body .warehouse-detail-header.has-basics-actions .work-detail-actions button { height: 40px; min-height: 40px; }

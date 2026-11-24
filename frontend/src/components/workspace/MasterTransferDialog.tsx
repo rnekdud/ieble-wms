@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import FormLabel from '../FormLabel'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../../api'
@@ -35,26 +36,26 @@ export default function MasterTransferDialog({ tenantId, onClose, onTransferred 
       setReview(false)
     } finally { sending.current = false; setBusy(false) }
   }
-  return <OrganizationDialog confirmation={review} title="마스터 위임" busy={busy} onClose={() => review ? setReview(false) : onClose()}>
-    {error && <p role="alert" className="alert error">{error}</p>}
-    {!data ? <p>위임 가능한 직원을 확인하고 있습니다.</p> : <>
+  return <OrganizationDialog confirmation={review} title={uiText("마스터 위임")} busy={busy} onClose={() => review ? setReview(false) : onClose()}>
+    {error && <p role="alert" className="alert error">{uiText(error)}</p>}
+    {!data ? <p>{uiText("위임 가능한 직원을 확인하고 있습니다.")}</p> : <>
       <form ref={form} hidden={review} onSubmit={e => { e.preventDefault(); if (target && !busy) setReview(true) }}>
         <fieldset disabled={busy}>
-          <label><FormLabel required>위임 대상</FormLabel><select aria-label="위임 대상" value={targetId} onChange={e => setTargetId(e.target.value)} required>
-            <option value="">직원 선택</option>{data.candidates.map(c => <option key={c.userId} value={c.userId}>{c.name} ({c.loginId}) · {c.role === 'Administrator' ? '기업 관리자' : '일반 직원'}</option>)}
+          <label><FormLabel required>{uiText("위임 대상")}</FormLabel><select aria-label={uiText("위임 대상")} value={targetId} onChange={e => setTargetId(e.target.value)} required>
+            <option value="">{uiText("직원 선택")}</option>{data.candidates.map(c => <option key={c.userId} value={c.userId}>{c.name} ({c.loginId}) · {c.role === 'Administrator' ? uiText("기업 관리자") : uiText("일반 직원")}</option>)}
           </select></label>
-          <p className="organization-help">같은 기업의 활성 직원 중 최초 비밀번호 변경을 완료한 사용자만 표시됩니다.</p>
-          <PasswordInput label="현재 마스터 비밀번호" name="currentPassword" autoComplete="current-password" required maxLength={128} />
-          <label><FormLabel required>위임 사유</FormLabel><textarea aria-label="위임 사유" name="reason" maxLength={500} required rows={3} /></label>
-          <button className="primary" disabled={!target}>위임 내용 확인</button>
+          <p className="organization-help">{uiText("같은 기업의 활성 직원 중 최초 비밀번호 변경을 완료한 사용자만 표시됩니다.")}</p>
+          <PasswordInput label={uiText("현재 마스터 비밀번호")} name="currentPassword" autoComplete="current-password" required maxLength={128} />
+          <label><FormLabel required>{uiText("위임 사유")}</FormLabel><textarea aria-label={uiText("위임 사유")} name="reason" maxLength={500} required rows={3} /></label>
+          <button className="primary" disabled={!target}>{uiText("위임 내용 확인")}</button>
         </fieldset>
       </form>
-      {review && <section role="alertdialog" aria-label="마스터 위임 최종 확인">
-        <p>본인: 기업 마스터 → <strong>기업 관리자</strong></p>
-        <p>{target?.name}: {target?.role === 'Administrator' ? '기업 관리자' : '일반 직원'} → <strong>기업 마스터</strong></p>
-        <p>위임 즉시 본인의 마스터 전용 기능은 제한되고, 저장된 기업 관리자 권한이 적용됩니다. 최종 확정 시 현재 비밀번호와 대상 상태를 서버에서 다시 검사합니다.</p>
-        <button className="secondary" disabled={busy} onClick={() => setReview(false)}>취소</button>{' '}
-        <button className="primary" disabled={busy} onClick={transfer}>{busy ? '위임 중…' : '위임 확정'}</button>
+      {review && <section role="alertdialog" aria-label={uiText("마스터 위임 최종 확인")}>
+        <p>{uiText("본인: 기업 마스터 →")} <strong>{uiText("기업 관리자")}</strong></p>
+        <p>{target?.name}: {target?.role === 'Administrator' ? uiText("기업 관리자") : uiText("일반 직원")} → <strong>{uiText("기업 마스터")}</strong></p>
+        <p>{uiText("위임 즉시 본인의 마스터 전용 기능은 제한되고, 저장된 기업 관리자 권한이 적용됩니다. 최종 확정 시 현재 비밀번호와 대상 상태를 서버에서 다시 검사합니다.")}</p>
+        <button className="secondary" disabled={busy} onClick={() => setReview(false)}>{uiText("취소")}</button>{' '}
+        <button className="primary" disabled={busy} onClick={transfer}>{busy ? uiText("위임 중…") : uiText("위임 확정")}</button>
       </section>}
     </>}
   </OrganizationDialog>

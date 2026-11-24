@@ -15,9 +15,17 @@
     </PackageReference>
     <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="../tools/plan-recognition/recognize.py;../tools/plan-recognition/requirements.txt" Link="plan-recognition/%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../shared/billing-preview-policy.json" LogicalName="BillingPreviewPolicy.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Reports/Fonts/NanumGothic-Regular.ttf" LogicalName="WmsDocumentFont.ttf" />
   </ItemGroup>
 </Project>

@@ -107,6 +107,7 @@ public sealed partial class ReceiptService(WmsDbContext db, ProductUsagePolicy p
             lines.Add(l);
         }
         UniqueSerials(lines);db.InboundReceiptLines.RemoveRange(old.Where(l=>!retained.Contains(l.Id)));
+        await SavePhotos(doc,actor,r.Photos,r.PhotosVersion,ct,!id.HasValue);
         Audit(doc,actor,id.HasValue?"Updated":"Created",before,lines);
         await Save(ct);await tx.CommitAsync(ct);return new {receipt=doc,lines};
     }

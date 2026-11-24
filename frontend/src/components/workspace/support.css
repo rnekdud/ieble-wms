@@ -12,3 +12,51 @@
   margin:0; padding:4px 10px; line-height:16px; white-space:nowrap;
 }
 .support-table td[data-label="처리 상태"] { vertical-align:middle; }
+
+/* Inquiry detail only: one scrollable body, compact metadata and persistent actions. */
+:root body .support-detail-dialog:not(.dialog-confirmation) > .organization-dialog-heading {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 24px; margin:0; border-bottom:1px solid var(--ui-line,#dfe7eb);
+}
+:root body .support-detail-dialog .organization-dialog-heading h2 { margin:0; }
+
+:root body .support-detail-dialog:not(.dialog-confirmation) > .dialog-body { padding:20px 24px; }
+:root body .support-detail-dialog .support-detail:not([hidden]) { display:grid; gap:20px; min-width:0; }
+:root body .support-detail-dialog .support-detail > section { min-width:0; }
+:root body .support-detail-dialog .support-detail-summary { display:grid; justify-items:start; gap:10px; }
+:root body .support-detail-dialog .support-detail-title { font-size:21px; line-height:1.5; overflow-wrap:anywhere; margin:0; }
+:root body .support-detail-dialog .support-detail-meta { display:flex; flex-wrap:wrap; gap:6px 20px; margin:0; font-size:13px; line-height:1.6; color:var(--ui-muted,#64748b); }
+:root body .support-detail-dialog .support-detail-meta > div { display:flex; flex-wrap:wrap; gap:4px 8px; min-width:0; max-width:100%; }
+:root body .support-detail-dialog .support-detail-meta dt { flex:none; font-weight:500; }
+:root body .support-detail-dialog .support-detail-meta dd { margin:0; min-width:0; overflow-wrap:anywhere; color:var(--ui-ink,#233f4c); }
+:root body .support-detail-dialog .support-detail-content { display:grid; gap:12px; border-top:1px solid var(--ui-line,#dfe7eb); padding-top:20px; }
+:root body .support-detail-dialog .support-detail h3:not(.support-detail-title) { font-size:15px; line-height:1.5; margin:0; }
+:root body .support-detail-dialog .support-message { font-size:14px; line-height:1.8; margin:0; }
+:root body .support-detail-dialog .support-attachments { min-width:0; margin-top:4px; }
+:root body .support-detail-dialog .support-attachments h4 { font-size:13px; margin:0 0 8px; }
+:root body .support-detail-dialog .support-files { margin:0; gap:8px; }
+:root body .support-detail-dialog .support-files li { min-width:0; }
+:root body .support-detail-dialog .support-files a { display:flex; align-items:center; gap:10px; width:100%; min-width:0; max-width:540px; min-height:44px; padding:8px 12px; border:1px solid var(--ui-line,#dfe7eb); border-radius:8px; text-decoration:none; color:var(--ui-ink,#233f4c); font-size:13px; }
+:root body .support-detail-dialog .support-files a:hover { background:var(--ui-surface-soft,#f5f7fa); }
+:root body .support-detail-dialog .support-files a:focus-visible { outline:2px solid var(--ui-ink,#233f4c); outline-offset:2px; }
+:root body .support-detail-dialog .support-files a > span { flex:1; min-width:0; overflow-wrap:anywhere; }
+:root body .support-detail-dialog .support-files svg { flex:none; }
+:root body .support-detail-dialog .support-files small { display:block; margin-top:2px; color:var(--ui-muted,#64748b); }
+:root body .support-detail-dialog .support-answer { display:grid; gap:12px; padding:16px; border:1px solid var(--ui-line,#dfe7eb); border-radius:8px; background:#f7f9fb; }
+:root body .support-detail-dialog .support-answer-empty { margin:0; color:var(--ui-muted,#64748b); font-size:14px; line-height:1.7; }
+:root body .support-detail-dialog .support-admin-editor { padding:0; border:0; margin:0; }
+:root body .support-detail-dialog .support-admin-editor fieldset { margin:0; gap:14px; }
+:root body .support-detail-dialog .support-admin-editor textarea { max-width:100%; scroll-margin-block:16px; }
+:root body .support-detail-dialog > .dialog-actions { gap:8px; padding:12px 24px calc(12px + env(safe-area-inset-bottom)); }
+:root body .support-detail-dialog > .dialog-actions > button { min-height:44px!important; height:auto!important; max-height:none; margin:0; }
+@media(max-width:600px) {
+  :root body .support-detail-dialog:not(.dialog-confirmation) > .organization-dialog-heading { padding:8px 12px; }
+  :root body .support-detail-dialog:not(.dialog-confirmation) > .dialog-body { padding:16px; }
+  :root body .support-detail-dialog .support-detail-title { font-size:19px; }
+  :root body .support-detail-dialog .support-detail-meta { gap:6px 14px; }
+  :root body .support-detail-dialog .support-answer { padding:12px; }
+  :root body .support-detail-dialog > .dialog-actions { padding-inline:16px; }
+}
+
+:root body .support-detail-dialog .support-admin-editor label:has(> select, > textarea) { min-width:0; grid-template-columns:minmax(0,1fr); justify-content:stretch; margin:0; }
+:root body .support-detail-dialog .support-admin-editor :is(select,textarea) { width:100%; min-width:0; box-sizing:border-box; }

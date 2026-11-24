@@ -1,3 +1,4 @@
+import { t as uiText, getLocale } from '../../i18n.ts'
 import { useEffect, useState } from 'react'
 import { api } from '../../api'
 import type { OverviewResult } from '../../stock-overview-model'
@@ -17,17 +18,17 @@ export default function BarcodeProductStock({ tenantId, productId }: { tenantId:
     })
     return () => { active = false }
   }, [key, url])
-  return <section className="barcode-product-stock" aria-label="상품 전체 재고" aria-busy={!current}>
-    <h3>재고 현황</h3>
-    {!current && <p role="status">전체 창고 재고를 조회하고 있습니다…</p>}
-    {current?.error && <p role="alert">{current.error} <button type="button" className="secondary" onClick={() => setRetry(n => n + 1)}>다시 조회</button></p>}
+  return <section className="barcode-product-stock" aria-label={uiText("상품 전체 재고")} aria-busy={!current}>
+    <h3>{uiText("재고 현황")}</h3>
+    {!current && <p role="status">{uiText("전체 창고 재고를 조회하고 있습니다…")}</p>}
+    {current?.error && <p role="alert">{uiText(current.error)} <button type="button" className="secondary" onClick={() => setRetry(n => n + 1)}>{uiText("다시 조회")}</button></p>}
     {current?.data && <>
       {current.data.items.map(row => <div key={`${row.productId}:${row.unit}`}>
-        {row.unit !== 'EA' && <p className="organization-help">기존 {row.unit} 재고 · EA로 자동 환산하지 않습니다.</p>}
-        <dl className="barcode-stock-totals">{[['현재고', row.quantity], ['예약 수량', row.reservedQuantity], ['가용 재고', row.availableQuantity]].map(([label, quantity]) => <div key={label}><dt>{label}</dt><dd>{Number(quantity).toLocaleString('ko-KR')}<small>{row.unit === 'EA' ? '개' : row.unit}</small></dd></div>)}</dl>
+        {row.unit !== 'EA' && <p className="organization-help">{uiText("기존")} {row.unit} {uiText("재고 · EA로 자동 환산하지 않습니다.")}</p>}
+        <dl className="barcode-stock-totals">{[['현재고', row.quantity], ['예약 수량', row.reservedQuantity], ['가용 재고', row.availableQuantity]].map(([label, quantity]) => <div key={label}><dt>{uiText(label)}</dt><dd>{Number(quantity).toLocaleString(getLocale())}<small>{row.unit === 'EA' ? uiText("개") : row.unit}</small></dd></div>)}</dl>
       </div>)}
-      {!current.data.items.length && <p>조회 가능한 재고 정보가 없습니다.</p>}
-      {current.data.total > current.data.pageSize && <Pagination page={page} total={current.data.total} pageSize={current.data.pageSize} onChange={setPage} label="재고 단위 페이지" />}
+      {!current.data.items.length && <p>{uiText("조회 가능한 재고 정보가 없습니다.")}</p>}
+      {current.data.total > current.data.pageSize && <Pagination page={page} total={current.data.total} pageSize={current.data.pageSize} onChange={setPage} label={uiText("재고 단위 페이지")} />}
     </>}
   </section>
 }

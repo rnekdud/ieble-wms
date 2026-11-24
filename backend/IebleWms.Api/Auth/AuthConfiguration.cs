@@ -28,6 +28,7 @@ public static class AuthConfiguration
         services.AddScoped<IebleWms.Api.Products.ProductService>();
         services.AddScoped<IebleWms.Api.Partners.PartnerService>();
         services.AddScoped<IebleWms.Api.Receiving.ReceiptService>();
+        services.AddScoped<IebleWms.Api.Reports.BusinessDocumentService>();
         services.AddScoped<IebleWms.Api.Shipping.ShipmentService>();
         services.AddScoped<IebleWms.Api.Inventory.InventoryService>();
         services.AddScoped<IebleWms.Api.Inventory.StocktakeService>();
@@ -41,6 +42,7 @@ public static class AuthConfiguration
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseWorkspaceService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehousePlanService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseTemplateService>();
+        services.AddScoped<IebleWms.Api.Labels.LabelDesignService>();
         services.AddScoped<IebleWms.Api.Warehousing.WarehouseSetupAccess>();
         services.AddScoped<TenantPermissionService>();
         services.AddScoped<PermissionGradeService>();

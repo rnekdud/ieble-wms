@@ -69,6 +69,26 @@ public sealed class SubscriptionTests
     private static async Task Login(HttpClient c, Fixture t, string role = "Master") => Assert.Equal(HttpStatusCode.OK, (await AuthTests.Post(c, "/api/auth/login", new { email = role, password = t.Password, rememberMe = true })).StatusCode);
     private static string Url(Fixture f) => $"/api/tenants/{f.Tenant}/subscription";
     [Fact]
+    public async Task PricingPreviewUsesLiveActiveMembersWithoutChangingLegacyBilling()
+    {
+        var clock=new BillingTestClock(DateTimeOffset.Parse("2026-10-29T12:00:00+09:00"));
+        using var f=new AuthFactory(clock:clock);var t=await Seed(f);using var c=f.Client();await Login(c,t);
+        var data=await c.GetFromJsonAsync<JsonElement>(Url(t));
+        Assert.Equal(3,data.GetProperty("currentUsers").GetInt32());
+        Assert.Equal(3000,data.GetProperty("estimatedMonthlyKrw").GetInt64());
+        var preview=data.GetProperty("pricingPreview");
+        Assert.Equal(6000,preview.GetProperty("monthlyTotalKrw").GetInt64());
+        Assert.Equal(72000,preview.GetProperty("annualTotalKrw").GetInt64());
+        Assert.Equal(clock.Now,preview.GetProperty("asOf").GetDateTimeOffset());
+        using var scope=f.Services.CreateScope();var db=scope.ServiceProvider.GetRequiredService<WmsDbContext>();
+        var member=await db.TenantMemberships.FirstAsync(x=>x.TenantId==t.Tenant && x.Role==TenantRole.Employee);
+        member.IsActive=false;await db.SaveChangesAsync();
+        var updated=await c.GetFromJsonAsync<JsonElement>(Url(t));
+        Assert.Equal(2,updated.GetProperty("currentUsers").GetInt32());
+        Assert.Equal(4000,updated.GetProperty("pricingPreview").GetProperty("monthlyTotalKrw").GetInt64());
+        Assert.Empty(await db.BillingInvoices.ToListAsync());
+    }
+    [Fact]
     public async Task ReminderFourteenDaysDismissalNextSeoulDayFeedbackIdempotencyAndAdminReview()
     {
         var clock = new BillingTestClock(DateTimeOffset.Parse("2026-10-29T12:00:00+09:00")); using var f = new AuthFactory(clock: clock);

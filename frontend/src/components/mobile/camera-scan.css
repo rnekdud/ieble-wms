@@ -12,3 +12,6 @@
   .mobile-camera-dialog > .organization-dialog-heading { gap:8px; }
   .camera-focus-controls button { font-size:12px; padding-inline:8px; }
 }
+
+/* Add breathing room after the final camera action; preserve shared button spacing. */
+:root body .mobile-camera-dialog > .dialog-actions > button:last-child { margin-inline-end:12px; }

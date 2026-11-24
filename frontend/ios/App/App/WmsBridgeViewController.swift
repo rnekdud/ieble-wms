@@ -1,5 +1,6 @@
 import Capacitor
 import WebKit
+import UIKit
 
 // A single validated origin is shared by fetch and authenticated /api image resources.
 private enum WmsEndpoint {
@@ -45,6 +46,7 @@ public class WmsApiPlugin: CAPPlugin, CAPBridgedPlugin {
 class WmsBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(WmsApiPlugin())
+        bridge?.registerPluginInstance(WmsDocumentsPlugin())
     }
 
     override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
@@ -103,4 +105,48 @@ private final class WmsSchemeTask: NSObject, WKURLSchemeTask {
     func didReceive(_ data: Data) { wrapped.didReceive(data) }
     func didFinish() { wrapped.didFinish(); complete() }
     func didFailWithError(_ error: Error) { wrapped.didFailWithError(error); complete() }
+}
+
+@objc(WmsDocumentsPlugin)
+public class WmsDocumentsPlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentPickerDelegate {
+    public let identifier = "WmsDocumentsPlugin"
+    public let jsName = "WmsDocuments"
+    public let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "save", returnType: CAPPluginReturnPromise)]
+    private var pendingCall: CAPPluginCall?
+    private var temporaryDirectory: URL?
+    @objc func save(_ call: CAPPluginCall) {
+        guard let name = call.getString("fileName"), !name.isEmpty,
+              !name.contains("/"), !name.contains("\\"), !name.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }),
+              let mime = call.getString("mimeType"), let encoded = call.getString("base64"), encoded.count <= 44739244,
+              let data = Data(base64Encoded: encoded), data.count <= 32 * 1024 * 1024,
+              (mime == "application/pdf" && name.hasSuffix(".pdf") && data.starts(with: Data("%PDF-".utf8))) ||
+              (mime == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" && name.hasSuffix(".xlsx") && data.starts(with: Data([80, 75])))
+        else { call.reject("Invalid document"); return }
+        DispatchQueue.main.async {
+            guard self.pendingCall == nil, let controller = self.bridge?.viewController, controller.presentedViewController == nil else { call.reject("File picker unavailable"); return }
+            do {
+                let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wms-document-" + UUID().uuidString, isDirectory: true)
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                self.temporaryDirectory = directory
+                let url = directory.appendingPathComponent(name)
+                try data.write(to: url, options: [.atomic, .completeFileProtection])
+                let picker = UIDocumentPickerViewController(forExporting: [url], asCopy: true)
+                picker.delegate = self
+                picker.popoverPresentationController?.sourceView = controller.view
+                picker.popoverPresentationController?.sourceRect = CGRect(x: controller.view.bounds.midX, y: controller.view.bounds.midY, width: 1, height: 1)
+                self.pendingCall = call
+                controller.present(picker, animated: true)
+            } catch { self.cleanup(); call.reject("Unable to export document", nil, error) }
+        }
+    }
+    public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        let call = pendingCall; cleanup(); call?.resolve(["cancelled": false])
+    }
+    public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        let call = pendingCall; cleanup(); call?.resolve(["cancelled": true])
+    }
+    private func cleanup() {
+        if let directory = temporaryDirectory { try? FileManager.default.removeItem(at: directory) }
+        temporaryDirectory = nil; pendingCall = nil
+    }
 }

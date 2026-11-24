@@ -33,7 +33,10 @@ export const workspaceMenus: WorkspaceMenu[] = [
   {
     label: '상품관리',
     icon: 'products',
-    page: page('products', '상품관리', '/app/products'),
+    children: [
+      page('products', '상품관리', '/app/products'),
+      page('label-editor', '라벨링 출력', '/app/label-editor'),
+    ],
   },
   {
     label: '바코드 조회',
@@ -116,6 +119,7 @@ export const canViewPage = (page: WorkspacePage, role: string | undefined, permi
   if (page.masterOnly || !role) return false
   if (page.key === 'guide') return true
   // A read-only entry point into existing product/warehouse permissions.
+  if (page.key === 'label-editor' && permissions) return permissions?.products?.includes('menu') === true && permissions.products.includes('read')
   if (page.key === 'barcode-lookup' && permissions)
     return ['products', 'warehouses'].some(area => permissions[area]?.includes('read'))
   if (permissions) return permissions[page.key]?.includes('menu') === true && permissions[page.key]?.includes('read') === true

@@ -1177,6 +1177,77 @@ namespace IebleWms.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.LabelDesign", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PaperName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Thumbnail")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TenantId", "Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Kind", "IsActive", "UpdatedAt");
+
+                    b.ToTable("LabelDesigns");
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.OrganizationChange", b =>
                 {
                     b.Property<long>("Id")
@@ -1293,6 +1364,18 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.Property<Guid>("RequestId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ShippingAddressDetail")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ShippingPostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1476,6 +1559,18 @@ namespace IebleWms.Api.Data.Migrations
 
                     b.Property<Guid>("CreationRequestId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("DefaultShippingAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DefaultShippingAddressDetail")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DefaultShippingPostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(254)
@@ -2148,6 +2243,49 @@ namespace IebleWms.Api.Data.Migrations
                     b.HasIndex("TenantId", "ReceiptId", "Id");
 
                     b.ToTable("ReceiptChanges");
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ReceiptPhoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Thumbnail")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ReceiptId", "Position");
+
+                    b.ToTable("ReceiptPhotos");
                 });
 
             modelBuilder.Entity("IebleWms.Api.Models.ShipmentAllocation", b =>
@@ -4312,6 +4450,25 @@ namespace IebleWms.Api.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("IebleWms.Api.Models.LabelDesign", b =>
+                {
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("IebleWms.Api.Models.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("IebleWms.Api.Models.OrganizationChange", b =>
                 {
                     b.HasOne("IebleWms.Api.Models.ApplicationUser", null)
@@ -4561,6 +4718,16 @@ namespace IebleWms.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("IebleWms.Api.Models.InboundReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ReceiptId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IebleWms.Api.Models.ReceiptPhoto", b =>
+                {
                     b.HasOne("IebleWms.Api.Models.InboundReceipt", null)
                         .WithMany()
                         .HasForeignKey("TenantId", "ReceiptId")

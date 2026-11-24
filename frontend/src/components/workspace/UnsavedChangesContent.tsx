@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import type { ReactNode } from 'react'
 
 /** Shared presentation only; each editor retains its existing navigation guard. */
@@ -12,12 +13,12 @@ export default function UnsavedChangesContent({
   busy?: boolean
   label?: string
 }) {
-  return <section className="unsaved-changes-content" role={label ? 'alertdialog' : undefined} aria-label={label}>
-    <p>{message}</p>
+  return <section className="unsaved-changes-content" role={label ? 'alertdialog' : undefined} aria-label={uiText(label)}>
+    <p>{typeof message === 'string' ? uiText(message) : message}</p>
     <p>{detail}</p>
     <div className="confirmation-actions">
-      <button type="button" className="secondary" onClick={stay}>계속 편집</button>
-      <button type="button" className="primary" disabled={busy} onClick={discard}>변경 버리고 계속</button>
+      <button type="button" className="secondary" onClick={stay}>{uiText("계속 편집")}</button>
+      <button type="button" className="primary" disabled={busy} onClick={discard}>{uiText("변경 버리고 계속")}</button>
     </div>
   </section>
 }

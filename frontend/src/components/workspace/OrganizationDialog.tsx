@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import './dialog-layout.css'
@@ -8,7 +9,6 @@ export default function OrganizationDialog({
   headingActions,
   detailHeader,
   className = '',
-  showClose = false,
   hideFooter = false,
   closeOnBackdrop = false,
   children,
@@ -22,8 +22,9 @@ export default function OrganizationDialog({
 }: {
   title: string
   headingActions?: ReactNode
-  detailHeader?: { code?: ReactNode; status?: ReactNode; actions?: ReactNode }
+  detailHeader?: { code?: ReactNode; status?: ReactNode; actions?: ReactNode; hideBack?: boolean; actionsInFooter?: boolean }
   className?: string
+  /** @deprecated Header close controls are replaced by footer actions. */
   showClose?: boolean
   hideFooter?: boolean
   closeOnBackdrop?: boolean
@@ -37,7 +38,7 @@ export default function OrganizationDialog({
   onClose: () => void
 }) {
   const titleId = useId(), descriptionId = useId()
-  const dialog = useRef<HTMLDialogElement>(null), body = useRef<HTMLDivElement>(null)
+  const dialog = useRef<HTMLDialogElement>(null)
   const [needsClose, setNeedsClose] = useState(false)
   const [opener] = useState(() => document.activeElement instanceof HTMLElement ? document.activeElement : null)
   useEffect(() => {
@@ -52,14 +53,18 @@ export default function OrganizationDialog({
     }
   }, [opener])
   useEffect(() => {
-    const element = body.current!
-    const update = () => setNeedsClose(!Array.from(element.querySelectorAll('button')).some(button =>
-      button.getClientRects().length > 0 && /^(취소|닫기|계속 편집|계속 보기|계속 작성|계속 수정|계속 확인|돌아가기|확인)$/.test(button.textContent?.trim() || '')))
+    const element = dialog.current!
+    // Inspect rendered body/footer actions, not header controls or the fallback itself.
+    // This also covers image viewers, detail headers and custom action footers.
+    const update = () => setNeedsClose(!Array.from(element.querySelectorAll<HTMLButtonElement>('.dialog-body button, .dialog-actions button')).some(button =>
+      button.closest('dialog') === element && !button.hasAttribute('data-dialog-fallback') &&
+      button.getClientRects().length > 0 && (button.textContent?.trim() !== uiText('확인') || !button.disabled) && ['취소','닫기','계속 편집','계속 보기','계속 작성','계속 수정','계속 확인','돌아가기','편집으로 돌아가기','카메라 종료','확인'].map(label => uiText(label)).includes(button.textContent?.trim() || '')))
     update()
     const observer = new MutationObserver(update)
     observer.observe(element, { childList: true, subtree: true, attributes: true, characterData: true })
     return () => observer.disconnect()
   }, [])
+  const footerActions = hideFooter ? null : detailHeader?.actionsInFooter && !confirmation ? detailHeader.actions : (!detailHeader || confirmation) ? actions : null
   return (
     <dialog
       ref={dialog}
@@ -86,13 +91,15 @@ export default function OrganizationDialog({
         if (!busy) onClose()
       }}
     >
-      {detailHeader && !confirmation ? <DetailHeader level={2} title={title} titleId={titleId} code={detailHeader.code} status={detailHeader.status} actions={detailHeader.actions} busy={busy} onBack={onClose} /> : <div className="organization-dialog-heading">
+      {detailHeader && !confirmation ? <DetailHeader level={2} title={title} titleId={titleId} code={detailHeader.code} status={detailHeader.status} actions={detailHeader.actionsInFooter ? undefined : detailHeader.actions} busy={busy} onBack={detailHeader.hideBack ? undefined : onClose} /> : <div className="organization-dialog-heading">
         <div><h2 id={titleId}>{title}</h2>{description && !confirmation && <p id={descriptionId}>{description}</p>}</div>
         {headingActions}
-        {showClose && <button type="button" className="dialog-close-icon" aria-label="닫기" disabled={busy} onClick={onClose}>×</button>}
       </div>}
-      <div className="dialog-body" ref={body}>{children}</div>
-      {!hideFooter && (!detailHeader || confirmation) && (actions ? <footer className="dialog-actions">{actions}</footer> : needsClose && <footer className="dialog-actions"><button type="button" className="secondary dialog-close" disabled={busy} onClick={onClose}>닫기</button></footer>)}
+      <div className="dialog-body">{children}</div>
+      {(footerActions || needsClose) && <footer className="dialog-actions">
+        {footerActions}
+        {needsClose && <button type="button" className="secondary dialog-close" data-dialog-fallback disabled={busy} onClick={onClose}>{uiText("닫기")}</button>}
+      </footer>}
     </dialog>
   )
 }

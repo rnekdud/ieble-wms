@@ -1,3 +1,4 @@
+import { t as uiText } from './i18n.ts'
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { iosApiBaseUrl, iosApiUrl } from './ios-api-url'
 
@@ -18,5 +19,5 @@ async function start() {
 
 void start().catch(() => {
   const root = document.getElementById('root')
-  if (root) root.textContent = '앱을 시작하지 못했습니다. iPhone용 API 주소 설정을 확인한 뒤 다시 실행해 주세요. Simulator의 localhost 주소는 실제 iPhone에서 사용할 수 없습니다.'
+  if (root) root.textContent = uiText('앱을 시작하지 못했습니다. iPhone용 API 주소 설정을 확인한 뒤 다시 실행해 주세요. Simulator의 localhost 주소는 실제 iPhone에서 사용할 수 없습니다.')
 })

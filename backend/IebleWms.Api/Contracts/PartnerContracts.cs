@@ -4,6 +4,13 @@ namespace IebleWms.Api.Contracts;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class PartnerRequest
 {
+    // Omitted fields preserve older clients and idempotency hashes; empty strings clear the address.
+    [StringLength(500), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DefaultShippingAddress { get; set; }
+    [StringLength(500), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DefaultShippingAddressDetail { get; set; }
+    [StringLength(20), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DefaultShippingPostalCode { get; set; }
     public Guid RequestId { get; set; }
     public Guid Version { get; set; }
     [StringLength(64)] public string? Code { get; set; }

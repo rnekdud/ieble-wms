@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import FormLabel from '../FormLabel'
 import RackBarcodeFields from './RackBarcodeFields'
 import RackBarcodeLabel from './RackBarcodeLabel'
@@ -55,37 +56,37 @@ export default function PlanStructureProperties({ item, endpoint, warehouse, obj
     catch (e) { setError(e instanceof Error ? e.message : '바코드를 저장하지 못했습니다.') }
     finally { sending.current = false; setSubmitting(false); onBusy(false) }
   }
-  return <section className="plan-structure-properties" aria-label={`실제 ${label} 설정`}>
-    {error && <p role="alert" className="alert error">{error}</p>}
-    {physical && <dl className="plan-linked-facts"><div><dt>{label} 코드</dt><dd>{physical.code}</dd></div><div><dt>이름</dt><dd>{physical.name}</dd></div>{isRack && <><div><dt>단수 · 칸수</dt><dd>{physical.levels}단 × {physical.bays}칸</dd></div><div><dt>소속 구역</dt><dd>{warehouse.zones.find(z => z.id === physical.zoneId)?.name || '구역 없음'}</dd></div></>}</dl>}
-    <details className="structure-link-options" open={!physical}><summary>{physical ? `${label} 연결 변경` : `등록된 ${label} 연결`}</summary>
-    <label>등록된 {label}<select aria-label={`실제 ${label} 연결`} disabled={!editable} value={linked || ''} onChange={e => onLink(isRack ? { rackId: e.target.value || null, locationId: null } : { zoneId: e.target.value || null, locationId: null })}>
-      <option value="">연결 안 함</option>
-      {linked && !physical && <option value={linked}>현재 연결된 {label}</option>}
-      {candidates.map(x => <option key={x.id} value={x.id} disabled={isRack && objects.some(o => o.id !== item.id && o.rackId === x.id)}>{x.code} · {x.name}{x.isActive ? '' : ' (미사용)'}{isRack && objects.some(o => o.id !== item.id && o.rackId === x.id) ? ' (다른 객체에 연결됨)' : ''}</option>)}
+  return <section className="plan-structure-properties" aria-label={uiText("실제 {v0} 설정", { v0: uiText(label) })}>
+    {error && <p role="alert" className="alert error">{uiText(error)}</p>}
+    {physical && <dl className="plan-linked-facts"><div><dt>{uiText(label)} {uiText("코드")}</dt><dd>{physical.code}</dd></div><div><dt>{uiText("이름")}</dt><dd>{physical.name}</dd></div>{isRack && <><div><dt>{uiText("단수 · 칸수")}</dt><dd>{physical.levels}{uiText("단 ×")} {physical.bays}{uiText("칸")}</dd></div><div><dt>{uiText("소속 구역")}</dt><dd>{warehouse.zones.find(z => z.id === physical.zoneId)?.name || uiText("구역 없음")}</dd></div></>}</dl>}
+    <details className="structure-link-options" open={!physical}><summary>{physical ? uiText("{v0} 연결 변경", { v0: uiText(label) }) : uiText("등록된 {v0} 연결", { v0: uiText(label) })}</summary>
+    <label>{uiText("등록된")} {uiText(label)}<select aria-label={uiText("실제 {v0} 연결", { v0: uiText(label) })} disabled={!editable} value={linked || ''} onChange={e => onLink(isRack ? { rackId: e.target.value || null, locationId: null } : { zoneId: e.target.value || null, locationId: null })}>
+      <option value="">{uiText("연결 안 함")}</option>
+      {linked && !physical && <option value={linked}>{uiText("현재 연결된")} {uiText(label)}</option>}
+      {candidates.map(x => <option key={x.id} value={x.id} disabled={isRack && objects.some(o => o.id !== item.id && o.rackId === x.id)}>{x.code} · {x.name}{x.isActive ? '' : uiText("(미사용)")}{isRack && objects.some(o => o.id !== item.id && o.rackId === x.id) ? uiText("(다른 객체에 연결됨)") : ''}</option>)}
     </select></label>
-    {physical && <p className="organization-help">{physical.code} · {physical.name}{isRack ? ` · ${physical.levels}단 × ${physical.bays}칸` : ''}<br />연결 해제는 실제 구조를 유지합니다. 삭제 버튼은 연결된 {label}을 즉시 삭제하며, 재고·업무 참조가 있으면 차단됩니다.{isRack && ' 단·칸 확장은 창고 상세의 랙 수정에서 할 수 있습니다.'}</p>}
+    {physical && <p className="organization-help">{physical.code} · {physical.name}{isRack ? uiText("· {v0}단 × {v1}칸", { v0: physical.levels, v1: physical.bays }) : ''}<br />{uiText("연결 해제는 실제 구조를 유지합니다. 삭제 버튼은 연결된")} {uiText(label)}{uiText("을 즉시 삭제하며, 재고·업무 참조가 있으면 차단됩니다.")}{isRack && uiText(" 단·칸 확장은 창고 상세의 랙 수정에서 할 수 있습니다.")}</p>}
     </details>
     {isRack && physical && <>
       {!editable && !submitting && <RackBarcodeLabel value={physical.barcode} rackId={physical.id} rackCode={physical.code} />}
-      {(editable || submitting) && <><RackBarcodeFields compact warehouseEndpoint={endpoint} rackId={physical.id} rackCode={physical.code} current={physical.barcode} value={draft.barcode || { mode: 'keep' }} disabled={submitting} onChange={barcode => onDraft({ ...draft, barcode })} /><button type="button" className="primary" disabled={submitting || !draft.barcode || draft.barcode.mode === 'keep'} onClick={saveBarcode}>바코드 저장</button><p className="organization-help">바코드는 도면과 별도로 저장합니다. 도면 배치나 기존 랙·보관 위치 ID는 바뀌지 않습니다.</p></>}
+      {(editable || submitting) && <><RackBarcodeFields compact warehouseEndpoint={endpoint} rackId={physical.id} rackCode={physical.code} current={physical.barcode} value={draft.barcode || { mode: 'keep' }} disabled={submitting} onChange={barcode => onDraft({ ...draft, barcode })} /><button type="button" className="primary" disabled={submitting || !draft.barcode || draft.barcode.mode === 'keep'} onClick={saveBarcode}>{uiText("바코드 저장")}</button><p className="organization-help">{uiText("바코드는 도면과 별도로 저장합니다. 도면 배치나 기존 랙·보관 위치 ID는 바뀌지 않습니다.")}</p></>}
     </>}
     {!linked && (editable || submitting) && <>
       {canCreate && warehouse.warehouse.isActive ? <form onSubmit={create}>
-        <h3>새 {label} 등록</h3>
+        <h3>{uiText("새")} {uiText(label)} {uiText("등록")}</h3>
         <fieldset disabled={submitting}>
-          <label><FormLabel required>{label}명</FormLabel><input aria-label={`새 ${label} 이름`} required maxLength={200} value={draft.name} onChange={e => patch('name', e.target.value)} /></label>
-          <label><FormLabel required>{label} 코드</FormLabel><input aria-label={`새 ${label} 코드`} required maxLength={32} value={draft.code} onChange={e => patch('code', e.target.value)} /></label>
+          <label><FormLabel required>{uiText(label)}{uiText("명")}</FormLabel><input aria-label={uiText("새 {v0} 이름", { v0: uiText(label) })} required maxLength={200} value={draft.name} onChange={e => patch('name', e.target.value)} /></label>
+          <label><FormLabel required>{uiText(label)} {uiText("코드")}</FormLabel><input aria-label={uiText("새 {v0} 코드", { v0: uiText(label) })} required maxLength={32} value={draft.code} onChange={e => patch('code', e.target.value)} /></label>
           {isRack && <>
             <RackBarcodeFields compact warehouseEndpoint={endpoint} rackId={item.id} rackCode={draft.code} value={draft.barcode || { mode: 'none' }} disabled={submitting} onChange={barcode => onDraft({ ...draft, barcode })} />
-            <div className="plan-structure-dimensions"><label><FormLabel required>단수</FormLabel><input aria-label="랙 단수" type="number" required min={1} max={100} step={1} value={draft.levels} onChange={e => patch('levels', e.target.value)} /></label><label><FormLabel required>칸수</FormLabel><input aria-label="랙 칸수" type="number" required min={1} max={100} step={1} value={draft.bays} onChange={e => patch('bays', e.target.value)} /></label></div>
-            <label>소속 구역<select aria-label="새 랙 소속 구역" value={draft.zoneId} onChange={e => patch('zoneId', e.target.value)}><option value="">구역 없음</option>{warehouse.zones.filter(z => z.isActive).map(z => <option key={z.id} value={z.id}>{z.code} · {z.name}</option>)}</select></label>
-            <p className="organization-help">{Number(draft.levels) * Number(draft.bays) || 0}개 보관 위치가 함께 생성됩니다.</p>
+            <div className="plan-structure-dimensions"><label><FormLabel required>{uiText("단수")}</FormLabel><input aria-label={uiText("랙 단수")} type="number" required min={1} max={100} step={1} value={draft.levels} onChange={e => patch('levels', e.target.value)} /></label><label><FormLabel required>{uiText("칸수")}</FormLabel><input aria-label={uiText("랙 칸수")} type="number" required min={1} max={100} step={1} value={draft.bays} onChange={e => patch('bays', e.target.value)} /></label></div>
+            <label>{uiText("소속 구역")}<select aria-label={uiText("새 랙 소속 구역")} value={draft.zoneId} onChange={e => patch('zoneId', e.target.value)}><option value="">{uiText("구역 없음")}</option>{warehouse.zones.filter(z => z.isActive).map(z => <option key={z.id} value={z.id}>{z.code} · {z.name}</option>)}</select></label>
+            <p className="organization-help">{Number(draft.levels) * Number(draft.bays) || 0}{uiText("개 보관 위치가 함께 생성됩니다.")}</p>
           </>}
-          <p className="organization-help">등록 즉시 실제 {label}이 저장됩니다. 도면 저장을 취소해도 유지되며, 기존 목록에서 다시 연결할 수 있습니다.</p>
-          <button type="submit" className="primary">{submitting ? '등록 중…' : `${label} 생성`}</button>
+          <p className="organization-help">{uiText("등록 즉시 실제")} {uiText(label)}{uiText("이 저장됩니다. 도면 저장을 취소해도 유지되며, 기존 목록에서 다시 연결할 수 있습니다.")}</p>
+          <button type="submit" className="primary">{submitting ? uiText("등록 중…") : uiText("{v0} 생성", { v0: uiText(label) })}</button>
         </fieldset>
-      </form> : <p className="organization-help">{canCreate ? '미사용 창고에는 새 구역·랙을 등록할 수 없습니다.' : '실제 구역·랙 등록에는 창고 등록 권한이 필요합니다. 기존 항목을 연결할 수 있습니다.'}</p>}
+      </form> : <p className="organization-help">{canCreate ? uiText("미사용 창고에는 새 구역·랙을 등록할 수 없습니다.") : uiText("실제 구역·랙 등록에는 창고 등록 권한이 필요합니다. 기존 항목을 연결할 수 있습니다.")}</p>}
     </>}
   </section>
 }

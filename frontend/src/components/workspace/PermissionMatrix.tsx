@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { workspaceMenus } from './navigation'
 import './PermissionMatrix.css'
 
@@ -32,13 +33,13 @@ export default function PermissionMatrix({ caption, features, checked, disabled,
     <table className="permission-matrix" style={{ minWidth: 220 + columns.length * 88 }}>
       <caption>{caption}</caption>
       <colgroup><col className="permission-menu-column" />{columns.map(a => <col key={a} />)}</colgroup>
-      <thead><tr><th scope="col">메뉴</th>{columns.map(a => <th scope="col" key={a}>{actionLabel(a)}</th>)}</tr></thead>
+      <thead><tr><th scope="col">{uiText("메뉴")}</th>{columns.map(a => <th scope="col" key={a}>{uiText(actionLabel(a))}</th>)}</tr></thead>
       {groups.map((group, index) => <tbody key={group.label || index}>
-        {group.label && <tr className="permission-group"><th scope="rowgroup">{group.label}</th><td colSpan={columns.length} /></tr>}
-        {group.rows.map(f => <tr key={f.key}><th scope="row" className={group.label ? 'permission-child' : undefined}>{f.label}</th>
+        {group.label && <tr className="permission-group"><th scope="rowgroup">{uiText(group.label)}</th><td colSpan={columns.length} /></tr>}
+        {group.rows.map(f => <tr key={f.key}><th scope="row" className={group.label ? 'permission-child' : undefined}>{uiText(f.label)}</th>
           {columns.map(a => <td key={a}>{f.actions.includes(a) ? <label className="permission-checkbox">
-            <input type="checkbox" aria-label={`${labelPrefix}${f.label} ${actionLabel(a)}`} checked={checked(f.key, a)} disabled={disabled(f.key, a)} onChange={e => onChange(f.key, a, e.target.checked)} />
-          </label> : <span className="permission-unavailable" aria-label={`${f.label} ${actionLabel(a)} 해당 없음`}>—</span>}</td>)}
+            <input type="checkbox" aria-label={`${labelPrefix}${uiText(f.label)} ${uiText(actionLabel(a))}`} checked={checked(f.key, a)} disabled={disabled(f.key, a)} onChange={e => onChange(f.key, a, e.target.checked)} />
+          </label> : <span className="permission-unavailable" aria-label={uiText("{v0} {v1} 해당 없음", { v0: uiText(f.label), v1: uiText(actionLabel(a)) })}>—</span>}</td>)}
         </tr>)}
       </tbody>)}
     </table>

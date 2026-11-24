@@ -356,3 +356,11 @@
 @media(max-width:600px) {
   :root body .product-barcode-section .barcode-packaging-inputs { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Product-code feedback uses the existing form column without widening it. */
+.product-code-field { display: grid; align-content: start; gap: 5px; min-width: 0; }
+.product-code-field > input { width: 100%; min-width: 0; box-sizing: border-box; }
+.product-code-check { min-width: 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.product-code-check.error { padding: 8px 10px; border-radius: 8px; color: #b42318; background: #fff1f0; }
+.product-code-check a { color: inherit; text-decoration: underline; }
+:root body .product-code-field > input[data-inline-error]:focus { outline: 2px solid var(--choice-ink, #172b4d); outline-offset: 2px; box-shadow: none; }

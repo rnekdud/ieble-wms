@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { useState } from 'react'
 import type { ProductDraft } from '../../product-model'
 import FormLabel from '../FormLabel'
@@ -24,10 +25,10 @@ export default function BarcodePackagingInputs({ draft, change, packageCode, ind
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setEditing([])
   }}>
     {fields.map(key => <label key={key}>
-      <FormLabel required>{labels[key]}</FormLabel>
-      <QuantityInput unit="EA" aria-label={`바코드 ${index + 1} ${labels[key]}`} required aria-required="true" aria-invalid={!valid(draft[key])} min="1" max="999999999" step="1" value={draft[key]} disabled={busy} onChange={event => change(key, event.target.value)} />
-      <small>{!valid(draft[key]) ? draft[key] === '' ? `${labels[key]} 설정이 없습니다. 바코드 등록을 위해 수량을 입력해 주세요. ` : '1~999,999,999 사이의 정수를 입력해 주세요. ' : ''}{key === 'palletPackQuantity' ? '아웃박스 / 파레트' : key === 'innerPackQuantity' ? '낱개 / 인박스' : draft.outerPackUnit === 'EA' ? '낱개 / 아웃박스' : '인박스 / 아웃박스'}</small>
+      <FormLabel required>{uiText(labels[key])}</FormLabel>
+      <QuantityInput unit="EA" aria-label={uiText("바코드 {v0} {v1}", { v0: index + 1, v1: labels[key] })} required aria-required="true" aria-invalid={!valid(draft[key])} min="1" max="999999999" step="1" value={draft[key]} disabled={busy} onChange={event => change(key, event.target.value)} />
+      <small>{!valid(draft[key]) ? draft[key] === '' ? uiText("{v0} 설정이 없습니다. 바코드 등록을 위해 수량을 입력해 주세요.", { v0: labels[key] }) : uiText("1~999,999,999 사이의 정수를 입력해 주세요.") : ''}{key === 'palletPackQuantity' ? uiText("아웃박스 / 파레트") : key === 'innerPackQuantity' ? uiText("낱개 / 인박스") : draft.outerPackUnit === 'EA' ? uiText("낱개 / 아웃박스") : uiText("인박스 / 아웃박스")}</small>
     </label>)}
-    {needsOuter && <label>아웃박스 구성<select aria-label={`바코드 ${index + 1} 아웃박스 구성`} value={draft.outerPackUnit} disabled={busy} onChange={event => change('outerPackUnit', event.target.value)}><option value="INNER">인박스</option><option value="EA">낱개 직접 포장</option></select></label>}
+    {needsOuter && <label>{uiText("아웃박스 구성")}<select aria-label={uiText("바코드 {v0} 아웃박스 구성", { v0: index + 1 })} value={draft.outerPackUnit} disabled={busy} onChange={event => change('outerPackUnit', event.target.value)}><option value="INNER">{uiText("인박스")}</option><option value="EA">{uiText("낱개 직접 포장")}</option></select></label>}
   </div>
 }

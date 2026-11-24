@@ -8,6 +8,7 @@ internal static class PartnerModel
         var p = b.Entity<Partner>();
         p.HasKey(x => x.Id);
         p.HasAlternateKey(x => new { x.TenantId, x.Id });
+        p.Property(x => x.DefaultShippingPostalCode).HasMaxLength(20);
         p.Property(x => x.Code).HasMaxLength(64).IsRequired();
         p.Property(x => x.NormalizedCode).HasMaxLength(64).IsRequired();
         p.Property(x => x.Name).HasMaxLength(200).IsRequired();
@@ -19,6 +20,8 @@ internal static class PartnerModel
         p.Property(x => x.BusinessRegistrationNumber).HasMaxLength(64);
         p.Property(x => x.RepresentativeName).HasMaxLength(100);
         p.Property(x => x.PostalCode).HasMaxLength(20);
+        p.Property(x => x.DefaultShippingAddress).HasMaxLength(500);
+        p.Property(x => x.DefaultShippingAddressDetail).HasMaxLength(500);
         p.Property(x => x.Address).HasMaxLength(500);
         p.Property(x => x.AddressDetail).HasMaxLength(500);
         p.Property(x => x.Phone).HasMaxLength(50);

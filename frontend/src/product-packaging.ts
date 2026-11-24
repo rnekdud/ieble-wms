@@ -1,3 +1,4 @@
+import { getLocale, t as uiText } from './i18n.ts'
 export type Packaging = { innerPackQuantity?: number | null; outerPackQuantity?: number | null; outerPackUnit?: string; palletPackQuantity?: number | null }
 export const packageLabels = { EA: '낱개', INNER: '인박스', OUTER: '아웃박스', PALLET: '파레트' }
 export type PackageCode = keyof typeof packageLabels
@@ -26,7 +27,7 @@ export function barcodePackageError(p: Packaging, unit: string, code = 'EA'): st
 }
 
 export function barcodePackageSummary(p: Packaging & { unit: string }, code = 'EA') {
-  if (barcodePackageError(p, p.unit, code)) return '포장 설정 확인 필요'
-  if (p.unit !== 'EA') return `기존 단위 · 1 ${p.unit} (자동 환산 없음)`
-  return `${packageLabels[code as PackageCode]} · ${packageFactors(p)[code as PackageCode]!.toLocaleString('ko-KR')} EA`
+  if (barcodePackageError(p, p.unit, code)) return uiText('포장 설정 확인 필요')
+  if (p.unit !== 'EA') return uiText('기존 단위 · 1 {v0} (자동 환산 없음)', {v0:p.unit})
+  return `${uiText(packageLabels[code as PackageCode])} · ${packageFactors(p)[code as PackageCode]!.toLocaleString(getLocale())} EA`
 }

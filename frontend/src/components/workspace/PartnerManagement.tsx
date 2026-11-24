@@ -1,5 +1,7 @@
+import { t as uiText } from '../../i18n.ts'
 import PageSizeSelect from '../PageSizeSelect'
 import FormLabel from '../FormLabel'
+import ShippingAddressFields from '../ShippingAddressFields'
 import AddressSearchField from "../AddressSearchField"
 import SearchFilters from './SearchFilters'
 import UnsavedChangesContent from './UnsavedChangesContent'
@@ -34,21 +36,21 @@ export default function PartnerManagement({ tenantId, grants }: { tenantId: stri
     return () => { live = false; window.clearTimeout(timer) }
   }, [url, key])
   return <>
-    <PageHeading title="거래처관리" actions={<> {grants.includes('create') && <button className="primary" onClick={() => { setSelection({ id: null }); setNotice('') }}>거래처 등록</button>} </>} />
-    {notice && <p role="status" className="alert">{notice}</p>}
-    {error && <p role="alert" className="alert error">{error} <button className="secondary" onClick={() => refresh(n => n + 1)}>다시 시도</button></p>}
+    <PageHeading title={uiText("거래처관리")} actions={<> {grants.includes('create') && <button className="primary" onClick={() => { setSelection({ id: null }); setNotice('') }}>{uiText("거래처 등록")}</button>} </>} />
+    {notice && <p role="status" className="alert">{uiText(notice)}</p>}
+    {error && <p role="alert" className="alert error">{uiText(error)} <button className="secondary" onClick={() => refresh(n => n + 1)}>{uiText("다시 시도")}</button></p>}
     <section className="wms-card products-card mobile-management-list">
       <SearchFilters onReset={() => { const next = { search: '', type: 'all', status: 'all', page: 1, pageSize: 20 }; setFilters(next); setQuery(next);  refresh(n => n + 1) }} busy={loading && !error} onSearch={() => { setQuery({ ...filters, page: 1 }); refresh(n => n + 1) }} className="products-toolbar mobile-management-filters">
 
-        <label>거래처 유형<select aria-label="거래처 유형 필터" value={filters.type} onChange={e => setFilters({ ...filters, type: e.target.value })}><option value="all">전체 유형</option>{Object.entries(partnerTypes).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label>사용 여부<select aria-label="사용 여부 필터" value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}><option value="all">전체</option><option value="active">사용</option><option value="inactive">미사용</option></select></label>
+        <label>{uiText("거래처 유형")}<select aria-label={uiText("거래처 유형 필터")} value={filters.type} onChange={e => setFilters({ ...filters, type: e.target.value })}><option value="all">{uiText("전체 유형")}</option>{Object.entries(partnerTypes).map(([value, label]) => <option key={value} value={value}>{uiText(label)}</option>)}</select></label>
+        <label>{uiText("사용 여부")}<select aria-label={uiText("사용 여부 필터")} value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}><option value="all">{uiText("전체")}</option><option value="active">{uiText("사용")}</option><option value="inactive">{uiText("미사용")}</option></select></label>
 
-      <label>거래처 검색<input aria-label="거래처 검색" placeholder="거래처명·코드·사업자등록번호·이메일" maxLength={100} value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} /></label>
+      <label>{uiText("거래처 검색")}<input aria-label={uiText("거래처 검색")} placeholder={uiText("거래처명·코드·사업자등록번호·이메일")} maxLength={100} value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} /></label>
 </SearchFilters>
-      <div className="table-scroll"><table className="organization-table mobile-record-table mobile-management-table partner-management-table"><thead><tr>{['거래처코드', '거래처명', '거래처 유형', '사업자등록번호', '대표 전화번호', '이메일', '담당자명', '담당자 연락처', '사용 여부', '관리'].map(text => <th key={text}>{text}</th>)}</tr></thead>
-        <tbody>{loading ? <tr><td colSpan={10}>{error ? '목록을 불러오지 못했습니다.' : '거래처를 불러오는 중…'}</td></tr> : !data.value.items.length ? <tr><td colSpan={10}>조회된 거래처가 없습니다.</td></tr> : data.value.items.map(p => <tr key={p.id}><td data-label="거래처코드">{p.code}</td><td data-label="거래처명"><span className="partner-card-name">{p.name}</span><span className="partner-card-meta">{p.code} / {partnerTypes[p.type]}</span></td><td data-label="거래처 유형">{partnerTypes[p.type]}</td><td data-label="사업자등록번호">{p.businessRegistrationNumber || '—'}</td><td data-label="대표 전화번호">{p.phone || '—'}</td><td data-label="이메일"><ContactLink value={p.email} email /></td><td data-label="담당자명">{p.contactName || '—'}</td><td data-label="담당자 연락처">{p.contactPhone || '—'}</td><td data-label="사용 여부" className="mobile-card-usage"><span className={`partner-card-status ${p.isActive ? "is-active" : "is-inactive"}`}>{p.isActive ? '사용' : '미사용'}</span></td><td data-label="관리"><button className="secondary" aria-label={`${p.name} 상세`} onClick={() => setSelection({ id: p.id })}>상세</button></td></tr>)}</tbody>
+      <div className="table-scroll"><table className="organization-table mobile-record-table mobile-management-table partner-management-table"><thead><tr>{['거래처코드', '거래처명', '거래처 유형', '사업자등록번호', '대표 전화번호', '이메일', '담당자명', '담당자 연락처', '사용 여부', '관리'].map(text => <th key={text}>{uiText(text)}</th>)}</tr></thead>
+        <tbody>{loading ? <tr><td colSpan={10}>{error ? uiText("목록을 불러오지 못했습니다.") : uiText("거래처를 불러오는 중…")}</td></tr> : !data.value.items.length ? <tr><td colSpan={10}>{uiText("조회된 거래처가 없습니다.")}</td></tr> : data.value.items.map(p => <tr key={p.id}><td data-label={uiText("거래처코드")}>{p.code}</td><td data-label={uiText("거래처명")}><span className="partner-card-name">{p.name}</span><span className="partner-card-meta">{p.code} / {uiText(partnerTypes[p.type])}</span></td><td data-label={uiText("거래처 유형")}>{uiText(partnerTypes[p.type])}</td><td data-label={uiText("사업자등록번호")}>{p.businessRegistrationNumber || '—'}</td><td data-label={uiText("대표 전화번호")}>{p.phone || '—'}</td><td data-label={uiText("이메일")}><ContactLink value={p.email} email /></td><td data-label={uiText("담당자명")}>{p.contactName || '—'}</td><td data-label={uiText("담당자 연락처")}>{p.contactPhone || '—'}</td><td data-label={uiText("사용 여부")} className="mobile-card-usage"><span className={`partner-card-status ${p.isActive ? "is-active" : "is-inactive"}`}>{p.isActive ? uiText("사용") : uiText("미사용")}</span></td><td data-label={uiText("관리")}><button className="secondary" aria-label={uiText(grants.includes('update') ? "{v0} 수정" : "{v0} 상세", { v0: p.name })} onClick={() => setSelection({ id: p.id })}>{uiText(grants.includes('update') ? "수정" : "상세")}</button></td></tr>)}</tbody>
       </table></div>
-      <Pagination pageSizeControl={<PageSizeSelect value={query.pageSize} onChange={pageSize => { setQuery(v => ({ ...v, pageSize, page: 1 })); setFilters(v => ({ ...v, pageSize, page: 1 }));  }} />} page={query.page} pageSize={data?.value.pageSize || query.pageSize} total={data?.value.total || 0} loading={loading} onChange={page => setQuery(q => ({ ...q, page }))} label="거래처 목록 페이지" />
+      <Pagination pageSizeControl={<PageSizeSelect value={query.pageSize} onChange={pageSize => { setQuery(v => ({ ...v, pageSize, page: 1 })); setFilters(v => ({ ...v, pageSize, page: 1 }));  }} />} page={query.page} pageSize={data?.value.pageSize || query.pageSize} total={data?.value.total || 0} loading={loading} onChange={page => setQuery(q => ({ ...q, page }))} label={uiText("거래처 목록 페이지")} />
     </section>
     {selection && <PartnerDialog key={selection.id || 'new'} id={selection.id} endpoint={endpoint} canUpdate={grants.includes('update')} onClose={() => setSelection(null)} onSaved={warning => { refresh(n => n + 1); setNotice('거래처 정보를 저장했습니다.' + (warning ? ` ${warning}` : '')) }} />}
   </>
@@ -57,25 +59,23 @@ export default function PartnerManagement({ tenantId, grants }: { tenantId: stri
 function PartnerDialog({ id, endpoint, canUpdate, onClose, onSaved }: {
   id: string | null; endpoint: string; canUpdate: boolean; onClose: () => void; onSaved: (warning: string | null) => void
 }) {
-  const [data, setData] = useState<Partner | null>(null), [editing, setEditing] = useState(!id), [error, setError] = useState(''), [retry, setRetry] = useState(0)
-  const [warning, setWarning] = useState<string | null>(null)
+  const [data, setData] = useState<Partner | null>(null), [error, setError] = useState(''), [retry, setRetry] = useState(0)
   useEffect(() => {
     if (!id) return
     let live = true
     api<Partner>(`${endpoint}/${id}`).then(value => { if (live) { setData(value); setError('') } }).catch(e => { if (live) setError(e instanceof Error ? e.message : '거래처를 불러오지 못했습니다.') })
     return () => { live = false }
   }, [id, endpoint, retry])
-  if (editing && (!id || data)) return <PartnerEditor partner={data || undefined} endpoint={endpoint} onClose={() => data ? setEditing(false) : onClose()} onSaved={result => { setData(result.partner); setWarning(result.warning); setEditing(false); onSaved(result.warning) }} />
-  return <OrganizationDialog title="거래처 상세" onClose={onClose} detailHeader={{code:data?.code,status:data && <span className="status-badge">{data.isActive ? '사용' : '미사용'}</span>,actions:data && canUpdate && <button type="button" className="primary" onClick={() => setEditing(true)}>거래처 수정</button>}}>
+  if ((!id || canUpdate) && (!id || data)) return <PartnerEditor partner={data || undefined} endpoint={endpoint} onClose={onClose} onSaved={result => { onSaved(result.warning); onClose() }} />
+  return <OrganizationDialog title={uiText(canUpdate ? "거래처 수정" : "거래처 상세")} onClose={onClose} detailHeader={{hideBack:true,code:data?.code,status:data && <span className="status-badge">{data.isActive ? uiText("사용") : uiText("미사용")}</span>}}>
 
-    {error && <p role="alert" className="alert error">{error} <button className="secondary" onClick={() => setRetry(n => n + 1)}>다시 시도</button></p>}
-    {!data ? <p>거래처를 불러오는 중…</p> : <>
-      {warning && <p role="status" className="alert">{warning}</p>}
+    {error && <p role="alert" className="alert error">{uiText(error)} <button className="secondary" onClick={() => setRetry(n => n + 1)}>{uiText("다시 시도")}</button></p>}
+    {!data ? <p>{uiText("거래처를 불러오는 중…")}</p> : <>
       <dl className="products-detail">{[
         ...partnerTextFields.map(([key, label]) => [label, data[key] || '—']),
-        ['거래처 유형', partnerTypes[data.type]], ['사업자번호 구분', data.registrationCountry === 'KR' ? '국내' : '해외'],
-        ['사용 여부', data.isActive ? '사용' : '미사용'],
-      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+        ['거래처 유형', uiText(partnerTypes[data.type])], ['사업자번호 구분', data.registrationCountry === 'KR' ? uiText('국내') : uiText('해외')],
+        ['사용 여부', data.isActive ? uiText('사용') : uiText('미사용')],
+      ].map(([label, value]) => <div key={label}><dt>{uiText(label)}</dt><dd>{value}</dd></div>)}</dl>
     </>}
   </OrganizationDialog>
 }
@@ -110,18 +110,19 @@ function PartnerEditor({ partner, endpoint, onClose, onSaved }: {
     } catch (e) { setError(e instanceof Error ? e.message : '거래처를 저장하지 못했습니다.'); setConfirm(false) }
     finally { inFlight.current = false; setBusy(false) }
   }
-  function textFields(keys: readonly string[]) { return partnerTextFields.filter(([key]) => keys.includes(key)).map(([key, label, max]) => <label key={key} className={['address', 'addressDetail', 'notes', 'paymentTerms'].includes(key) ? 'products-full' : key === 'code' ? 'partner-code-field' : undefined}><FormLabel required={key === 'name'}>{label}</FormLabel>{key === 'notes' ? <textarea aria-label={label} maxLength={max} value={draft[key]} onChange={e => change(key, e.target.value)} /> : <input aria-label={label} required={key === 'name'} type={key === 'email' ? 'email' : key === 'phone' || key === 'contactPhone' ? 'tel' : 'text'} maxLength={max} placeholder={key === 'code' ? partner ? '미입력 시 기존 코드 유지' : '미입력 시 자동 생성' : undefined} value={draft[key]} onChange={e => change(key, e.target.value)} />}</label>) }
+  function textFields(keys: readonly string[]) { return partnerTextFields.filter(([key]) => keys.includes(key)).map(([key, label, max]) => <label key={key} className={['address', 'addressDetail', 'notes', 'paymentTerms'].includes(key) ? 'products-full' : key === 'code' ? 'partner-code-field' : undefined}><FormLabel required={key === 'name'}>{uiText(label)}</FormLabel>{key === 'notes' ? <textarea aria-label={uiText(label)} maxLength={max} value={draft[key]} onChange={e => change(key, e.target.value)} /> : <input aria-label={uiText(label)} required={key === 'name'} type={key === 'email' ? 'email' : key === 'phone' || key === 'contactPhone' ? 'tel' : 'text'} maxLength={max} placeholder={key === 'code' ? partner ? uiText("미입력 시 기존 코드 유지") : uiText("미입력 시 자동 생성") : undefined} value={draft[key]} onChange={e => change(key, e.target.value)} />}</label>) }
   const matches = duplicates?.key === checkKey ? duplicates : null
-  return <OrganizationDialog detailHeader={{code:partner?.code,status:partner && <span className="status-badge">{partner.isActive ? '사용' : '미사용'}</span>,actions:<button type="submit" form="partner-editor" className="primary" disabled={busy}>거래처 저장</button>}} wide confirmation={confirm || navigation.blocked} size={confirm || navigation.blocked ? 'small' : 'large'} title={navigation.blocked ? '저장하지 않은 거래처 작업' : `거래처 ${partner ? '수정' : '등록'}`} busy={busy} onClose={() => navigation.blocked ? navigation.stay() : confirm ? setConfirm(false) : requestNavigation(onClose)}>
-    {error && <p role="alert" className="alert error">{error}</p>}
-    {!!matches?.matches.length && <p role="status" className="alert">같은 사업자등록번호의 거래처: {matches.matches.map(p => `${p.name} (${p.code})`).join(', ')}. 지점·거래 관계에 따른 별도 등록이면 저장할 수 있습니다.</p>}
-    {matches?.error && <p role="status">{matches.error}</p>}
+  function closeEditor() { if (navigation.blocked) navigation.stay(); else if (confirm) setConfirm(false); else requestNavigation(onClose) }
+  return <OrganizationDialog detailHeader={{hideBack:!!partner,actionsInFooter:!!partner,code:partner?.code,status:partner && <span className="status-badge">{partner.isActive ? uiText("사용") : uiText("미사용")}</span>,actions:<>{partner && <button type="button" className="secondary" disabled={busy} onClick={closeEditor}>{uiText("닫기")}</button>}<button type="submit" form="partner-editor" className="primary" disabled={busy}>{uiText("거래처 저장")}</button></>}} wide confirmation={confirm || navigation.blocked} size={confirm || navigation.blocked ? 'small' : 'large'} title={navigation.blocked ? uiText("저장하지 않은 거래처 작업") : uiText("거래처 {v0}", { v0: partner ? uiText('수정') : uiText('등록') })} busy={busy} onClose={closeEditor}>
+    {error && <p role="alert" className="alert error">{uiText(error)}</p>}
+    {!!matches?.matches.length && <p role="status" className="alert">{uiText("같은 사업자등록번호의 거래처:")} {matches.matches.map(p => `${p.name} (${p.code})`).join(', ')}{uiText(". 지점·거래 관계에 따른 별도 등록이면 저장할 수 있습니다.")}</p>}
+    {matches?.error && <p role="status">{uiText(matches.error)}</p>}
     {navigation.blocked && <UnsavedChangesContent stay={navigation.stay} discard={navigation.discard} message="저장하지 않은 거래처 변경을 버리고 이동하시겠습니까?" />}
-    {confirm && !navigation.blocked && <section role="alertdialog" aria-label="거래처 저장 확인"><p>거래처 정보를 저장하시겠습니까?</p><button className="secondary" disabled={busy} onClick={() => setConfirm(false)}>계속 편집</button>{' '}<button className="primary" disabled={busy} onClick={save}>{busy ? '저장 중…' : '확인'}</button></section>}
+    {confirm && !navigation.blocked && <section role="alertdialog" aria-label={uiText("거래처 저장 확인")}><p>{uiText("거래처 정보를 저장하시겠습니까?")}</p><button className="secondary" disabled={busy} onClick={() => setConfirm(false)}>{uiText("계속 편집")}</button>{' '}<button className="primary" disabled={busy} onClick={save}>{busy ? uiText("저장 중…") : uiText("확인")}</button></section>}
     <form id="partner-editor" className="dialog-form" onSubmit={submit} hidden={confirm || navigation.blocked}>
-      <div className="dialog-form-scroll"><fieldset disabled={busy}><DialogSection title="기본 정보">{textFields(['code','name'])}        <label><FormLabel required>거래처 유형</FormLabel><select aria-label="거래처 유형" required value={draft.type} onChange={e => change('type', e.target.value as Partner['type'])}>{Object.entries(partnerTypes).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <div className="dialog-form-scroll"><fieldset disabled={busy}><DialogSection title={uiText("기본 정보")}>{textFields(['code','name'])}        <label><FormLabel required>{uiText("거래처 유형")}</FormLabel><select aria-label={uiText("거래처 유형")} required value={draft.type} onChange={e => change('type', e.target.value as Partner['type'])}>{Object.entries(partnerTypes).map(([value, label]) => <option key={value} value={value}>{uiText(label)}</option>)}</select></label>
 
-{textFields(['businessRegistrationNumber'])}</DialogSection><DialogSection title="사업장 정보">{textFields(['representativeName','phone'])}<label>주소 국가<select aria-label="주소 국가" value={draft.registrationCountry} onChange={e => change('registrationCountry', e.target.value as Partner['registrationCountry'])}><option value="KR">국내</option><option value="OTHER">해외</option></select></label><AddressSearchField value={draft} overseas={draft.registrationCountry !== 'KR'} disabled={busy} onChange={address => setDraft(d => ({ ...d, ...address }))} /></DialogSection><DialogSection title="담당자 정보">{textFields(['contactName','contactPhone','email'])}</DialogSection><DialogSection title="기타">{textFields(['paymentTerms'])}        <label><FormLabel required>사용 여부</FormLabel><select aria-label="사용 여부" required value={String(draft.isActive)} onChange={e => change('isActive', e.target.value === 'true')}><option value="true">사용</option><option value="false">미사용</option></select></label>
+{textFields(['businessRegistrationNumber'])}</DialogSection><DialogSection title={uiText("사업장 정보")}>{textFields(['representativeName','phone'])}<label>{uiText("주소 국가")}<select aria-label={uiText("주소 국가")} value={draft.registrationCountry} onChange={e => change('registrationCountry', e.target.value as Partner['registrationCountry'])}><option value="KR">{uiText("국내")}</option><option value="OTHER">{uiText("해외")}</option></select></label><AddressSearchField value={draft} overseas={draft.registrationCountry !== 'KR'} disabled={busy} onChange={address => setDraft(d => ({ ...d, ...address }))} /></DialogSection><DialogSection title={uiText("기본 출고지")}><ShippingAddressFields label={uiText("기본 출고지")} postalCode={draft.defaultShippingPostalCode} address={draft.defaultShippingAddress} detail={draft.defaultShippingAddressDetail} disabled={busy} onChange={(address, detail, postalCode) => setDraft(d => ({ ...d, defaultShippingPostalCode: postalCode, defaultShippingAddress: address, defaultShippingAddressDetail: detail }))} /></DialogSection><DialogSection title={uiText("담당자 정보")}>{textFields(['contactName','contactPhone','email'])}</DialogSection><DialogSection title={uiText("기타")}>{textFields(['paymentTerms'])}        <label><FormLabel required>{uiText("사용 여부")}</FormLabel><select aria-label={uiText("사용 여부")} required value={String(draft.isActive)} onChange={e => change('isActive', e.target.value === 'true')}><option value="true">{uiText("사용")}</option><option value="false">{uiText("미사용")}</option></select></label>
 {textFields(['notes'])}</DialogSection>      </fieldset></div>
 
     </form>

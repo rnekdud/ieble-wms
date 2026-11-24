@@ -3,8 +3,6 @@
 :is(.receipt-planned-tracking,.receipt-inspection-tracking) > .organization-dialog-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:0; padding:24px 24px 0; }
 :is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-dialog-heading h2 { margin:0; font-size:20px; font-weight:700; color:#16345f; }
 :is(.receipt-planned-tracking,.receipt-inspection-tracking) .organization-dialog-heading p { margin:5px 0 0; font-size:13px; overflow-wrap:anywhere; }
-:is(.receipt-planned-tracking,.receipt-inspection-tracking) .dialog-close-icon { display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; height:36px; padding:0; border:0; background:transparent; color:#16345f; font-size:24px; border-radius:6px; }
-:is(.receipt-planned-tracking,.receipt-inspection-tracking) .dialog-close-icon:hover { background:#f1f5f9; }
 :is(.receipt-planned-tracking,.receipt-inspection-tracking) > .dialog-body { padding:20px 24px; scrollbar-gutter:auto; }
 :is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-planned-tabs { width:fit-content; max-width:100%; justify-content:flex-start; margin:0 0 16px; }
 :is(.receipt-planned-tracking,.receipt-inspection-tracking) .receipt-planned-content { display:flex; flex-direction:column; align-items:stretch; gap:10px; margin:0; padding:0; border:0; min-width:0; }

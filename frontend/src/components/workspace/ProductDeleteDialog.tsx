@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../../api'
 import type { Product } from '../../product-model'
@@ -26,14 +27,14 @@ export default function ProductDeleteDialog({ endpoint, products, single = false
     } catch (e) { setError(e instanceof Error ? e.message : '삭제하지 못했습니다.'); setReview(null) }
     finally { inFlight.current = false; setBusy(false) }
   }
-  return <OrganizationDialog confirmation title={single ? '상품을 삭제하시겠습니까?' : '선택한 상품을 삭제하시겠습니까?'} busy={busy} onClose={() => { if (!inFlight.current) onClose() }}>
+  return <OrganizationDialog confirmation title={single ? uiText("상품을 삭제하시겠습니까?") : uiText("선택한 상품을 삭제하시겠습니까?")} busy={busy} onClose={() => { if (!inFlight.current) onClose() }}>
     <section className="product-delete-content">
-      <p>{single ? `${products[0].name} 상품을 삭제합니다.` : `선택한 상품 ${products.length}개를 삭제합니다.`}</p>
-      <p>입출고·재고 이력이 있는 상품은 삭제할 수 없습니다.</p>
-      {!review && !error && <p role="status">삭제 가능 여부를 확인하는 중…</p>}
-      {review && <><div className="product-delete-results" aria-label="상품별 삭제 가능 여부">{review.items.map(item => <div key={item.id}><strong>{item.name} <small>{item.code}</small></strong><span className={item.canDelete ? '' : 'danger-text'}>{item.canDelete ? '삭제 가능 — 참조 이력 없음' : `삭제 불가 — ${item.reasons.join(', ')}`}</span></div>)}</div>{!review.canDelete && <p role="alert">전체 삭제를 중단했습니다. 삭제 불가 상품을 선택 해제하거나 사용 중지 기능을 이용해 주세요.</p>}</>}
-      {error && <p role="alert" className="alert error">{error}</p>}
-      <div className="confirmation-actions"><button type="button" className="secondary" disabled={busy} onClick={onClose}>취소</button>{error && !review && <button type="button" className="secondary" disabled={busy} onClick={() => { setError(''); setRetry(n => n + 1) }}>다시 확인</button>}<button type="button" className="primary" disabled={busy || !review?.canDelete} onClick={() => void remove()}>{busy ? '삭제 중…' : single ? '상품 삭제' : '선택 상품 삭제'}</button></div>
+      <p>{single ? uiText("{v0} 상품을 삭제합니다.", { v0: products[0].name }) : uiText("선택한 상품 {v0}개를 삭제합니다.", { v0: products.length })}</p>
+      <p>{uiText("입출고·재고 이력이 있는 상품은 삭제할 수 없습니다.")}</p>
+      {!review && !error && <p role="status">{uiText("삭제 가능 여부를 확인하는 중…")}</p>}
+      {review && <><div className="product-delete-results" aria-label={uiText("상품별 삭제 가능 여부")}>{review.items.map(item => <div key={item.id}><strong>{item.name} <small>{item.code}</small></strong><span className={item.canDelete ? '' : 'danger-text'}>{item.canDelete ? uiText("삭제 가능 — 참조 이력 없음") : uiText("삭제 불가 — {v0}", { v0: item.reasons.join(', ') })}</span></div>)}</div>{!review.canDelete && <p role="alert">{uiText("전체 삭제를 중단했습니다. 삭제 불가 상품을 선택 해제하거나 사용 중지 기능을 이용해 주세요.")}</p>}</>}
+      {error && <p role="alert" className="alert error">{uiText(error)}</p>}
+      <div className="confirmation-actions"><button type="button" className="secondary" disabled={busy} onClick={onClose}>{uiText("취소")}</button>{error && !review && <button type="button" className="secondary" disabled={busy} onClick={() => { setError(''); setRetry(n => n + 1) }}>{uiText("다시 확인")}</button>}<button type="button" className="primary" disabled={busy || !review?.canDelete} onClick={() => void remove()}>{busy ? uiText("삭제 중…") : single ? uiText("상품 삭제") : uiText("선택 상품 삭제")}</button></div>
     </section>
   </OrganizationDialog>
 }

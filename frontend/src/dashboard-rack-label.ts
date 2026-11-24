@@ -1,10 +1,11 @@
+import { getLocale, t as uiText } from './i18n.ts'
 export type RackTotal = { rackId: string; unit: string; quantity: number }
 export function rackQuantitySummary(totals: RackTotal[], products: number) {
   const values = totals.filter(t => t.quantity !== 0)
-  const format = (t: RackTotal) => `${t.quantity.toLocaleString('ko-KR', { maximumFractionDigits: 3 })} ${t.unit}`
-  if (!values.length) return '총 0개'
-  if (values.length === 1) return `총 ${['EA', '개'].includes(values[0].unit) ? values[0].quantity.toLocaleString('ko-KR', { maximumFractionDigits: 3 }) + '개' : format(values[0])}`
-  return `${products}종 · ${values.slice(0, 2).map(format).join(' / ')}${values.length > 2 ? ` 외 ${values.length - 2}단위` : ''}`
+  const format = (t: RackTotal) => `${t.quantity.toLocaleString(getLocale(), { maximumFractionDigits: 3 })} ${t.unit}`
+  if (!values.length) return uiText('총 0개')
+  if (values.length === 1) return ['EA', '개'].includes(values[0].unit) ? uiText('총 {v0}개', {v0:values[0].quantity.toLocaleString(getLocale(), {maximumFractionDigits:3})}) : uiText('총 {v0}', {v0:format(values[0])})
+  return uiText('{v0}종 · {v1}{v2}', {v0:products,v1:values.slice(0, 2).map(format).join(' / '),v2:values.length > 2 ? uiText(' 외 {v0}단위', {v0:values.length-2}) : ''})
 }
 // Screen-pixel cap keeps dashboard text subordinate to the drawing at every zoom.
 export function rackLabelFont(label: string, width: number, height: number, scale: number, maximum = 12) {

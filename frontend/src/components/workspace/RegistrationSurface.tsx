@@ -1,3 +1,6 @@
+import { inputValidationMessage } from '../../input-validation-message'
+import { useLanguage } from '../../use-language'
+import { t as uiText } from '../../i18n.ts'
 import { useEffect, useId, useRef } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { Check } from 'lucide-react'
@@ -12,8 +15,8 @@ export default function RegistrationSurface({ page = false, formId, action, cont
   const notice = formId === 'receipt-registration' ? '실제 재고는 입고 최종 확정 시 반영됩니다.' : formId === 'shipment-registration' ? '등록 시 재고를 예약하며, 출고 확정 시 실제 재고가 차감됩니다.' : null
   if (!page) return <OrganizationDialog {...dialog} description={description}>{children}</OrganizationDialog>
   return <section className={`registration-page registration-${formId}`}>
-    <DetailHeader className="registration-header" title={dialog.title} code={context} status={status} busy={dialog.busy} onBack={dialog.onClose} actions={<>{headerActions}<button type="submit" form={formId} className="primary" disabled={dialog.busy}><Check size={16} />{dialog.busy ? '저장 중…' : action}</button></>} />
-    {notice && <p className="registration-intro">{notice}</p>}
+    <DetailHeader className="registration-header" title={dialog.title} code={context} status={status} busy={dialog.busy} onBack={dialog.onClose} actions={<>{headerActions}<button type="submit" form={formId} className="primary" disabled={dialog.busy}><Check size={16} />{dialog.busy ? uiText("저장 중…") : uiText(action)}</button></>} />
+    {notice && <p className="registration-intro">{uiText(notice)}</p>}
     {children}
   </section>
 }
@@ -26,6 +29,13 @@ export function RegistrationPrompt({ page, active, children, ...dialog }: Compon
 /** Inline native validation with first-invalid focus; business/server errors stay visible. */
 export function RegistrationFields({ page, error, children, onEdit }: { page: boolean; error: string; children: ReactNode; onEdit: () => void }) {
   const root = useRef<HTMLDivElement>(null), errorId = useId()
+  const language = useLanguage()
+  useEffect(() => {
+    root.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[aria-errormessage]').forEach(input => {
+      const message = document.getElementById(input.getAttribute('aria-errormessage') || '')
+      if (message?.classList.contains('registration-field-error')) message.textContent = inputValidationMessage(input)
+    })
+  }, [language])
   useEffect(() => {
     if (page && error) root.current?.querySelector<HTMLElement>('[role="alert"]')?.focus()
   }, [page, error])
@@ -34,10 +44,12 @@ export function RegistrationFields({ page, error, children, onEdit }: { page: bo
     if (!page) return
     const input = e.target as HTMLInputElement
     input.setAttribute('aria-invalid', 'true')
+    // This field already renders an accessible inline error; avoid repeating it.
+    if (input.hasAttribute('data-inline-error') && input.validity.customError) return
     const container = input.closest('label') || input.parentElement
     if (container && !container.querySelector('.registration-field-error')) {
       const message = document.createElement('small'); message.className = 'registration-field-error'; message.id = `${errorId}-${encodeURIComponent(input.getAttribute('aria-label') || input.name)}`
-      message.textContent = input.validationMessage; container.appendChild(message); input.setAttribute('aria-errormessage', message.id)
+      message.textContent = inputValidationMessage(input); container.appendChild(message); input.setAttribute('aria-errormessage', message.id)
     }
     const first = input.form?.querySelector<HTMLElement>('input:invalid,select:invalid,textarea:invalid')
     if (first === input) input.scrollIntoView({ block: 'center', behavior: 'smooth' })
@@ -47,7 +59,7 @@ export function RegistrationFields({ page, error, children, onEdit }: { page: bo
     input.removeAttribute('aria-invalid'); input.removeAttribute('aria-errormessage')
     ;(input.closest('label') || input.parentElement)?.querySelector('.registration-field-error')?.remove()
   }}>
-    {error && <p className="alert error" role="alert" tabIndex={-1}>{error}</p>}
+    {error && <p className="alert error" role="alert" tabIndex={-1}>{uiText(error)}</p>}
     {children}
   </div>
 }
@@ -56,5 +68,5 @@ export function RegistrationSummary({ lines }: { lines: { product?: { id: string
   const products = new Set(lines.flatMap(l => l.product ? [l.product.id] : []))
   const totals = new Map<string, number>()
   for (const line of lines) if (line.product?.unit && Number.isFinite(Number(line.quantity))) totals.set(line.product.unit, (totals.get(line.product.unit) || 0) + Number(line.quantity))
-  return <div className="registration-summary" aria-label="등록 상품 요약"><strong>상품 {products.size}종</strong><span>{lines.length}개 입력 행</span>{[...totals].map(([unit, quantity]) => <span key={unit}>{Math.round(quantity * 1000) / 1000} {unit}</span>)}</div>
+  return <div className="registration-summary" aria-label={uiText("등록 상품 요약")}><strong>{uiText("상품")} {products.size}{uiText("종")}</strong><span>{lines.length}{uiText("개 입력 행")}</span>{[...totals].map(([unit, quantity]) => <span key={unit}>{Math.round(quantity * 1000) / 1000} {unit}</span>)}</div>
 }

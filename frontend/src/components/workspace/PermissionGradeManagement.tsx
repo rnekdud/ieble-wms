@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n.ts'
 import PageSizeSelect from '../PageSizeSelect'
 import Pagination from '../Pagination'
 import FormLabel from '../FormLabel'
@@ -31,21 +32,21 @@ export default function PermissionGradeManagement({ tenantId, grants, header }: 
   }
   const visibleItems = items.filter(x => x.name.toLowerCase().includes(appliedSearch.toLowerCase()))
   return <>
-    {header(grants.includes('create') && <button className="primary" onClick={() => { setEditing('create'); setError('') }}>권한 등급 추가</button>)}
+    {header(grants.includes('create') && <button className="primary" onClick={() => { setEditing('create'); setError('') }}>{uiText("권한 등급 추가")}</button>)}
     <section className="wms-card organization-card mobile-management-list">
-    <SearchFilters className="mobile-management-filters" onReset={() => { setSearch(''); setAppliedSearch(''); setPage(1) }} busy={busy} onSearch={() => { setAppliedSearch(search.trim()); setPage(1) }}><label>권한 등급 검색<input value={search} onChange={e => setSearch(e.target.value)} maxLength={100} /></label></SearchFilters>
-    {!editing && error && <p role="alert" className="alert error">{error}</p>}{notice && <p role="status" className="alert success">{notice}</p>}
-    <><div className="wms-table-scroll"><table className="wms-table mobile-record-table mobile-management-table permission-grades-list" aria-label="권한 등급 목록"><thead><tr><th>권한명</th><th>구분</th><th>사용 인원</th><th>사용 여부</th><th>관리</th></tr></thead><tbody>{visibleItems.slice((page - 1) * pageSize, page * pageSize).map(x => <tr key={x.id}><td data-label="권한명">{x.name}</td><td data-label="구분">{x.isBuiltIn ? '—' : '사용자 추가'}</td><td data-label="사용 인원">{x.memberCount}명</td><td data-label="사용 여부" className="mobile-card-usage"><span className={`mobile-usage-badge ${x.isActive ? 'is-active' : 'is-inactive'}`}>{x.isActive ? '사용' : '사용 중지'}</span></td><td data-label="관리">{grants.includes('update') && <button className="secondary" aria-label={`${x.name} 수정`} onClick={() => { setEditing(x); setError('') }}>수정</button>}</td></tr>)}{!visibleItems.length && <tr><td colSpan={5}>조회된 권한 등급이 없습니다.</td></tr>}</tbody></table></div><Pagination pageSizeControl={<PageSizeSelect value={pageSize} disabled={busy} onChange={size=>{setPageSize(size);setPage(1)}} />} page={page} pageSize={pageSize} total={visibleItems.length} disabled={busy} onChange={setPage} /></>
-    <p className="organization-help">이력과 사용자 연결을 보존하기 위해 삭제 대신 사용 중지합니다. 사용 중인 권한은 사용자 재배정 후 중지할 수 있습니다.</p>
+    <SearchFilters className="mobile-management-filters" onReset={() => { setSearch(''); setAppliedSearch(''); setPage(1) }} busy={busy} onSearch={() => { setAppliedSearch(search.trim()); setPage(1) }}><label>{uiText("권한 등급 검색")}<input value={search} onChange={e => setSearch(e.target.value)} maxLength={100} /></label></SearchFilters>
+    {!editing && error && <p role="alert" className="alert error">{uiText(error)}</p>}{notice && <p role="status" className="alert success">{uiText(notice)}</p>}
+    <><div className="wms-table-scroll"><table className="wms-table mobile-record-table mobile-management-table permission-grades-list" aria-label={uiText("권한 등급 목록")}><thead><tr><th>{uiText("권한명")}</th><th>{uiText("구분")}</th><th>{uiText("사용 인원")}</th><th>{uiText("사용 여부")}</th><th>{uiText("관리")}</th></tr></thead><tbody>{visibleItems.slice((page - 1) * pageSize, page * pageSize).map(x => <tr key={x.id}><td data-label={uiText("권한명")}>{x.name}</td><td data-label={uiText("구분")}>{x.isBuiltIn ? '—' : uiText("사용자 추가")}</td><td data-label={uiText("사용 인원")}>{x.memberCount}{uiText("명")}</td><td data-label={uiText("사용 여부")} className="mobile-card-usage"><span className={`mobile-usage-badge ${x.isActive ? 'is-active' : 'is-inactive'}`}>{x.isActive ? uiText("사용") : uiText("사용 중지")}</span></td><td data-label={uiText("관리")}>{grants.includes('update') && <button className="secondary" aria-label={uiText("{v0} 수정", { v0: x.name })} onClick={() => { setEditing(x); setError('') }}>{uiText("수정")}</button>}</td></tr>)}{!visibleItems.length && <tr><td colSpan={5}>{uiText("조회된 권한 등급이 없습니다.")}</td></tr>}</tbody></table></div><Pagination pageSizeControl={<PageSizeSelect value={pageSize} disabled={busy} onChange={size=>{setPageSize(size);setPage(1)}} />} page={page} pageSize={pageSize} total={visibleItems.length} disabled={busy} onChange={setPage} /></>
+    <p className="organization-help">{uiText("이력과 사용자 연결을 보존하기 위해 삭제 대신 사용 중지합니다. 사용 중인 권한은 사용자 재배정 후 중지할 수 있습니다.")}</p>
     </section>
-    {editing && <OrganizationDialog className="organization-item-dialog" title={`권한 등급 ${editing === 'create' ? '추가' : '수정'}`} busy={busy} onClose={() => requestNavigation(() => setEditing(null))}>
-      {error && <p className="alert error" role="alert">{error}</p>}
+    {editing && <OrganizationDialog className="organization-item-dialog" title={uiText("권한 등급 {v0}", { v0: editing === 'create' ? uiText('추가') : uiText('수정') })} busy={busy} onClose={() => requestNavigation(() => setEditing(null))}>
+      {error && <p className="alert error" role="alert">{uiText(error)}</p>}
       <GuardedForm className="dialog-form" busy={busy} onSubmit={save}><div className="dialog-form-scroll"><fieldset disabled={busy}>
-        <label><FormLabel required>권한명</FormLabel><input aria-label={"권한명"} autoFocus required name="name" maxLength={100} defaultValue={editing === 'create' ? '' : editing.name} /></label>
-        <label>설명 (선택)<textarea name="description" maxLength={500} defaultValue={editing === 'create' ? '' : editing.description || ''} /></label>
-        <label className="organization-checkbox"><input type="checkbox" name="isActive" value="true" defaultChecked={editing === 'create' || editing.isActive}/>사용</label>
-        {editing !== 'create' && editing.isBuiltIn && <p className="organization-help">이름을 바꾸어도 기존 사용자와 세부 권한은 유지됩니다. 세부 권한을 변경하면 연결된 사용자의 접근에 적용됩니다.</p>}
-      </fieldset></div><div className="dialog-actions"><button className="secondary" type="button" disabled={busy} onClick={() => requestNavigation(() => setEditing(null))}>취소</button><button className="primary" disabled={busy}>{editing === 'create' ? '등록' : '저장'}</button></div></GuardedForm>
+        <label><FormLabel required>{uiText("권한명")}</FormLabel><input aria-label={uiText("권한명")} autoFocus required name="name" maxLength={100} defaultValue={editing === 'create' ? '' : editing.name} /></label>
+        <label>{uiText("설명 (선택)")}<textarea name="description" maxLength={500} defaultValue={editing === 'create' ? '' : editing.description || ''} /></label>
+        <label className="organization-checkbox"><input type="checkbox" name="isActive" value="true" defaultChecked={editing === 'create' || editing.isActive}/>{uiText("사용")}</label>
+        {editing !== 'create' && editing.isBuiltIn && <p className="organization-help">{uiText("이름을 바꾸어도 기존 사용자와 세부 권한은 유지됩니다. 세부 권한을 변경하면 연결된 사용자의 접근에 적용됩니다.")}</p>}
+      </fieldset></div><div className="dialog-actions"><button className="secondary" type="button" disabled={busy} onClick={() => requestNavigation(() => setEditing(null))}>{uiText("취소")}</button><button className="primary" disabled={busy}>{editing === 'create' ? uiText("등록") : uiText("저장")}</button></div></GuardedForm>
     </OrganizationDialog>}
   </>
 }

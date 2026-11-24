@@ -1,3 +1,4 @@
+import { t as uiText, getLocale } from '../../i18n.ts'
 import { useMobile } from '../../use-mobile'
 import CameraScanButton from '../mobile/CameraScanButton'
 import FormLabel from '../FormLabel'
@@ -42,10 +43,10 @@ export default function SearchableChoiceField({ onCreate, emptyOptionLabel, scro
   }, [open])
   const close = (focus = false) => { setOpen(false); if (focus) trigger.current?.focus() }
   return <div className="searchable-choice" ref={root} onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) close() }}>
-    <label className={hideLabel ? 'sr-only' : undefined} id={`${id}-label`}><FormLabel required={required || labelRequired}>{label}</FormLabel></label>
+    <label className={hideLabel ? 'sr-only' : undefined} id={`${id}-label`}><FormLabel required={required || labelRequired}>{uiText(label)}</FormLabel></label>
     <button ref={trigger} disabled={disabled} type="button" className={`searchable-choice-trigger${description ? ' has-selection-detail' : ''}${titleTrigger ? ' is-title-trigger' : ''}`} aria-labelledby={`${id}-label ${id}-value`} title={selectionSummary || undefined} aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? id : undefined}
       onClick={() => setOpen(v => !v)} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); setOpen(true) } }}>
-      <span id={`${id}-value`}>{displayed?.id === value ? <><strong>{selectedName}</strong>{description && <small className="searchable-choice-selection-detail">{description}</small>}</> : <span className="searchable-choice-placeholder">{placeholder || '선택하세요'}</span>}</span>{titleTrigger ? <svg className="choice-title-arrow" width="18" height="9" viewBox="0 0 18 9" fill="currentColor" aria-hidden="true" focusable="false"><path d="M2 0H16C17.8 0 18.6 2.2 17.1 3.3L11.1 7.9C9.85 8.85 8.15 8.85 6.9 7.9L.9 3.3C-.6 2.2 .2 0 2 0Z" /></svg> : <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>}
+      <span id={`${id}-value`}>{displayed?.id === value ? <><strong>{selectedName}</strong>{description && <small className="searchable-choice-selection-detail">{description}</small>}</> : <span className="searchable-choice-placeholder">{placeholder || uiText("선택하세요")}</span>}</span>{titleTrigger ? <svg className="choice-title-arrow" width="18" height="9" viewBox="0 0 18 9" fill="currentColor" aria-hidden="true" focusable="false"><path d="M2 0H16C17.8 0 18.6 2.2 17.1 3.3L11.1 7.9C9.85 8.85 8.15 8.85 6.9 7.9L.9 3.3C-.6 2.2 .2 0 2 0Z" /></svg> : <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>}
     </button>
     {open && !disabled && <ChoicePopup selectedSummary={description ? selectionSummary : undefined} onCreate={onCreate && (name => { onCreate(name); close(true) })} emptyOptionLabel={emptyOptionLabel} scrollOptions={scrollOptions} anchor={floating ? trigger : undefined} loadPage={loadPage} key={`${kind}:${productId}:${warehouseId}:${rackId}:${locationId}`} productId={productId} locationId={locationId} searchPlaceholder={searchPlaceholder} emptyMessage={emptyMessage} id={id} endpoint={endpoint} kind={kind} label={label} value={value} warehouseId={warehouseId} zoneId={zoneId} rackId={rackId} required={required} labelRequired={labelRequired} onChange={item => { onChange(item); close(true) }} onClose={() => close(true)} />}
   </div>
@@ -87,7 +88,7 @@ function ChoicePopup({ selectedSummary, onCreate, emptyOptionLabel, scrollOption
     observer.observe(more.current)
     return () => observer.disconnect()
   }, [scrollOptions, ready, error, items.length, result?.total])
-  const selectable = !required && emptyOptionLabel && !search && ready ? [{ id:'', name:emptyOptionLabel, code:'', unit:null, lotManaged:false, expiryManaged:false, serialManaged:false }, ...items] : items
+  const selectable = !required && emptyOptionLabel && !search && ready ? [{ id:'', name:uiText(emptyOptionLabel), code:'', unit:null, lotManaged:false, expiryManaged:false, serialManaged:false }, ...items] : items
   useEffect(() => { document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' }) }, [active, id])
   function keys(e: KeyboardEvent) {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onClose() }
@@ -101,18 +102,18 @@ function ChoicePopup({ selectedSummary, onCreate, emptyOptionLabel, scrollOption
   }
   return <div ref={popup} popover={anchor ? 'manual' : undefined} className="searchable-choice-popup" onKeyDown={e => { if (e.key === 'Escape') keys(e) }}>
     {selectedSummary && <p className="searchable-choice-current" id={`${id}-current`}>{selectedSummary}</p>}
-    <div className="searchable-choice-search"><input ref={input} role="combobox" aria-label={`${label} 검색`} aria-describedby={selectedSummary ? `${id}-current` : undefined} aria-expanded="true" aria-autocomplete="list" aria-controls={id} aria-activedescendant={selectable[active] ? `${id}-${active}` : undefined}
-      placeholder={searchPlaceholder || (kind === 'collaborators' ? '업체명 검색' : kind === 'products' ? '상품명·코드·모델·바코드 검색' : kind === 'partners' ? '거래처명·코드·사업자번호 검색' : '창고명·코드 검색')} maxLength={onCreate ? 200 : 100} value={search} onKeyDown={keys}
+    <div className="searchable-choice-search"><input ref={input} role="combobox" aria-label={uiText("{v0} 검색", { v0: uiText(label) })} aria-describedby={selectedSummary ? `${id}-current` : undefined} aria-expanded="true" aria-autocomplete="list" aria-controls={id} aria-activedescendant={selectable[active] ? `${id}-${active}` : undefined}
+      placeholder={searchPlaceholder || (kind === 'collaborators' ? uiText("업체명 검색") : kind === 'products' ? uiText("상품명·코드·모델·바코드 검색") : kind === 'partners' ? uiText("거래처명·코드·사업자번호 검색") : uiText("창고명·코드 검색"))} maxLength={onCreate ? 200 : 100} value={search} onKeyDown={keys}
       onChange={e => { setSearch(e.target.value); setPage(1); setActive(0); setError('') }} /></div>
-    {mobile && (searchPlaceholder?.includes('바코드') || kind === 'products') && <CameraScanButton onManual={() => input.current?.focus()} onScan={code => { setSearch(code); setPage(1); setActive(0); setError('') }} />}
-    {error ? <div className="searchable-choice-message" role="alert">{error} <button type="button" className="secondary" onClick={() => { setError(''); setRetry(n => n + 1) }}>다시 시도</button></div> : !ready ? <p className="searchable-choice-message" role="status">불러오는 중…</p> : !items.length && <p className="searchable-choice-message" role="status">{search ? '검색 결과가 없습니다.' : emptyMessage || '선택 가능한 항목이 없습니다.'}</p>}
-    <div id={id} role="listbox" aria-required={required || labelRequired || undefined} aria-label={`${label} 선택 목록`} className="searchable-choice-options">
+    {mobile && (!!searchPlaceholder && /바코드|barcode/i.test(searchPlaceholder) || kind === 'products') && <CameraScanButton onManual={() => input.current?.focus()} onScan={code => { setSearch(code); setPage(1); setActive(0); setError('') }} />}
+    {error ? <div className="searchable-choice-message" role="alert">{uiText(error)} <button type="button" className="secondary" onClick={() => { setError(''); setRetry(n => n + 1) }}>{uiText("다시 시도")}</button></div> : !ready ? <p className="searchable-choice-message" role="status">{uiText("불러오는 중…")}</p> : !items.length && <p className="searchable-choice-message" role="status">{search ? uiText("검색 결과가 없습니다.") : emptyMessage || uiText("선택 가능한 항목이 없습니다.")}</p>}
+    <div id={id} role="listbox" aria-required={required || labelRequired || undefined} aria-label={uiText("{v0} 선택 목록", { v0: uiText(label) })} className="searchable-choice-options">
       {selectable.map((item, index) => <button key={item.id} id={`${id}-${index}`} type="button" role="option" aria-selected={value === item.id} tabIndex={-1} className={index === active ? 'is-highlighted' : ''} onMouseEnter={() => setActive(index)} onMouseDown={e => e.preventDefault()} onClick={() => onChange(item.id ? item : undefined)}><span><strong>{choiceName(item)}</strong><small>{choiceDescription(item)}</small></span>{value === item.id && <span aria-hidden="true">✓</span>}</button>)}
       {scrollOptions && <div ref={more} aria-hidden="true" style={{ height: 1 }} />}
     </div>
-    {!scrollOptions && ready && result.total > (result.pageSize || 30) && <Pagination page={page} pageSize={result.pageSize || 30} total={result.total} loading={!ready} onChange={n => { setPage(n); setActive(0); setError(''); input.current?.focus() }} label={`${label} 선택 페이지`} />}
-    {onCreate && search.trim() && <button className="secondary searchable-choice-clear" type="button" onClick={() => onCreate(search.trim())}>입력한 업체명 사용</button>}
-    {!emptyOptionLabel && !required && value && <button className="secondary searchable-choice-clear" type="button" onClick={() => onChange(undefined)}>선택 해제</button>}
+    {!scrollOptions && ready && result.total > (result.pageSize || 30) && <Pagination page={page} pageSize={result.pageSize || 30} total={result.total} loading={!ready} onChange={n => { setPage(n); setActive(0); setError(''); input.current?.focus() }} label={uiText("{v0} 선택 페이지", { v0: uiText(label) })} />}
+    {onCreate && search.trim() && <button className="secondary searchable-choice-clear" type="button" onClick={() => onCreate(search.trim())}>{uiText("입력한 업체명 사용")}</button>}
+    {!emptyOptionLabel && !required && value && <button className="secondary searchable-choice-clear" type="button" onClick={() => onChange(undefined)}>{uiText("선택 해제")}</button>}
   </div>
 }
 
@@ -121,7 +122,7 @@ function choiceName(item: Choice) {
 }
 function choiceDescription(item: Choice) {
   if (item.email !== undefined) return [item.customCode, item.email].filter(Boolean).join(' · ')
-  if (item.rackAvailable != null) return `${item.code} · 가용 ${item.rackAvailable.toLocaleString('ko-KR')} ${item.unit || ''} · 현재고 ${item.rackPhysical?.toLocaleString('ko-KR')}${item.ownReserved ? ` · 이 문서 예약 포함 ${item.rackRequestable?.toLocaleString('ko-KR')}` : ''}`
+  if (item.rackAvailable != null) return `${item.code} · 가용 ${item.rackAvailable.toLocaleString(getLocale())} ${item.unit || ''} · 현재고 ${item.rackPhysical?.toLocaleString(getLocale())}${item.ownReserved ? ` · 이 문서 예약 포함 ${item.rackRequestable?.toLocaleString(getLocale())}` : ''}`
   if (item.quantity != null) return `유통기한 ${item.expiryDate || '없음'} · 현재 ${item.quantity} / 출고 예정 ${item.reservedQuantity} / 출고 가능 ${item.availableQuantity} ${item.unit || ''} · 재고 ${item.id}`
   return [item.code, item.rackCode, item.customCode, item.level != null ? `${item.level}단` : '', item.bay != null ? `${item.bay}칸` : '', item.barcode, item.unit].filter(Boolean).join(' · ')
 }

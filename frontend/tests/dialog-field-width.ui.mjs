@@ -52,6 +52,7 @@ try{
   if(p==='/partners')return json({...empty,items:[partner],total:1})
   if(p==='/partners/partner')return json(partner)
   if(p==='/support')return json({...empty,items:[inquiry],total:1})
+  if(p==='/receipts/photo-options')return json({maxCount:10,maxBytes:5242880,formats:['image/jpeg','image/png','image/webp']})
   if(p==='/support/ticket')return json(inquiry)
   if(p==='/company')return json({company:{id:workspace.id,name:workspace.name,version:'1'},history:[]})
   if(p==='/reports/stock-history')return json({...empty,summary:{rows:0,receiptRows:0,shipmentRows:0,operationRows:0,stocktakeRows:0,workCount:0},start:'2026-11-01',end:'2026-11-09',today:'2026-11-09'})

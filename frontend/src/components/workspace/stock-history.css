@@ -33,7 +33,7 @@
   :root body .wms-content .stock-history .list-search-filters > .overview-help { grid-column:1/-1; grid-row:9; margin:0; }
   :root body .wms-content .stock-history .list-search-filters::after { display:none; }
 
-  :root body .wms-content .stock-history .list-search-filters > label:has(input[aria-label="문서번호 검색"]) { grid-row:7; }
+  :root body .wms-content .stock-history .list-search-filters > label:has(input:is([aria-label="문서번호 검색"], [aria-label="Search Document Number"])) { grid-row:7; }
   .history-mobile-list { display:grid; gap:12px; min-width:0; }
   .history-mobile-list > .mobile-stock-card { padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:#fff; min-width:0; }
   .history-mobile-list h3 { overflow-wrap:anywhere; }

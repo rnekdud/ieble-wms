@@ -1,3 +1,4 @@
+import { getLocale, t as uiText } from './i18n.ts'
 export type GuideSection = { title: string; paragraphs: string[]; note?: string; image?: string; caption?: string }
 export type UserGuideArticle = { id: string; title: string; category: '처음 시작하기' | '기능별 이용 가이드'; summary: string; keywords: string[]; sections: GuideSection[] }
 export const userGuides: UserGuideArticle[] = [
@@ -71,6 +72,6 @@ export const userGuides: UserGuideArticle[] = [
 ]
 export const guideCategories = ['전체', '처음 시작하기', '기능별 이용 가이드'] as const
 export function searchGuides(query: string, category: string = '전체') {
- const words = query.trim().toLocaleLowerCase('ko-KR').split(/\s+/).filter(Boolean)
- return userGuides.filter(g => (category === '전체' || g.category === category) && words.every(word => [g.title, g.summary, ...g.keywords, ...g.sections.flatMap(s => [s.title, ...s.paragraphs, s.note || ''])].join(' ').toLocaleLowerCase('ko-KR').includes(word)))
+ const words = query.trim().toLocaleLowerCase(getLocale()).split(/\s+/).filter(Boolean)
+ return userGuides.filter(g => (category === '전체' || g.category === category) && words.every(word => [g.title, g.summary, ...g.keywords, ...g.sections.flatMap(s => [s.title, ...s.paragraphs, s.note || ''])].flatMap(text => [text, uiText(text)]).join(' ').toLocaleLowerCase(getLocale()).includes(word)))
 }

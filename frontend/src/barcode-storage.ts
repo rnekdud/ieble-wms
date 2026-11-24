@@ -1,3 +1,4 @@
+import { getLocale } from './i18n.ts'
 import type { OverviewRow } from './stock-overview-model.ts'
 export type StorageQuantity = { unit: string; quantity: number; reservedQuantity: number; availableQuantity: number }
 export type ProductStorageLocation = StorageQuantity & Pick<OverviewRow,'warehouseId'|'zoneId'|'zoneName'|'rackId'|'rackCode'|'rackName'|'locationId'|'locationCode'|'locationName'> & { key:string }
@@ -14,5 +15,5 @@ export function barcodeStorageLocations(rows:OverviewRow[]):ProductStorageLocati
 }
 export function storageQuantityLabel(rows:StorageQuantity[]){
   const units=new Map<string,number>();for(const row of rows)units.set(row.unit,(units.get(row.unit)||0)+row.quantity)
-  return [...units].map(([unit,value])=>`${value.toLocaleString('ko-KR')} ${unit}`).join(' · ')
+  return [...units].map(([unit,value])=>`${value.toLocaleString(getLocale())} ${unit}`).join(' · ')
 }

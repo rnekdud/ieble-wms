@@ -1,7 +1,8 @@
+import { getLocale } from './i18n.ts'
 import { eachQuantityError } from './quantity-input.ts'
 import type { ReceiptLine, Receipt } from './receipt-model'
 export const shipmentStatuses = { Requested: '출고 요청', Picking: '피킹 중', Picked: '피킹 완료', Inspected: '검수 완료', Confirmed: '출고 확정', Cancelled: '취소' } as const
-export type Shipment = Omit<Receipt, 'status'> & { requestDate: string; status: keyof typeof shipmentStatuses; pickedAt: string | null }
+export type Shipment = Omit<Receipt, 'status'> & { shippingPostalCode?: string | null; shippingAddress?: string | null; shippingAddressDetail?: string | null; requestDate: string; status: keyof typeof shipmentStatuses; pickedAt: string | null }
 export type ShipmentLine = Omit<ReceiptLine, 'expectedQuantity' | 'inspectedQuantity' | 'placements'> & { requestedQuantity: number }
 export type Allocation = { rackId?: string | null; locationId?: string; warehouseId?: string; warehouseName?: string; pickedByName?: string | null; confirmedQuantity?: number; id: string; lineId: string; stockId: string; locationCode: string; rackCode: string | null; lotNumber: string | null; expiryDate: string | null; serialNumber: string | null; quantity: number; pickedQuantity: number; inspectedQuantity: number; state: string; pickedAt: string | null; inspectedAt: string | null }
 export type ShipmentDetail = { shipment: Shipment; lines: ShipmentLine[]; allocations: Allocation[]; movements: { id: string; quantity: number }[] }
@@ -17,7 +18,7 @@ export function workError(quantity: string, limit: number, complete: boolean, mi
   if (!/^\d+(\.\d{1,3})?$/.test(quantity) || !Number.isFinite(Number(quantity))) return '수량은 0 이상, 소수점 3자리까지 입력해 주세요.'
   if (Number(quantity) < minimum) return '이미 기록한 피킹 수량보다 줄일 수 없습니다.'
   const delta = Math.round((Number(quantity) - limit) * 1000) / 1000
-  if (delta > 0) return `기준 수량보다 ${delta.toLocaleString('ko-KR')} 초과했습니다.`
-  if (complete && delta < 0) return `기준 수량보다 ${(-delta).toLocaleString('ko-KR')} 부족합니다. 모든 위치의 수량을 확인해 주세요.`
+  if (delta > 0) return `기준 수량보다 ${delta.toLocaleString(getLocale())} 초과했습니다.`
+  if (complete && delta < 0) return `기준 수량보다 ${(-delta).toLocaleString(getLocale())} 부족합니다. 모든 위치의 수량을 확인해 주세요.`
   return null
 }

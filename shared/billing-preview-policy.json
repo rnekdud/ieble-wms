@@ -1,0 +1,7 @@
+{
+  "monthlyPerUserKrw": 5000,
+  "annualDiscountPercent": 20,
+  "eventEnabled": true,
+  "eventMonthlyPerUserKrw": 2000,
+  "eventEndsOn": null
+}
