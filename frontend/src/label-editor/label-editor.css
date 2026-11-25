@@ -45,7 +45,7 @@
 .label-product-tools summary { padding:2px 0 5px; cursor:pointer; }
 :root body .label-editor .label-product-tools button { width:100%; margin:4px 0 0; font-size:12px; --ui-action-height:34px; --ui-action-padding:6px; white-space:normal; }
 .label-product-tools small { display:block; margin-top:6px; overflow-wrap:anywhere; color:#64748b; }
-.label-canvas-panel { min-width:0; min-height:0; display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:8px; }
+.label-canvas-panel { min-width:0; min-height:0; display:grid; grid-template-rows:auto auto minmax(0,1fr); gap:8px; }
 .label-canvas-heading { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:32px; }
 .label-canvas-identity { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-right:auto; font-size:14px; }
 .label-canvas-identity span { color:#64748b; font-size:11px; }
@@ -171,3 +171,66 @@
 :root body .label-editor .label-paper-choice .searchable-choice-trigger { width:190px; min-width:0; min-height:40px; height:40px; }
 .label-paper-choice > small { display:block; max-width:320px; color:#b42318; margin-top:4px; font-size:11px; }
 @media(max-width:480px) { :root body .label-editor .label-paper-choice .searchable-choice-trigger { width:160px; } }
+
+/* Keep editor actions grouped without changing the label's physical geometry. */
+.label-mobile-caption { display:none; }
+.label-canvas-actions { display:flex; gap:8px; align-items:center; }
+.label-text-actions:empty { display:none; }
+@media(min-width:1101px) { .label-canvas-actions:not(:has(.label-text-actions > button)) { display:none; } }
+@media(max-width:1100px) {
+ .label-editor { gap:12px; }
+ :root body .label-editor :is(.wms-page-actions,.label-paper-bar,.label-toolbar,.label-zoom-toolbar,.label-canvas-actions,.label-mobile-panels,.label-page-navigation) button { --ui-action-height:44px; }
+ :root body .label-editor .label-zoom-toolbar .label-icon-button { --ui-action-width:44px; width:44px!important; min-width:44px; }
+ :root body .label-editor .label-add-page { --ui-action-height:44px; }
+ :root body .label-editor > .wms-page-heading { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; padding:0; }
+ :root body .label-editor > .wms-page-heading .wms-page-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:100%; gap:8px; margin:0; }
+ :root body .label-editor > .wms-page-heading .wms-page-actions > button { width:100%; min-width:0; min-height:44px; height:auto; margin:0; padding:8px!important; font-size:12px; line-height:1.35; white-space:normal; }
+ .label-paper-bar { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 10px; padding:10px; }
+ .label-paper-choice { grid-column:1; grid-row:1; }
+ .label-paper-choice > .searchable-choice { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; }
+ :root body .label-editor .label-paper-choice .searchable-choice-trigger { width:100%; height:44px!important; min-height:44px!important; max-height:44px; }
+ :root body .label-editor .label-paper-settings { grid-column:2; grid-row:1; align-self:end; min-width:0; min-height:44px; padding:8px 10px!important; font-size:12px; }
+ .label-paper-summary { grid-column:1/-1; min-width:0; font-size:11px; line-height:16px; }
+ .label-save-state { grid-column:1/-1; width:auto; min-width:0; padding-top:6px; border-top:1px solid #edf0f5; font-size:11px; line-height:16px; }
+ .label-toolbar { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; }
+ .label-command-group { display:contents; }
+ .label-command-group + .label-command-group { border:0; padding:0; margin:0; }
+ .label-command-group:nth-child(2) > button,.label-command-group:nth-child(3) > button { grid-column:span 2; }
+ :root body .label-editor .label-toolbar button { width:100%; min-width:0; min-height:44px; height:auto; padding:6px!important; font-size:12px; line-height:1.35; white-space:normal; }
+ .label-toolbar button svg { flex-shrink:0; }
+ .label-workspace { gap:0; }
+ .label-canvas-panel { padding:10px; border:1px solid #dce3ec; border-radius:10px; background:#fff; gap:10px; }
+ .label-canvas-heading { min-height:32px; gap:6px; }
+ .label-canvas-identity { gap:4px; }
+ .label-canvas-identity strong { font-size:13px; }
+ :root body .label-editor .label-canvas-heading .label-check { font-size:11px; min-height:32px; }
+ .label-zoom-toolbar { display:grid; grid-template-columns:auto auto 44px minmax(0,1fr) 44px; gap:5px; }
+ :root body .label-editor .label-zoom-toolbar button { width:100%; min-width:0; min-height:44px; height:44px; padding:5px!important; font-size:11px; }
+ :root body .label-editor .label-zoom-toolbar select { width:100%; min-width:0; height:44px!important; min-height:44px!important; max-height:44px; padding:6px 22px 6px 6px!important; font-size:11px!important; }
+ .label-canvas-scroll { height:clamp(180px,28dvh,280px); border-radius:7px; }
+ :root body .label-editor .label-canvas-actions button { min-height:44px; width:100%; min-width:0; padding:8px!important; font-size:12px; }
+ .label-canvas-actions > :is(button,div) { flex:1; }
+ .label-canvas-actions { min-width:0; }
+ .label-canvas-panel > small { font-size:10px; line-height:15px; }
+ .label-canvas-panel > small > br { display:none; }
+ .label-canvas-panel > small > :is(.label-pointer-help,.label-touch-help) { display:none; }
+ .label-mobile-panels { margin-top:12px; padding:5px; gap:4px; border:1px solid #dce3ec; border-radius:10px 10px 0 0; background:white; }
+ :root body .label-editor .label-mobile-panels button { border:0; border-radius:6px; min-height:44px; background:transparent; box-shadow:none; }
+ :root body .label-editor .label-mobile-panels button[aria-expanded=true] { background:#fff4c8; color:#16345f; }
+ .label-workspace > :is(.label-tools,.label-properties) { border-top:0; border-radius:0 0 10px 10px; }
+ .label-workspace[data-mobile-pane=none] .label-mobile-panels { border-radius:10px; }
+ .label-tools { height:clamp(320px,45dvh,440px); padding:10px; gap:10px; }
+ .label-list-section { gap:10px; }
+ :root body .label-editor .label-page-navigation button { min-width:44px; width:44px; min-height:44px; height:44px; }
+ :root body .label-editor .label-add-page { min-height:44px; }
+ .label-properties-scroll { max-height:min(480px,65dvh); }
+ .label-properties-fields { gap:16px; }
+ .label-property-grid { gap:12px; }
+ .label-properties-heading { padding:12px 10px; }
+}
+@media(max-width:600px) {
+ .label-desktop-caption { display:none; }
+ .label-mobile-caption { display:inline; }
+ :root body .label-editor > .wms-page-heading .primary svg { display:none; }
+ .label-canvas-identity span { font-size:10px; }
+}
